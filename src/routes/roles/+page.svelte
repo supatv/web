@@ -1,1 +1,1 @@
-<h1>coming soon&trade;</h1>
+<h1>coming soon :3</h1>
