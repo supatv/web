@@ -36,7 +36,6 @@
 	"dependencies": {
 		"@fontsource/inter": "^5.1.0",
 		"dayjs": "^1.11.13",
-		"fuse.js": "^7.0.0",
 		"fuzzysort": "^3.1.0",
 		"mode-watcher": "^0.5.0"
 	}
