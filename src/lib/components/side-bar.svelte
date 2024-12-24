@@ -7,7 +7,7 @@
     import IconSparkles from "lucide-svelte/icons/sparkles";
 
     import * as Sidebar from "$lib/components/ui/sidebar/index.js";
-    import { page } from "$app/stores";
+    import { page } from "$app/state";
 </script>
 
 <Sidebar.Root>
@@ -26,7 +26,7 @@
             <Sidebar.GroupContent>
                 <Sidebar.Menu>
                     <Sidebar.MenuItem>
-                        <Sidebar.MenuButton isActive={$page.url.pathname === "/live"}>
+                        <Sidebar.MenuButton isActive={page.url.pathname === "/live"}>
                             {#snippet child({ props })}
                                 <a href="/live" {...props}>
                                     <IconTv />
@@ -44,7 +44,7 @@
             <Sidebar.GroupContent>
                 <Sidebar.Menu>
                     <Sidebar.MenuItem>
-                        <Sidebar.MenuButton isActive={$page.url.pathname === "/logs"}>
+                        <Sidebar.MenuButton isActive={page.url.pathname === "/logs"}>
                             {#snippet child({ props })}
                                 <a href="/logs" {...props}>
                                     <IconScroll />
@@ -55,7 +55,7 @@
                     </Sidebar.MenuItem>
 
                     <Sidebar.MenuItem>
-                        <Sidebar.MenuButton aria-disabled={true} isActive={$page.url.pathname === "/roles"}>
+                        <Sidebar.MenuButton aria-disabled={true} isActive={page.url.pathname === "/roles"}>
                             {#snippet child({ props })}
                                 <a href="/roles" {...props}>
                                     <IconGem />
@@ -73,7 +73,7 @@
             <Sidebar.GroupContent>
                 <Sidebar.Menu>
                     <Sidebar.MenuItem>
-                        <Sidebar.MenuButton aria-disabled={true} isActive={$page.url.pathname === "/follows"}>
+                        <Sidebar.MenuButton aria-disabled={true} isActive={page.url.pathname === "/follows"}>
                             {#snippet child({ props })}
                                 <a href="/follows" {...props}>
                                     <IconBookUser />

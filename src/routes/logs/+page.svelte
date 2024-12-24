@@ -29,6 +29,7 @@
         };
     };
 
+    let error: String | null = $state(null);
     let loading = $state(false);
 
     let channels: { name: string; userID: string }[] = $state([]);
@@ -36,8 +37,15 @@
     let selectedIndex = $state(0); // Track selected item
 
     const loadChannels = async () => {
+        error = null;
         loading = true;
         const res = await fetch("https://logs.zonian.dev/channels");
+        if (~~(res.status / 100) !== 2) {
+            error = `Error from server: ${res.status} ${res.statusText}`;
+            loading = false;
+            throw error;
+        }
+
         const data = await res.json();
         channels = data.channels;
         searchTargets = channels.map((c) => c.name).map((str) => fuzzysort.prepare(str));
@@ -92,21 +100,36 @@
 
     const listLogs = async (channel: string, user: string) => {
         const res = await fetch(`https://logs.zonian.dev/list?channel=${encodeURIComponent(channel)}&user=${encodeURIComponent(user)}`);
+        if (~~(res.status / 100) !== 2) {
+            if (res.status === 404) error = "No logs found for this channel and user";
+            else error = `Error from server: ${res.status} ${res.statusText}`;
+
+            loading = false;
+            throw error;
+        }
+
         const data: { availableLogs: LogsDate[] } = await res.json();
         return data;
     };
 
     const fetchLogs = async (channel: string, user: string, date: LogsDate) => {
         const res = await fetch(`https://logs.zonian.dev/channel/${encodeURIComponent(channel)}/user/${encodeURIComponent(user)}/${date.year}/${date.month}?jsonBasic=1&reverse=1`);
+        if (~~(res.status / 100) !== 2) {
+            error = `Error from server: ${res.status} ${res.statusText}`;
+            loading = false;
+            throw error;
+        }
+
         const data: { messages: Message[] } = await res.json();
         return data;
     };
 
     const formSubmit = async (event: SubmitEvent) => {
         event.preventDefault();
-        if (loading) return;
+        if (loading || !channelName || !userName) return;
 
         availableLogs = [];
+        error = null;
         loading = true;
         const data = await listLogs(channelName, userName);
         availableLogs = data.availableLogs;
@@ -121,6 +144,7 @@
     $effect(() => {
         if (!dateContent) return;
         untrack(async () => {
+            error = null;
             loading = true;
             const data = await fetchLogs(channelName, userName, dateContent);
             chatLogs = data.messages;
@@ -192,7 +216,9 @@
         {/if}
     </div>
 
-    {#if loading}
+    {#if error}
+        <p class="text-red-500">{error}</p>
+    {:else if loading}
         <Spinner />
     {:else if chatLogs.length}
         <div class="flex flex-1 min-h-0 w-full">
