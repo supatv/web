@@ -31,7 +31,7 @@
     });
 </script>
 
-<div class="flex flex-col m-5 self-center">
+<div class="flex flex-col p-5 self-center">
     {#if streams === null}
         <Spinner />
     {:else}

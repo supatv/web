@@ -16,7 +16,7 @@
 <ModeWatcher />
 <Sidebar.Provider>
 	<AppSidebar />
-	<main class="flex flex-1 flex-col m-1">
+	<main class="flex flex-1 flex-col p-1 max-h-screen">
 		<div class="flex gap-1 sticky top-1 z-50">
 			<Sidebar.Trigger />
 			<Button onclick={toggleMode} variant="ghost" size="icon" class="h-7 w-7">

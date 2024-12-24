@@ -73,7 +73,7 @@
             <Sidebar.GroupContent>
                 <Sidebar.Menu>
                     <Sidebar.MenuItem>
-                        <Sidebar.MenuButton isActive={$page.url.pathname === "/follows"}>
+                        <Sidebar.MenuButton aria-disabled={true} isActive={$page.url.pathname === "/follows"}>
                             {#snippet child({ props })}
                                 <a href="/follows" {...props}>
                                     <IconBookUser />

@@ -129,9 +129,9 @@
     });
 </script>
 
-<div class="m-5 relative flex flex-col flex-1 h-full">
+<div class="m-5 relative flex flex-col flex-1 h-full min-h-0">
     <h1 class="text-2xl font-bold mb-2">Search any user's chat logs</h1>
-    <div class="flex flex-row my-3 justify-between">
+    <div class="flex flex-row my-3 justify-between min-h-0">
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <form class="flex relative gap-2 align-middle" onkeydown={formKeydown} onsubmit={formSubmit}>
             <div class="flex gap-2">
@@ -195,20 +195,18 @@
     {#if loading}
         <Spinner />
     {:else if chatLogs.length}
-        <div class="flex flex-1" style="max-height: calc(100vh - 200px);">
-            <div class=" h-full max-h-full w-full">
-                <Card.Root class="max-h-full h-full w-full flex-col overflow-hidden p-3 leading-none">
-                    <VirtualList items={chatLogs} height="100%">
-                        {#snippet children(data)}
-                            <div class="flex flex-row gap-x-1 my-0.5">
-                                <span class="font-mono text-neutral-500 text-nowrap text-xs mt-0.5">{dayjs(data.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
-                                <span style="color: {data.tags['color'] ?? '#fffff'}" class="font-bold text-nowrap">{data.displayName}:</span>
-                                <span style="word-break: break-word;">{data.text}</span>
-                            </div>
-                        {/snippet}
-                    </VirtualList>
-                </Card.Root>
-            </div>
+        <div class="flex flex-1 min-h-0 w-full">
+            <Card.Root class="h-full w-full flex-col overflow-hidden p-3 leading-none">
+                <VirtualList items={chatLogs} height="100%">
+                    {#snippet children(data)}
+                        <div class="flex flex-row gap-x-1 my-0.5">
+                            <span class="font-mono text-neutral-500 text-nowrap text-xs mt-0.5">{dayjs(data.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
+                            <span style="color: {data.tags['color'] || 'gray'}" class="font-bold text-nowrap">{data.displayName}:</span>
+                            <span style="word-break: break-word;">{data.text}</span>
+                        </div>
+                    {/snippet}
+                </VirtualList>
+            </Card.Root>
         </div>
     {/if}
 </div>
