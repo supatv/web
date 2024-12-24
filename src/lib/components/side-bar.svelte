@@ -35,13 +35,31 @@
                             {/snippet}
                         </Sidebar.MenuButton>
                     </Sidebar.MenuItem>
+                </Sidebar.Menu>
+            </Sidebar.GroupContent>
+        </Sidebar.Group>
 
+        <Sidebar.Group>
+            <Sidebar.GroupLabel>Chat</Sidebar.GroupLabel>
+            <Sidebar.GroupContent>
+                <Sidebar.Menu>
                     <Sidebar.MenuItem>
                         <Sidebar.MenuButton isActive={$page.url.pathname === "/logs"}>
                             {#snippet child({ props })}
                                 <a href="/logs" {...props}>
                                     <IconScroll />
                                     <span>Logs</span>
+                                </a>
+                            {/snippet}
+                        </Sidebar.MenuButton>
+                    </Sidebar.MenuItem>
+
+                    <Sidebar.MenuItem>
+                        <Sidebar.MenuButton aria-disabled={true} isActive={$page.url.pathname === "/roles"}>
+                            {#snippet child({ props })}
+                                <a href="/roles" {...props}>
+                                    <IconGem />
+                                    <span>Roles</span>
                                 </a>
                             {/snippet}
                         </Sidebar.MenuButton>
@@ -54,23 +72,12 @@
             <Sidebar.GroupLabel>Miscellaneous</Sidebar.GroupLabel>
             <Sidebar.GroupContent>
                 <Sidebar.Menu>
-                    <!-- <Sidebar.MenuItem>
+                    <Sidebar.MenuItem>
                         <Sidebar.MenuButton isActive={$page.url.pathname === "/follows"}>
                             {#snippet child({ props })}
                                 <a href="/follows" {...props}>
                                     <IconBookUser />
                                     <span>Following</span>
-                                </a>
-                            {/snippet}
-                        </Sidebar.MenuButton>
-                    </Sidebar.MenuItem> -->
-
-                    <Sidebar.MenuItem>
-                        <Sidebar.MenuButton isActive={$page.url.pathname === "/roles"}>
-                            {#snippet child({ props })}
-                                <a href="/roles" {...props}>
-                                    <IconGem />
-                                    <span>Roles</span>
                                 </a>
                             {/snippet}
                         </Sidebar.MenuButton>
@@ -80,8 +87,8 @@
         </Sidebar.Group>
     </Sidebar.Content>
     <Sidebar.Footer>
-        <p class="text-xs opacity-80">
-            not affiliated with Twitch Interactive,
+        <p class="text-xs opacity-60">
+            not affiliated with Twitch Interactive Inc,
             <br />
             <a href="https://supa.sh" target="_blank">
                 supa.codes &copy; {new Date().getFullYear()}
