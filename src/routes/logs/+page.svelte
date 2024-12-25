@@ -12,7 +12,10 @@
     import VirtualList from "@/components/virtual-list.svelte";
 
     import { onMount, untrack } from "svelte";
-    import Spinner from "@/components/spinner.svelte";
+    import { page } from "$app/state";
+    import { goto } from "$app/navigation";
+
+    import IconLoading from "lucide-svelte/icons/loader-circle";
 
     type LogsDate = {
         year: string;
@@ -131,6 +134,11 @@
         availableLogs = [];
         error = null;
         loading = true;
+
+        page.url.searchParams.set("c", channelName);
+        page.url.searchParams.set("u", userName);
+        goto(page.url.search);
+
         const data = await listLogs(channelName, userName);
         availableLogs = data.availableLogs;
         loading = false;
@@ -152,6 +160,8 @@
         });
     });
 </script>
+
+<div id="main-fit-screen" class="hidden"></div>
 
 <div class="m-5 relative flex flex-col flex-1 h-full min-h-0">
     <h1 class="text-2xl font-bold mb-2">Search logs in {channels.length.toLocaleString()} channels</h1>
@@ -207,7 +217,7 @@
                         <Select.Group>
                             {#each availableLogs as date, index}
                                 {@const str = `${date.year}/${date.month.padStart(2, "0")}`}
-                                <Select.Item class="font-mono" value={index.toString()} label={str} />
+                                <Select.Item class="tabular-nums" value={index.toString()} label={str} />
                             {/each}
                         </Select.Group>
                     </Select.Content>
@@ -219,15 +229,15 @@
     {#if error}
         <p class="text-red-500">{error}</p>
     {:else if loading}
-        <Spinner />
+        <IconLoading class="animate-spin size-8" />
     {:else if chatLogs.length}
         <div class="flex flex-1 min-h-0 w-full">
             <Card.Root class="h-full w-full flex-col overflow-hidden p-3 leading-none">
                 <VirtualList items={chatLogs} height="100%">
                     {#snippet children(data)}
                         <div class="flex flex-row gap-x-1 my-0.5">
-                            <span class="font-mono text-neutral-500 text-nowrap text-xs mt-0.5">{dayjs(data.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
-                            <span style="color: {data.tags['color'] || 'gray'}" class="font-bold text-nowrap">{data.displayName}:</span>
+                            <span class="tabular-nums text-neutral-500 whitespace-nowrap text-xs">{dayjs(data.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
+                            <span style="color: {data.tags['color'] || 'gray'}" class="font-bold whitespace-nowrap">{data.displayName}:</span>
                             <span style="word-break: break-word;">{data.text}</span>
                         </div>
                     {/snippet}
