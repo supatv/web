@@ -1,8 +1,7 @@
 <script lang="ts">
     import * as Card from "$lib/components/ui/card/index.js";
 
-    import Spinner from "@/components/spinner.svelte";
-
+    import IconLoading from "lucide-svelte/icons/loader-circle";
     import IconCheck from "lucide-svelte/icons/badge-check";
     import IconUser from "lucide-svelte/icons/user";
 
@@ -47,7 +46,7 @@
 
 <div class="flex flex-col p-5 self-center">
     {#if streams === null}
-        <Spinner />
+        <IconLoading class="animate-spin size-8" />
     {:else}
         <h1 class="text-2xl font-bold mb-2">
             Browse {streams.length.toLocaleString()} livestreams with {streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()} viewers
