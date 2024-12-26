@@ -7,6 +7,18 @@
 
     import { onDestroy, onMount } from "svelte";
 
+    type Stream = {
+        uid: string;
+        login: string;
+        name: string;
+        started: string;
+        viewers: number;
+        game: string;
+        title: string;
+        avatar: string;
+        type: string;
+    };
+
     const formatUptime = (s: string) => {
         let string = "";
         const date = Date.parse(s);
@@ -21,13 +33,13 @@
         return string;
     };
 
-    let fetchInterval: number | null = null;
+    let fetchTimeout: number | NodeJS.Timeout | null = null;
 
-    let streams: { uid: string; login: string; name: string; started: string; viewers: number; game: string; title: string; avatar: string; type: string }[] | null = null;
+    let streams: Stream[] | null = null;
     const fetchStreams = async () => {
         const res = await fetch("https://tv.supa.sh/tags/ro");
         streams = await res.json();
-        fetchInterval = setTimeout(() => {
+        fetchTimeout = setTimeout(() => {
             fetchStreams();
         }, 60_000);
     };
@@ -37,9 +49,9 @@
     });
 
     onDestroy(() => {
-        if (fetchInterval) {
-            clearTimeout(fetchInterval);
-            fetchInterval = null;
+        if (fetchTimeout) {
+            clearTimeout(fetchTimeout);
+            fetchTimeout = null;
         }
     });
 </script>
@@ -58,7 +70,7 @@
                         <div class="max-w-full">
                             <div class="relative rounded-sm overflow-hidden">
                                 <span class="tabular-nums text-xs absolute right-0 bg-black/50 text-white px-0.5 rounded-bl-sm">{formatUptime(stream.started)}</span>
-                                <img src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-600x338.jpg?t={~~(Date.now() / 1000 / 120)}" loading="lazy" alt="Thumbnail" class="aspect-video w-full _thumbnail" />
+                                <img src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-600x338.jpg?t={~~(Date.now() / 1000 / 120)}" loading="lazy" alt="Thumbnail" class="aspect-video w-full stream-preview" />
                             </div>
 
                             <div class="flex h-12 items-center mt-0 mx-1">
@@ -94,7 +106,7 @@
 </div>
 
 <style>
-    ._thumbnail {
+    .stream-preview {
         background-image: url("https://static-cdn.jtvnw.net/ttv-static/404_preview-350x197.jpg");
         background-size: cover;
     }

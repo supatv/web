@@ -8,6 +8,7 @@
 
     import * as Sidebar from "$lib/components/ui/sidebar/index.js";
     import { page } from "$app/state";
+    import dayjs from "dayjs";
 </script>
 
 <Sidebar.Root>
@@ -86,8 +87,12 @@
             </Sidebar.GroupContent>
         </Sidebar.Group>
     </Sidebar.Content>
-    <Sidebar.Footer>
-        <p class="text-xs opacity-60">
+    <Sidebar.Footer class="text-xs opacity-60">
+        <p class="text-[0.7rem]">
+            {dayjs(__BUILD_DATE).format("D MMM YYYY")}, beta build
+            <span class="font-mono">{__COMMIT_HASH.slice(0, 7)}</span>
+        </p>
+        <p>
             not affiliated with Twitch Interactive Inc,
             <br />
             <a href="https://supa.sh" target="_blank">

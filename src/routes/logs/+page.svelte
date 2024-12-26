@@ -225,7 +225,7 @@
 
     function selectResult(index: number) {
         inputChannelName = foundChannels[index].target;
-        selectedIndex = 0; // Reset selection after choosing
+        selectedIndex = 0; // reset selection after choosing
     }
 </script>
 
@@ -312,7 +312,7 @@
     {:else if chatLogs.length}
         <div class="flex flex-1 min-h-0 w-full" bind:clientHeight={logsBoxHeight}>
             <Card.Root class="h-full w-full flex-col leading-none p-3">
-                {@const messages = searchValue ? fuzzysort.go(searchValue, chatLogs, { key: "text", threshold: 0.7, limit: 1000 }).map((x) => x.obj) : chatLogs}
+                {@const messages = searchValue ? fuzzysort.go(searchValue, chatLogs, { key: "text", threshold: 0.5, limit: 5000 }).map((x) => x.obj) : chatLogs}
                 <VirtualList height={logsBoxHeight - 24} itemCount={messages.length} itemSize={20}>
                     <div class="flex flex-row gap-x-1 h-5 text-nowrap" slot="item" let:index let:style {style}>
                         {@const msg = messages[index]}
@@ -321,16 +321,6 @@
                         <span>{msg.text}</span>
                     </div>
                 </VirtualList>
-
-                <!-- <VirtualList items={searchValue ? fuzzysort.go(searchValue, chatLogs, { key: "text", threshold: 0.5 }).map((x) => x.obj) : chatLogs} height="100%">
-                    {#snippet children(data)}
-                        <div class="flex flex-row gap-x-1 my-0.5">
-                            <span class="tabular-nums text-neutral-500 whitespace-nowrap text-xs">{dayjs(data.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
-                            <span style="color: {data.tags['color'] || 'gray'}" class="font-bold whitespace-nowrap">{data.displayName}:</span>
-                            <span style="word-break: break-word;">{data.text}</span>
-                        </div>
-                    {/snippet}
-                </VirtualList> -->
             </Card.Root>
         </div>
     {/if}

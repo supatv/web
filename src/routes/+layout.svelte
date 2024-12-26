@@ -9,8 +9,8 @@
 	import Sun from "lucide-svelte/icons/sun";
 	import Moon from "lucide-svelte/icons/moon";
 
-	import * as Sidebar from "@/components/ui/sidebar/index.js";
-	import AppSidebar from "@/components/side-bar.svelte";
+	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+	import AppSidebar from "$lib/components/sidebar.svelte";
 </script>
 
 <ModeWatcher />
