@@ -32,7 +32,7 @@
         };
     };
 
-    let error: String | null = $state(null);
+    let error: string | null = $state(null);
     let loading = $state(false);
 
     let channels: { name: string; userID: string }[] = $state([]);
@@ -104,6 +104,7 @@
 
     let foundChannels = $derived(fuzzysort.go(inputChannelName, channelTargets, { threshold: 0.5, limit: 5 }));
     $effect(() => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         foundChannels;
         selectedIndex = 0;
     });
@@ -236,7 +237,6 @@
 <div class="m-5 relative flex flex-col flex-1 h-full min-h-0">
     <h1 class="text-2xl font-bold">Search logs{channels.length ? ` in ${channels.length.toLocaleString()} channels` : ""}</h1>
     <div class="flex flex-row my-4 justify-between min-h-0">
-        <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
         <form class="flex relative gap-2 align-middle" onsubmit={formSubmit}>
             <div class="flex gap-2">
                 <div class="flex flex-col w-1/2 relative">

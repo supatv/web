@@ -89,7 +89,7 @@
     </Sidebar.Content>
     <Sidebar.Footer class="text-xs opacity-60">
         <p class="text-[0.7rem]">
-            {dayjs(__BUILD_DATE).format("D MMM YYYY")}, beta build
+            {dayjs(__BUILD_DATE).format("D MMM")}, beta build
             <span class="font-mono">{__COMMIT_HASH.slice(0, 7)}</span>
         </p>
         <p>
