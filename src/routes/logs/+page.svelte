@@ -9,7 +9,7 @@
     import * as Select from "$lib/components/ui/select/index.js";
     import * as Card from "$lib/components/ui/card/index.js";
 
-    import VirtualList from "@/components/virtual-list.svelte";
+    import VirtualList from "svelte-tiny-virtual-list";
 
     import { onMount, untrack } from "svelte";
     import { page } from "$app/state";
@@ -36,49 +36,89 @@
     let loading = $state(false);
 
     let channels: { name: string; userID: string }[] = $state([]);
-    let searchTargets: Fuzzysort.Prepared[] = $state([]);
+    let channelTargets: Fuzzysort.Prepared[] = $state([]);
     let selectedIndex = $state(0); // Track selected item
 
     const loadChannels = async () => {
         error = null;
-        loading = true;
+        // loading = true;
         const res = await fetch("https://logs.zonian.dev/channels");
         if (~~(res.status / 100) !== 2) {
-            error = `Error from server: ${res.status} ${res.statusText}`;
-            loading = false;
+            // error = `Error from server: ${res.status} ${res.statusText}`;
+            // loading = false;
             throw error;
         }
 
         const data = await res.json();
         channels = data.channels;
-        searchTargets = channels.map((c) => c.name).map((str) => fuzzysort.prepare(str));
-        loading = false;
+        channelTargets = channels.map(({ name }) => fuzzysort.prepare(name));
+        // loading = false;
     };
 
     onMount(() => {
         loadChannels();
+
+        const q = page.url.searchParams;
+        if (q.has("channel")) {
+            q.set("c", q.get("channel") || "");
+            q.delete("channel");
+        }
+        if (q.has("username")) {
+            q.set("u", q.get("username") || "");
+            q.delete("username");
+        }
+        goto(page.url.search);
+
+        inputChannelName = channelName = q.get("c") || "";
+        inputUserName = userName = q.get("u") || "";
+        dateValue = q.get("d") || "";
+        searchValue = q.get("s") || "";
     });
 
+    let logsBoxHeight = $state(0);
+    let inputChannelName = $state("");
     let channelName = $state("");
+    let inputUserName = $state("");
     let userName = $state("");
 
-    let searchResults = $derived(fuzzysort.go(channelName, searchTargets, { threshold: 0.5, limit: 5 }));
     $effect(() => {
-        searchResults;
+        const c = channelName;
+        const u = userName;
+        const d = dateValue;
+        const s = searchValue;
+        untrack(() => {
+            const q = page.url.searchParams;
+
+            if (c) q.set("c", c);
+            if (u) q.set("u", u);
+
+            if (d) q.set("d", d);
+            else q.delete("d");
+
+            if (s) q.set("s", s);
+            else q.delete("s");
+
+            goto(page.url.search);
+        });
+    });
+
+    let foundChannels = $derived(fuzzysort.go(inputChannelName, channelTargets, { threshold: 0.5, limit: 5 }));
+    $effect(() => {
+        foundChannels;
         selectedIndex = 0;
     });
 
     const channelKeydown = (event: KeyboardEvent) => {
-        if (!searchResults.length || searchResults[0].target === channelName.toLowerCase()) return;
+        if (!foundChannels.length || foundChannels[0].target === inputChannelName.toLowerCase()) return;
 
         switch (event.key) {
             case "ArrowDown":
                 event.preventDefault();
-                selectedIndex = (selectedIndex + 1) % searchResults.length;
+                selectedIndex = (selectedIndex + 1) % foundChannels.length;
                 break;
             case "ArrowUp":
                 event.preventDefault();
-                selectedIndex = selectedIndex <= 0 ? searchResults.length - 1 : selectedIndex - 1;
+                selectedIndex = selectedIndex <= 0 ? foundChannels.length - 1 : selectedIndex - 1;
                 break;
             case "Tab":
             case "Enter":
@@ -90,95 +130,125 @@
         }
     };
 
-    const formKeydown = (event: KeyboardEvent) => {
-        // if (event.key !== "Enter") return;
-        // event.preventDefault();
+    // const formKeydown = (event: KeyboardEvent) => {
+    //     if (event.key !== "Enter") return;
+    //     event.preventDefault();
+    // };
+
+    const windowKeydown = (event: KeyboardEvent) => {
+        if (event.ctrlKey && event.key === "f") {
+            event.preventDefault();
+        }
     };
 
-    let availableLogs: LogsDate[] = $state([]);
     let chatLogs: Message[] = $state([]);
+
+    let availableDates: LogsDate[] = $state([]);
     let dateValue = $state("");
 
-    const dateContent = $derived(availableLogs[Number(dateValue) ?? 0]);
+    let searchValue = $state("");
 
-    const listLogs = async (channel: string, user: string) => {
-        const res = await fetch(`https://logs.zonian.dev/list?channel=${encodeURIComponent(channel)}&user=${encodeURIComponent(user)}`);
-        if (~~(res.status / 100) !== 2) {
-            if (res.status === 404) error = "No logs found for this channel and user";
-            else error = `Error from server: ${res.status} ${res.statusText}`;
-
-            loading = false;
-            throw error;
+    // const dateContent = $derived(availableDates[Number(dateValue) ?? 0]);
+    const dateContent = $derived.by(() => {
+        const [year, month] = dateValue.split("-");
+        if (!year || !month) {
+            const firstDate = availableDates[0];
+            if (!firstDate) return;
+            untrack(() => (dateValue = `${firstDate.year}-${firstDate.month}`));
+            return firstDate;
         }
-
-        const data: { availableLogs: LogsDate[] } = await res.json();
-        return data;
-    };
-
-    const fetchLogs = async (channel: string, user: string, date: LogsDate) => {
-        const res = await fetch(`https://logs.zonian.dev/channel/${encodeURIComponent(channel)}/user/${encodeURIComponent(user)}/${date.year}/${date.month}?jsonBasic=1&reverse=1`);
-        if (~~(res.status / 100) !== 2) {
-            error = `Error from server: ${res.status} ${res.statusText}`;
-            loading = false;
-            throw error;
-        }
-
-        const data: { messages: Message[] } = await res.json();
-        return data;
-    };
-
-    const formSubmit = async (event: SubmitEvent) => {
-        event.preventDefault();
-        if (loading || !channelName || !userName) return;
-
-        availableLogs = [];
-        error = null;
-        loading = true;
-
-        page.url.searchParams.set("c", channelName);
-        page.url.searchParams.set("u", userName);
-        goto(page.url.search);
-
-        const data = await listLogs(channelName, userName);
-        availableLogs = data.availableLogs;
-        loading = false;
-    };
-
-    function selectResult(index: number) {
-        channelName = searchResults[index].target;
-        selectedIndex = 0; // Reset selection after choosing
-    }
+        return { year, month };
+    });
 
     $effect(() => {
-        if (!dateContent) return;
+        // fetch available dates
+        if (!channelName || !userName) return;
+        untrack(async () => {
+            availableDates = [];
+            chatLogs = [];
+            loading = true;
+
+            const res = await fetch(`https://logs.zonian.dev/list?channel=${encodeURIComponent(channelName)}&user=${encodeURIComponent(userName)}`);
+            if (~~(res.status / 100) !== 2) {
+                if (res.status === 404) error = "No logs found for this channel and user";
+                else error = `Error from server: ${res.status} ${res.statusText}`;
+                loading = false;
+                dateValue = "";
+                throw error;
+            }
+
+            const data: { availableLogs: LogsDate[] } = await res.json();
+            availableDates = data.availableLogs;
+            // loading = false;
+        });
+    });
+
+    $effect(() => {
+        // fetch logs
+        const date = dateContent;
+        if (!date) {
+            loading = false;
+            return;
+        }
         untrack(async () => {
             error = null;
             loading = true;
-            const data = await fetchLogs(channelName, userName, dateContent);
+
+            const res = await fetch(`https://logs.zonian.dev/channel/${encodeURIComponent(channelName)}/user/${encodeURIComponent(userName)}/${date.year}/${date.month}?jsonBasic=1&reverse=1`);
+            if (~~(res.status / 100) !== 2) {
+                error = `Error from server: ${res.status} ${res.statusText}`;
+                loading = false;
+                throw error;
+            }
+
+            const data: { messages: Message[] } = await res.json();
             chatLogs = data.messages;
             loading = false;
+
+            return data;
         });
     });
+
+    const formSubmit = async (event: SubmitEvent) => {
+        event.preventDefault();
+        if (loading || !inputChannelName || !inputUserName) return;
+
+        // force reload
+        channelName = "";
+        userName = "";
+
+        availableDates = [];
+        dateValue = "";
+        channelName = inputChannelName;
+        userName = inputUserName;
+    };
+
+    function selectResult(index: number) {
+        inputChannelName = foundChannels[index].target;
+        selectedIndex = 0; // Reset selection after choosing
+    }
 </script>
+
+<svelte:window on:keydown={windowKeydown} />
 
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="m-5 relative flex flex-col flex-1 h-full min-h-0">
-    <h1 class="text-2xl font-bold mb-2">Search logs in {channels.length.toLocaleString()} channels</h1>
-    <div class="flex flex-row my-3 justify-between min-h-0">
+    <h1 class="text-2xl font-bold">Search logs in {channels.length.toLocaleString()} channels</h1>
+    <div class="flex flex-row my-4 justify-between min-h-0">
         <!-- svelte-ignore a11y_no_noninteractive_element_interactions -->
-        <form class="flex relative gap-2 align-middle" onkeydown={formKeydown} onsubmit={formSubmit}>
+        <form class="flex relative gap-2 align-middle" onsubmit={formSubmit}>
             <div class="flex gap-2">
                 <div class="flex flex-col w-1/2 relative">
                     <Label for="input-channel" class="text-base">Channel</Label>
-                    <Input id="input-channel" maxlength={25} bind:value={channelName} placeholder="channel or id:123" onkeydown={channelKeydown} />
+                    <Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} />
 
-                    {#if searchResults.length && searchResults[0].target !== channelName.toLowerCase()}
+                    {#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
                         <div class="absolute top-full left-0 right-0 z-10 mt-1">
                             <ScrollArea class="flex-1 rounded-md">
                                 <!-- svelte-ignore a11y_click_events_have_key_events -->
                                 <!-- svelte-ignore a11y_no_static_element_interactions -->
-                                {#each searchResults as c, index (c.target)}
+                                {#each foundChannels as c, index (c.target)}
                                     <!-- svelte-ignore a11y_click_events_have_key_events -->
                                     <div
                                         class="h-8 hover:cursor-pointer flex items-center text-sm
@@ -196,44 +266,63 @@
 
                 <div class="flex flex-col w-1/2">
                     <Label for="input-user" class="text-base">User</Label>
-                    <Input id="input-user" maxlength={25} bind:value={userName} placeholder="username or id:123" />
+                    <Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="username or id:123" />
                 </div>
 
-                <div class="flex flex-col">
-                    <Label for="load-btn" class="text-base invisible">Load</Label>
+                <div class="flex flex-row self-end gap-1 items-center">
                     <Button type="submit" id="load-btn" class="sticky" disabled={loading}>Load</Button>
+                    {#if loading}
+                        <IconLoading class="animate-spin size-8" />
+                    {/if}
                 </div>
             </div>
         </form>
+    </div>
 
+    <div class="flex flex-row flex-wrap-reverse gap-1 justify-between mb-1">
         {#if dateContent}
-            <div class="flex flex-col ml-4">
-                <Label for="input-date" class="text-base">Date</Label>
+            <div class="flex flex-row">
                 <Select.Root type="single" name="input-date" bind:value={dateValue}>
-                    <Select.Trigger class="w-32">
-                        {dateContent.year}/{String(dateContent.month).padStart(2, "0")}
+                    <Select.Trigger class="w-28 h-8">
+                        {dateContent.year}-{String(dateContent.month).padStart(2, "0")}
                     </Select.Trigger>
                     <Select.Content>
                         <Select.Group>
-                            {#each availableLogs as date, index}
-                                {@const str = `${date.year}/${date.month.padStart(2, "0")}`}
-                                <Select.Item class="tabular-nums" value={index.toString()} label={str} />
+                            {#each availableDates as date, index}
+                                {#if index > 0 && date.year !== availableDates[index - 1].year}
+                                    <Select.Separator class="mx-0" />
+                                {/if}
+                                {@const str = `${date.year}-${date.month.padStart(2, "0")}`}
+                                <Select.Item class="tabular-nums p-1 m-0 justify-center" value={str} label={str} />
                             {/each}
                         </Select.Group>
                     </Select.Content>
                 </Select.Root>
             </div>
         {/if}
+        {#if chatLogs.length}
+            <div class="flex-1">
+                <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} autofocus />
+            </div>
+        {/if}
     </div>
 
     {#if error}
         <p class="text-red-500">{error}</p>
-    {:else if loading}
-        <IconLoading class="animate-spin size-8" />
     {:else if chatLogs.length}
-        <div class="flex flex-1 min-h-0 w-full">
-            <Card.Root class="h-full w-full flex-col overflow-hidden p-3 leading-none">
-                <VirtualList items={chatLogs} height="100%">
+        <div class="flex flex-1 min-h-0 w-full" bind:clientHeight={logsBoxHeight}>
+            <Card.Root class="h-full w-full flex-col leading-none p-3">
+                {@const messages = searchValue ? fuzzysort.go(searchValue, chatLogs, { key: "text", threshold: 0.7, limit: 1000 }).map((x) => x.obj) : chatLogs}
+                <VirtualList height={logsBoxHeight - 24} itemCount={messages.length} itemSize={20}>
+                    <div class="flex flex-row gap-x-1 h-5 text-nowrap" slot="item" let:index let:style {style}>
+                        {@const msg = messages[index]}
+                        <span class="tabular-nums text-neutral-500 text-xs">{dayjs(msg.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
+                        <span style="color: {msg.tags['color'] || 'gray'}" class="font-bold">{msg.displayName}:</span>
+                        <span>{msg.text}</span>
+                    </div>
+                </VirtualList>
+
+                <!-- <VirtualList items={searchValue ? fuzzysort.go(searchValue, chatLogs, { key: "text", threshold: 0.5 }).map((x) => x.obj) : chatLogs} height="100%">
                     {#snippet children(data)}
                         <div class="flex flex-row gap-x-1 my-0.5">
                             <span class="tabular-nums text-neutral-500 whitespace-nowrap text-xs">{dayjs(data.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
@@ -241,7 +330,7 @@
                             <span style="word-break: break-word;">{data.text}</span>
                         </div>
                     {/snippet}
-                </VirtualList>
+                </VirtualList> -->
             </Card.Root>
         </div>
     {/if}

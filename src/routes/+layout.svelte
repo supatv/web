@@ -18,10 +18,10 @@
 	<AppSidebar />
 	<main class="flex flex-1 flex-col p-1">
 		<div class="flex gap-1 sticky top-1 z-50">
-			<Sidebar.Trigger />
-			<Button onclick={toggleMode} variant="ghost" size="icon" class="h-7 w-7">
-				<Sun class="h-7 w-7 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-				<Moon class="absolute h-7 w-7 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+			<Sidebar.Trigger class="size-7" />
+			<Button onclick={toggleMode} variant="ghost" size="icon" class="size-7">
+				<Sun class="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+				<Moon class="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
 				<span class="sr-only">Toggle theme</span>
 			</Button>
 		</div>
