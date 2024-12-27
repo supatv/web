@@ -74,6 +74,7 @@
 
     onMount(() => {
         loadChannels();
+        fetchGlobalEmotes();
 
         const q = page.url.searchParams;
         if (q.has("channel")) {
@@ -97,6 +98,11 @@
     let channelName = $state("");
     let inputUserName = $state("");
     let userName = $state("");
+
+    let channelId = $state("");
+    let emoteUpdates = $state(0);
+    const channelEmotes = new Map();
+    const globalEmotes = new Map();
 
     $effect(() => {
         const c = channelName;
@@ -223,7 +229,27 @@
             chatLogs = data.messages;
             loading = false;
 
+            channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
+
             return data;
+        });
+    });
+
+    $effect(() => {
+        // fetch 7tv emotes
+        channelEmotes.clear();
+        if (!channelId) return;
+        untrack(async () => {
+            const res = await fetch(`https://7tv.io/v3/users/twitch/${encodeURIComponent(channelId)}`);
+            if (~~(res.status / 100) !== 2) {
+                throw new Error("Failed fetching 7TV channel emotes", { cause: res });
+            }
+
+            const data = await res.json();
+            for (const emote of data.emote_set?.emotes) {
+                channelEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.avif`);
+            }
+            emoteUpdates++;
         });
     });
 
@@ -244,6 +270,19 @@
     const selectResult = (index: number) => {
         inputChannelName = foundChannels[index].target;
         selectedIndex = 0; // reset selection after choosing
+    };
+
+    const fetchGlobalEmotes = async () => {
+        const res = await fetch("https://7tv.io/v3/emote-sets/global");
+        if (~~(res.status / 100) !== 2) {
+            throw new Error("Failed fetching 7TV global emotes", { cause: res });
+        }
+
+        const data = await res.json();
+        for (const emote of data.emotes) {
+            globalEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.avif`);
+        }
+        emoteUpdates++;
     };
 
     const parseMessage = (msg: Message) => {
@@ -298,6 +337,12 @@
     };
 
     const processWord = (word: string, components: ChatComponents) => {
+        const emoteUrl = channelEmotes.get(word) || globalEmotes.get(word);
+        if (emoteUrl) {
+            components.push({ type: Emote, props: { name: word, src: emoteUrl } });
+            return;
+        }
+
         try {
             const url = new URL(word);
             components.push({
@@ -399,9 +444,11 @@
                         <span class="tabular-nums text-neutral-500 text-xs">{dayjs(msg.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
                         <span class:hidden={msg.tags["target-user-id"]} style="color: {msg.tags['color'] || 'gray'}" class="font-bold">{msg.displayName}:</span>
                         <span class:text-neutral-500={msg.tags["target-user-id"]}>
-                            {#each parseMessage(msg) as { type: Component, props }}
-                                <Component {...props} />
-                            {/each}
+                            {#key emoteUpdates}
+                                {#each parseMessage(msg) as { type: Component, props }}
+                                    <Component {...props} />
+                                {/each}
+                            {/key}
                         </span>
                     </div>
                 </VirtualList>
