@@ -237,17 +237,21 @@
 
     $effect(() => {
         // fetch 7tv emotes
-        channelEmotes.clear();
-        emoteUpdates++;
-        if (!channelId) return;
+
+        // eslint-disable-next-line @typescript-eslint/no-unused-expressions
+        channelId;
         untrack(async () => {
+            channelEmotes.clear();
+            emoteUpdates++;
+            if (!channelId) return;
+
             const res = await fetch(`https://7tv.io/v3/users/twitch/${encodeURIComponent(channelId)}`);
             if (~~(res.status / 100) !== 2) {
                 throw new Error("Failed fetching 7TV channel emotes", { cause: res });
             }
 
             const data = await res.json();
-            for (const emote of data.emote_set?.emotes) {
+            for (const emote of data.emote_set?.emotes ?? []) {
                 channelEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.avif`);
             }
             emoteUpdates++;
@@ -280,7 +284,7 @@
         }
 
         const data = await res.json();
-        for (const emote of data.emotes) {
+        for (const emote of data.emotes ?? []) {
             globalEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.avif`);
         }
         emoteUpdates++;
