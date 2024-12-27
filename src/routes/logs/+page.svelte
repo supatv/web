@@ -11,7 +11,10 @@
 
     import VirtualList from "svelte-tiny-virtual-list";
 
-    import { onMount, untrack } from "svelte";
+    import TextFragment from "$lib/components/message/text-fragment.svelte";
+    import Emote from "$lib/components/message/emote.svelte";
+
+    import { onMount, untrack, type Component } from "svelte";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
@@ -31,6 +34,13 @@
             [key: string]: string;
         };
     };
+
+    type TMIEmote = {
+        id: string;
+        pos: number[];
+    };
+
+    // let logsBoxEl: HTMLElement | null = $state(null);
 
     let error: string | null = $state(null);
     let loading = $state(false);
@@ -224,10 +234,63 @@
         userName = inputUserName;
     };
 
-    function selectResult(index: number) {
+    const selectResult = (index: number) => {
         inputChannelName = foundChannels[index].target;
         selectedIndex = 0; // reset selection after choosing
-    }
+    };
+
+    const parseMessage = (msg: Message) => {
+        // $inspect(msg);
+
+        let cum = "";
+        let arg = "";
+
+        let components: { type: Component<any>; props: Object }[] = [];
+
+        let twitchEmotes: TMIEmote[] = [];
+        if (msg.tags["emotes"]) {
+            for (const e of msg.tags["emotes"].split("/")) {
+                const [id, positions] = e.split(":");
+                for (const pos of positions.split(",")) {
+                    twitchEmotes.push({ id, pos: pos.split("-").map((s) => Number(s)) });
+                }
+            }
+            twitchEmotes = twitchEmotes.sort((a, b) => a.pos[0] - b.pos[0]);
+            // console.log(twitchEmotes);
+        }
+
+        // console.log(msg.tags["emotes"], msgTwitchEmotes);
+
+        const unicode = [...msg.text];
+        for (let i = 0; i < unicode.length; i++) {
+            const cur = unicode[i];
+            arg += cur;
+
+            const nextEmote = twitchEmotes[0];
+            if (nextEmote && nextEmote.pos[0] <= i && nextEmote.pos[1] >= i) {
+                const next = unicode[i + 1];
+                if (!next || next === " ") {
+                    components.push({ type: TextFragment, props: { text: cum } });
+                    cum = "";
+
+                    twitchEmotes.shift();
+                    components.push({ type: Emote, props: { name: arg, src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0` } });
+                }
+                continue;
+            }
+
+            if (cur === " ") {
+                arg = "";
+            }
+
+            cum += cur;
+        }
+
+        if (cum) components.push({ type: TextFragment, props: { text: cum } });
+
+        // console.log(components);
+        return components;
+    };
 </script>
 
 <svelte:window on:keydown={windowKeydown} />
@@ -317,8 +380,12 @@
                     <div class="flex flex-row gap-x-1 h-5 text-nowrap" slot="item" let:index let:style {style}>
                         {@const msg = messages[index]}
                         <span class="tabular-nums text-neutral-500 text-xs">{dayjs(msg.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
-                        <span style="color: {msg.tags['color'] || 'gray'}" class="font-bold">{msg.displayName}:</span>
-                        <span>{msg.text}</span>
+                        <span class:hidden={msg.tags["target-user-id"]} style="color: {msg.tags['color'] || 'gray'}" class="font-bold">{msg.displayName}:</span>
+                        <span class:text-neutral-500={msg.tags["target-user-id"]}>
+                            {#each parseMessage(msg) as { type: Component, props }}
+                                <Component {...props} />
+                            {/each}
+                        </span>
                     </div>
                 </VirtualList>
             </Card.Root>

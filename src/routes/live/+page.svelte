@@ -69,12 +69,12 @@
                     <Card.Root class="text-left p-1 hover:scale-105 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 transition">
                         <div class="max-w-full">
                             <div class="relative rounded-sm overflow-hidden">
-                                <span class="tabular-nums text-xs absolute right-0 bg-black/50 text-white px-0.5 rounded-bl-sm">{formatUptime(stream.started)}</span>
+                                <span class="text-xs absolute right-0 bg-black/50 text-white px-0.5 rounded-bl-sm">{formatUptime(stream.started)}</span>
                                 <img src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-600x338.jpg?t={~~(Date.now() / 1000 / 120)}" loading="lazy" alt="Thumbnail" class="aspect-video w-full stream-preview" />
                             </div>
 
                             <div class="flex h-12 items-center mt-0 mx-1">
-                                <img src={stream.avatar} loading="lazy" alt="Avatar" class="mr-1 rounded-full size-10 text-center" />
+                                <img src={stream.avatar} loading="lazy" alt="Avatar" class="mr-1 rounded-full size-10 text-[0]" />
 
                                 <div class="flex flex-1 overflow-hidden leading-tight items-center h-full">
                                     <div class="flex-1 min-w-[50%] overflow-hidden">

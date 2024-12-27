@@ -96,7 +96,7 @@
             not affiliated with Twitch Interactive Inc,
             <br />
             <a href="https://supa.sh" target="_blank">
-                supa.codes &copy; {new Date().getFullYear()}
+                &copy; supa.codes {new Date().getFullYear()}
                 <IconHeart fill="#cba6f7" color="#cba6f7" class="inline size-4" />
             </a>
         </p>
