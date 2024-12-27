@@ -273,6 +273,7 @@
                 const url = URL.parse(arg);
                 if (url) {
                     components.push({ type: Link, props: { text: arg, href: url.toString() } });
+                    components.push({ type: TextFragment, props: { text: next } });
                     cum = "";
                     continue;
                 }
