@@ -272,8 +272,8 @@
             if (boundary) {
                 const url = URL.parse(arg);
                 if (url) {
+                    components.push({ type: TextFragment, props: { text: cum.substring(0, cum.lastIndexOf(" ") + 1) } }); // suboptimal
                     components.push({ type: Link, props: { text: arg, href: url.toString() } });
-                    components.push({ type: TextFragment, props: { text: next } });
                     cum = "";
                     continue;
                 }
