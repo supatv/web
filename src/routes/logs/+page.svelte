@@ -238,6 +238,7 @@
     $effect(() => {
         // fetch 7tv emotes
         channelEmotes.clear();
+        emoteUpdates++;
         if (!channelId) return;
         untrack(async () => {
             const res = await fetch(`https://7tv.io/v3/users/twitch/${encodeURIComponent(channelId)}`);
