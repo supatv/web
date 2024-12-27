@@ -2,4 +2,4 @@
     let { text, href } = $props();
 </script>
 
-<a {href} target="_blank">{text}</a>
+<a {href} target="_blank" class="dark:text-primary text-blue-600 hover:underline">{text}</a>

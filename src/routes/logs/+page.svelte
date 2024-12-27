@@ -19,6 +19,7 @@
     import { goto } from "$app/navigation";
 
     import IconLoading from "lucide-svelte/icons/loader-circle";
+    import Link from "$lib/components/message/link.svelte";
 
     type LogsDate = {
         year: string;
@@ -266,10 +267,20 @@
             const cur = unicode[i];
             arg += cur;
 
+            const next = unicode[i + 1];
+            const boundary = !next || next === " ";
+            if (boundary) {
+                const url = URL.parse(arg);
+                if (url) {
+                    components.push({ type: Link, props: { text: arg, href: url.toString() } });
+                    cum = "";
+                    continue;
+                }
+            }
+
             const nextEmote = twitchEmotes[0];
             if (nextEmote && nextEmote.pos[0] <= i && nextEmote.pos[1] >= i) {
-                const next = unicode[i + 1];
-                if (!next || next === " ") {
+                if (boundary) {
                     components.push({ type: TextFragment, props: { text: cum } });
                     cum = "";
 
