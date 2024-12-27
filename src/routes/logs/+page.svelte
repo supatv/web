@@ -315,7 +315,7 @@
                 components.push({
                     type: Emote,
                     props: {
-                        name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1]).join(""),
+                        name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
                         src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
                     },
                 });
