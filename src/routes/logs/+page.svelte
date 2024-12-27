@@ -41,6 +41,12 @@
         pos: number[];
     };
 
+    type ChatComponents = {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        type: Component<any>;
+        props: object;
+    }[];
+
     // let logsBoxEl: HTMLElement | null = $state(null);
 
     let error: string | null = $state(null);
@@ -241,12 +247,7 @@
     };
 
     const parseMessage = (msg: Message) => {
-        // $inspect(msg);
-
-        let cum = "";
-        let arg = "";
-
-        let components: { type: Component<any>; props: Object }[] = [];
+        let components: ChatComponents = [];
 
         let twitchEmotes: TMIEmote[] = [];
         if (msg.tags["emotes"]) {
@@ -257,51 +258,55 @@
                 }
             }
             twitchEmotes = twitchEmotes.sort((a, b) => a.pos[0] - b.pos[0]);
-            // console.log(twitchEmotes);
         }
 
-        // console.log(msg.tags["emotes"], msgTwitchEmotes);
-
+        let cum = "";
         const unicode = [...msg.text];
         for (let i = 0; i < unicode.length; i++) {
-            const cur = unicode[i];
-            arg += cur;
-
-            const next = unicode[i + 1];
-            const boundary = !next || next === " ";
-            if (boundary) {
-                const url = URL.parse(arg);
-                if (url) {
-                    components.push({ type: TextFragment, props: { text: cum.substring(0, cum.lastIndexOf(" ") + 1) } }); // suboptimal
-                    components.push({ type: Link, props: { text: arg, href: url.toString() } });
-                    cum = "";
-                    continue;
-                }
-            }
+            const c = unicode[i];
 
             const nextEmote = twitchEmotes[0];
-            if (nextEmote && nextEmote.pos[0] <= i && nextEmote.pos[1] >= i) {
-                if (boundary) {
-                    components.push({ type: TextFragment, props: { text: cum } });
-                    cum = "";
-
-                    twitchEmotes.shift();
-                    components.push({ type: Emote, props: { name: arg, src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0` } });
-                }
+            if (nextEmote?.pos[0] === i) {
+                twitchEmotes.shift();
+                components.push({
+                    type: Emote,
+                    props: {
+                        name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1]).join(""),
+                        src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
+                    },
+                });
+                i = nextEmote.pos[1];
                 continue;
             }
 
-            if (cur === " ") {
-                arg = "";
+            if (c === " ") {
+                if (cum.trim()) {
+                    processWord(cum, components);
+                    cum = "";
+                }
+                components.push({ type: TextFragment, props: { text: " " } });
+            } else {
+                cum += c;
             }
 
-            cum += cur;
+            if (i === unicode.length - 1 && cum.trim()) {
+                processWord(cum, components);
+            }
         }
 
-        if (cum) components.push({ type: TextFragment, props: { text: cum } });
-
-        // console.log(components);
         return components;
+    };
+
+    const processWord = (word: string, components: ChatComponents) => {
+        try {
+            const url = new URL(word);
+            components.push({
+                type: Link,
+                props: { href: url.href, text: word },
+            });
+        } catch {
+            components.push({ type: TextFragment, props: { text: word } });
+        }
     };
 </script>
 

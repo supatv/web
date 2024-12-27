@@ -89,11 +89,11 @@
     </Sidebar.Content>
     <Sidebar.Footer class="text-xs opacity-60">
         <p class="text-[0.7rem]">
-            {dayjs(__BUILD_DATE).format("D MMM")}, beta build
-            <span class="font-mono">{__COMMIT_HASH.slice(0, 7)}</span>
+            {dayjs(__BUILD_DATE).format("D MMM")}, beta build <span class="font-mono">{__COMMIT_HASH.slice(0, 7)}</span>
+            <br />feedback appreciated :3
         </p>
         <p>
-            not affiliated with Twitch Interactive Inc,
+            not affiliated with Twitch Interactive Inc.
             <br />
             <a href="https://supa.sh" target="_blank">
                 &copy; supa.codes {new Date().getFullYear()}
