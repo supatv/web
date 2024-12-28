@@ -98,7 +98,7 @@
     let inputUserName = $state("");
     let userName = $state("");
 
-    let scrollFromBottom = $state(false);
+    let scrollFromBottom = $state(window.localStorage.getItem("logs-bottom-scroll-state") === "true" ? true : false);
 
     let channelId = $state("");
     let emoteUpdates = $state(0);
@@ -302,6 +302,11 @@
         selectedIndex = 0; // reset selection after choosing
     };
 
+    const scrollFromBottomToggle = () => {
+        scrollFromBottom = !scrollFromBottom;
+        window.localStorage.setItem("logs-bottom-scroll-state", scrollFromBottom.toString());
+    };
+
     const fetchGlobalEmotes = async () => {
         const res = await fetch("https://7tv.io/v3/emote-sets/global");
         if (~~(res.status / 100) !== 2) {
@@ -461,7 +466,7 @@
             <div class="flex flex-1 gap-1">
                 <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} autofocus />
                 {#if dateContent}
-                    <Button variant="ghost" size="icon" class="size-8 border" onclick={() => (scrollFromBottom = !scrollFromBottom)}>
+                    <Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
                         {#if scrollFromBottom}
                             <ArrowUpNarrowWideIcon />
                         {:else}

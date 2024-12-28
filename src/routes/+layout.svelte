@@ -10,10 +10,15 @@
 
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import AppSidebar from "$lib/components/sidebar.svelte";
+
+	let sidebarOpened = $state(window.localStorage.getItem("sidebar-provider-state") === "false" ? false : true);
+	const sidebarOpenChange = (open: boolean) => {
+		window.localStorage.setItem("sidebar-provider-state", open.toString());
+	};
 </script>
 
 <ModeWatcher />
-<Sidebar.Provider>
+<Sidebar.Provider onOpenChange={sidebarOpenChange} open={sidebarOpened}>
 	<AppSidebar />
 	<main class="flex flex-1 flex-col p-1">
 		<div class="flex gap-1 sticky top-1 z-50">
