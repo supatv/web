@@ -1,11 +1,11 @@
-name: CI
+name: Deploy build
 
 on:
   push:
     branches: [ "main" ]
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     strategy:
@@ -21,6 +21,22 @@ jobs:
         cache: 'npm'
     - run: npm ci
     - run: npm run build
+    - name: Upload build artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: build
+        path: build/
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build
+
+    steps:
+    - name: Download build artifacts
+      uses: actions/download-artifact@v4
+      with:
+        name: build
+        path: build/
     - name: Deploy to tv.supa.sh
       uses: easingthemes/ssh-deploy@v5.1.0
       with:
