@@ -442,7 +442,12 @@
     {:else if chatLogs.length}
         <div class="flex flex-1 min-h-0 w-full" bind:clientHeight={logsBoxHeight}>
             <Card.Root class="h-full w-full flex-col leading-none p-3">
-                {@const messages = searchValue ? fuzzysort.go(searchValue, chatLogs, { key: "text", threshold: 0.5, limit: 5000 }).map((x) => x.obj) : chatLogs}
+                {@const messages = searchValue
+                    ? fuzzysort
+                          .go(searchValue, chatLogs, { key: "text", threshold: 0.5, limit: 5000 })
+                          .map((x) => x.obj)
+                          .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
+                    : chatLogs}
                 <VirtualList height={logsBoxHeight - 24} itemCount={messages.length} itemSize={20}>
                     <div class="flex flex-row gap-x-1 h-5 text-nowrap" slot="item" let:index let:style {style}>
                         {@const msg = messages[index]}
