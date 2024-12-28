@@ -14,11 +14,13 @@
     import TextFragment from "$lib/components/message/text-fragment.svelte";
     import Emote from "$lib/components/message/emote.svelte";
 
-    import { onMount, untrack, type Component } from "svelte";
+    import { onMount, tick, untrack, type Component } from "svelte";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
     import IconLoading from "lucide-svelte/icons/loader-circle";
+    import IconFileText from "lucide-svelte/icons/file-text";
+
     import Link from "$lib/components/message/link.svelte";
 
     type LogsDate = {
@@ -46,8 +48,6 @@
         type: Component<any>;
         props: object;
     }[];
-
-    // let logsBoxEl: HTMLElement | null = $state(null);
 
     let error: string | null = $state(null);
     let loading = $state(false);
@@ -172,6 +172,28 @@
 
     let searchValue = $state("");
 
+    let scrollOffset: any = $state(null);
+
+    let filteredChatLogs = $derived(
+        searchValue
+            ? fuzzysort
+                  .go(searchValue, chatLogs, { key: "text", threshold: 0.5, limit: 5000 })
+                  .map((x) => x.obj)
+                  .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
+            : chatLogs,
+    );
+
+    $effect(() => {
+        const l = filteredChatLogs.length;
+        untrack(async () => {
+            scrollOffset = 0;
+            await tick();
+            const scrollHeight = l * 20;
+            if (logsBoxHeight - 24 > scrollHeight) return;
+            scrollOffset = scrollHeight;
+        });
+    });
+
     // const dateContent = $derived(availableDates[Number(dateValue) ?? 0]);
     const dateContent = $derived.by(() => {
         const [year, month] = dateValue.split("-");
@@ -218,7 +240,7 @@
             error = null;
             loading = true;
 
-            const res = await fetch(`https://logs.zonian.dev/channel/${encodeURIComponent(channelName)}/user/${encodeURIComponent(userName)}/${date.year}/${date.month}?jsonBasic=1&reverse=1`);
+            const res = await fetch(`https://logs.zonian.dev/channel/${encodeURIComponent(channelName)}/user/${encodeURIComponent(userName)}/${date.year}/${date.month}?jsonBasic=1`);
             if (~~(res.status / 100) !== 2) {
                 error = `Error from server: ${res.status} ${res.statusText}`;
                 loading = false;
@@ -230,8 +252,6 @@
             loading = false;
 
             channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
-
-            return data;
         });
     });
 
@@ -431,8 +451,13 @@
             </div>
         {/if}
         {#if chatLogs.length}
-            <div class="flex-1">
+            <div class="flex flex-1 gap-1">
                 <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} autofocus />
+                {#if dateContent}
+                    <Button variant="ghost" size="icon" class="size-8 border" target="_blank" href="https://logs.zonian.dev/channel/{encodeURIComponent(channelName)}/user/{encodeURIComponent(userName)}/{dateContent.year}/{dateContent.month}">
+                        <IconFileText />
+                    </Button>
+                {/if}
             </div>
         {/if}
     </div>
@@ -442,15 +467,9 @@
     {:else if chatLogs.length}
         <div class="flex flex-1 min-h-0 w-full" bind:clientHeight={logsBoxHeight}>
             <Card.Root class="h-full w-full flex-col leading-none p-3">
-                {@const messages = searchValue
-                    ? fuzzysort
-                          .go(searchValue, chatLogs, { key: "text", threshold: 0.5, limit: 5000 })
-                          .map((x) => x.obj)
-                          .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp))
-                    : chatLogs}
-                <VirtualList height={logsBoxHeight - 24} itemCount={messages.length} itemSize={20}>
+                <VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} bind:scrollOffset>
                     <div class="flex flex-row gap-x-1 h-5 text-nowrap" slot="item" let:index let:style {style}>
-                        {@const msg = messages[index]}
+                        {@const msg = filteredChatLogs[index]}
                         <span class="tabular-nums text-neutral-500 text-xs">{dayjs(msg.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
                         <span class:hidden={msg.tags["target-user-id"]} style="color: {msg.tags['color'] || 'gray'}" class="font-bold">{msg.displayName}:</span>
                         <span class:text-neutral-500={msg.tags["target-user-id"]}>
