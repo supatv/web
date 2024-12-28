@@ -315,7 +315,7 @@
 
         let twitchEmotes: TMIEmote[] = [];
         const systemMsg = msg.tags["system-msg"];
-        const posOffset = systemMsg ? systemMsg.length + 1 : 0;
+        const posOffset = systemMsg ? [...systemMsg].length + 1 : 0;
         if (msg.tags["emotes"]) {
             for (const e of msg.tags["emotes"].split("/")) {
                 const [id, positions] = e.split(":");
