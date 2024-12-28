@@ -18,7 +18,7 @@
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
-    import { LoaderCircleIcon, FileTextIcon } from "lucide-svelte";
+    import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon } from "lucide-svelte";
 
     import Link from "$lib/components/message/link.svelte";
 
@@ -98,6 +98,8 @@
     let inputUserName = $state("");
     let userName = $state("");
 
+    let scrollFromBottom = $state(false);
+
     let channelId = $state("");
     let emoteUpdates = $state(0);
     const channelEmotes = new Map();
@@ -173,23 +175,27 @@
 
     let scrollOffset: number | undefined = $state();
 
-    let filteredChatLogs = $derived(
-        searchValue
+    let filteredChatLogs = $derived.by(() => {
+        let logs = searchValue
             ? fuzzysort
                   .go(searchValue, chatLogs, { key: "text", threshold: 0.5, limit: 5000 })
                   .map((x) => x.obj)
                   .sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
-            : chatLogs,
-    );
+            : chatLogs;
+        if (!scrollFromBottom) logs = logs.toReversed();
+        return logs;
+    });
 
     $effect(() => {
         const l = filteredChatLogs.length;
         untrack(async () => {
             scrollOffset = 0;
-            await tick();
-            const scrollHeight = l * 20;
-            if (logsBoxHeight - 24 > scrollHeight) return;
-            scrollOffset = scrollHeight;
+            if (scrollFromBottom) {
+                await tick();
+                const scrollHeight = l * 20;
+                if (logsBoxHeight - 24 > scrollHeight) return;
+                scrollOffset = scrollHeight;
+            }
         });
     });
 
@@ -455,6 +461,13 @@
             <div class="flex flex-1 gap-1">
                 <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} autofocus />
                 {#if dateContent}
+                    <Button variant="ghost" size="icon" class="size-8 border" onclick={() => (scrollFromBottom = !scrollFromBottom)}>
+                        {#if scrollFromBottom}
+                            <ArrowUpNarrowWideIcon />
+                        {:else}
+                            <ArrowDownWideNarrowIcon />
+                        {/if}
+                    </Button>
                     <Button variant="ghost" size="icon" class="size-8 border" target="_blank" href="https://logs.zonian.dev/channel/{encodeURIComponent(channelName)}/user/{encodeURIComponent(userName)}/{dateContent.year}/{dateContent.month}">
                         <FileTextIcon />
                     </Button>
