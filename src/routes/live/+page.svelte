@@ -1,9 +1,7 @@
 <script lang="ts">
     import * as Card from "$lib/components/ui/card/index.js";
 
-    import IconLoading from "lucide-svelte/icons/loader-circle";
-    import IconCheck from "lucide-svelte/icons/badge-check";
-    import IconUser from "lucide-svelte/icons/user";
+    import { LoaderCircleIcon, BadgeCheckIcon, UserIcon } from "lucide-svelte";
 
     import { onDestroy, onMount } from "svelte";
 
@@ -58,7 +56,7 @@
 
 <div class="flex flex-col p-5 self-center">
     {#if streams === null}
-        <IconLoading class="animate-spin size-8" />
+        <LoaderCircleIcon class="animate-spin size-8" />
     {:else}
         <h1 class="text-2xl font-bold mb-2">
             Browse {streams.length.toLocaleString()} livestreams with {streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()} viewers
@@ -81,7 +79,7 @@
                                         <p class="font-semibold gap-0.5 flex items-center" title={stream.name}>
                                             {stream.name}
                                             {#if stream.type == "partner"}
-                                                <IconCheck class="inline size-4 text-purple-500 dark:text-purple-300" />
+                                                <BadgeCheckIcon class="inline size-4 text-purple-500 dark:text-purple-300" />
                                             {/if}
                                         </p>
                                         <p class="text-purple-500 dark:text-purple-300 capitalize text-sm">{stream.type}</p>
@@ -89,7 +87,7 @@
 
                                     <div class="text-right overflow-hidden">
                                         <div class="flex justify-end items-center text-red-500 dark:text-red-300 font-semibold">
-                                            <IconUser class="size-5" />
+                                            <UserIcon class="size-5" />
                                             <span>{stream.viewers.toLocaleString()}</span>
                                         </div>
                                         <p class="text-sm opacity-80 whitespace-nowrap overflow-hidden text-ellipsis" title={stream.game}>{stream.game}</p>

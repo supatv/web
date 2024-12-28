@@ -1,10 +1,5 @@
 <script lang="ts">
-    import IconTv from "lucide-svelte/icons/tv";
-    import IconScroll from "lucide-svelte/icons/scroll";
-    import IconGem from "lucide-svelte/icons/gem";
-    import IconBookUser from "lucide-svelte/icons/book-user";
-    import IconHeart from "lucide-svelte/icons/heart";
-    import IconSparkles from "lucide-svelte/icons/sparkles";
+    import { TvIcon, ScrollIcon, GemIcon, BookUserIcon, HeartIcon, SparklesIcon } from "lucide-svelte";
 
     import * as Sidebar from "$lib/components/ui/sidebar/index.js";
     import { page } from "$app/state";
@@ -14,7 +9,7 @@
 <Sidebar.Root>
     <Sidebar.Header class="items-center">
         <div class="flex items-center">
-            <IconSparkles class="absolute left-4" fill="#cba6f7" color="#cba6f7" />
+            <SparklesIcon class="absolute left-4" fill="#cba6f7" color="#cba6f7" />
             <div class="flex flex-col my-2 leading-none">
                 <span class="text-xs font-bold">tv.supa.sh</span>
                 <h1 class="text-l">Twitch Utilities</h1>
@@ -30,7 +25,7 @@
                         <Sidebar.MenuButton isActive={page.url.pathname === "/live"}>
                             {#snippet child({ props })}
                                 <a href="/live" {...props}>
-                                    <IconTv />
+                                    <TvIcon />
                                     <span>Directory</span>
                                 </a>
                             {/snippet}
@@ -48,7 +43,7 @@
                         <Sidebar.MenuButton isActive={page.url.pathname === "/logs"}>
                             {#snippet child({ props })}
                                 <a href="/logs" {...props}>
-                                    <IconScroll />
+                                    <ScrollIcon />
                                     <span>Logs</span>
                                 </a>
                             {/snippet}
@@ -59,7 +54,7 @@
                         <Sidebar.MenuButton aria-disabled={true} isActive={page.url.pathname === "/roles"}>
                             {#snippet child({ props })}
                                 <a href="/roles" {...props}>
-                                    <IconGem />
+                                    <GemIcon />
                                     <span>Roles</span>
                                 </a>
                             {/snippet}
@@ -77,7 +72,7 @@
                         <Sidebar.MenuButton aria-disabled={true} isActive={page.url.pathname === "/follows"}>
                             {#snippet child({ props })}
                                 <a href="/follows" {...props}>
-                                    <IconBookUser />
+                                    <BookUserIcon />
                                     <span>Following</span>
                                 </a>
                             {/snippet}
@@ -97,7 +92,7 @@
             <br />
             <a href="https://supa.sh" target="_blank">
                 &copy; supa.codes {new Date().getFullYear()}
-                <IconHeart fill="#cba6f7" color="#cba6f7" class="inline size-4" />
+                <HeartIcon fill="#cba6f7" color="#cba6f7" class="inline size-4" />
             </a>
         </p>
     </Sidebar.Footer>

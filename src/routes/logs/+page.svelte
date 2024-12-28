@@ -18,8 +18,7 @@
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
-    import IconLoading from "lucide-svelte/icons/loader-circle";
-    import IconFileText from "lucide-svelte/icons/file-text";
+    import { LoaderCircleIcon, FileTextIcon } from "lucide-svelte";
 
     import Link from "$lib/components/message/link.svelte";
 
@@ -424,7 +423,7 @@
                 <div class="flex flex-row self-end gap-1 items-center">
                     <Button type="submit" id="load-btn" class="sticky" disabled={loading}>Load</Button>
                     {#if loading}
-                        <IconLoading class="animate-spin size-8" />
+                        <LoaderCircleIcon class="animate-spin size-8" />
                     {/if}
                 </div>
             </div>
@@ -457,7 +456,7 @@
                 <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} autofocus />
                 {#if dateContent}
                     <Button variant="ghost" size="icon" class="size-8 border" target="_blank" href="https://logs.zonian.dev/channel/{encodeURIComponent(channelName)}/user/{encodeURIComponent(userName)}/{dateContent.year}/{dateContent.month}">
-                        <IconFileText />
+                        <FileTextIcon />
                     </Button>
                 {/if}
             </div>
