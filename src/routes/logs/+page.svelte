@@ -499,3 +499,14 @@
         </div>
     {/if}
 </div>
+
+<style>
+    :global(.virtual-list-wrapper) {
+        &::-webkit-scrollbar {
+            @apply size-1.5 bg-sidebar-border;
+        }
+        &::-webkit-scrollbar-thumb {
+            @apply bg-foreground/50 rounded;
+        }
+    }
+</style>
