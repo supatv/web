@@ -172,7 +172,7 @@
 
     let searchValue = $state("");
 
-    let scrollOffset: any = $state(null);
+    let scrollOffset: number | undefined = $state();
 
     let filteredChatLogs = $derived(
         searchValue
