@@ -463,6 +463,7 @@
                 </Select.Root>
             </div>
             {#if chatLogs.length}
+                <div class="flex flex-1 gap-1">
                     <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} autofocus />
                     <Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
                         {#if scrollFromBottom}
