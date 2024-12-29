@@ -489,7 +489,7 @@
                     <div class="flex flex-row gap-x-1 h-5 text-nowrap" slot="item" let:index let:style {style}>
                         {@const msg = filteredChatLogs[index]}
                         <span class="tabular-nums text-neutral-500 text-xs">{dayjs(msg.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
-                        <span class:hidden={msg.tags["target-user-id"]} style="color: {msg.tags['color'] || 'gray'}" class="font-bold">{msg.displayName}:</span>
+                        <span class:hidden={msg.tags["target-user-id"]} style="color: oklab(from {msg.tags['color'] || 'gray'} 70% a b)" class="font-bold">{msg.displayName}:</span>
                         <span class:text-neutral-500={msg.tags["target-user-id"]}>
                             {#key emoteUpdates}
                                 {#each parseMessage(msg) as { type: Component, props }}
