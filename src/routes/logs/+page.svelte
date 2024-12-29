@@ -237,11 +237,12 @@
     $effect(() => {
         // fetch logs
         const date = dateContent;
-        if (!date) {
-            loading = false;
-            return;
-        }
         untrack(async () => {
+            if (!date) {
+                loading = false;
+                return;
+            }
+
             error = null;
             loading = true;
 
@@ -461,11 +462,8 @@
                     </Select.Content>
                 </Select.Root>
             </div>
-        {/if}
-        {#if chatLogs.length}
-            <div class="flex flex-1 gap-1">
-                <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} autofocus />
-                {#if dateContent}
+            {#if chatLogs.length}
+                    <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} autofocus />
                     <Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
                         {#if scrollFromBottom}
                             <ArrowUpNarrowWideIcon />
@@ -476,8 +474,8 @@
                     <Button variant="ghost" size="icon" class="size-8 border" target="_blank" href="https://logs.zonian.dev/channel/{encodeURIComponent(channelName)}/user/{encodeURIComponent(userName)}/{dateContent.year}/{dateContent.month}">
                         <FileTextIcon />
                     </Button>
-                {/if}
-            </div>
+                </div>
+            {/if}
         {/if}
     </div>
 
