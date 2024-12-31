@@ -211,6 +211,26 @@
         return { year, month };
     });
 
+    const parseChannelUser = (channel: string, user: string, params: boolean) => {
+        channel = channel.toLowerCase();
+        user = user.toLowerCase();
+
+        let channelType = "channel";
+        if (channel.startsWith("id:")) {
+            channelType += "id";
+            channel = channel.slice(3).trim();
+        }
+
+        let userType = "user";
+        if (user.startsWith("id:")) {
+            userType += "id";
+            user = user.slice(3).trim();
+        }
+
+        if (params) return `${channelType}=${encodeURIComponent(channel)}&${userType}=${encodeURIComponent(user)}`;
+        else return `${channelType}/${encodeURIComponent(channel)}/${userType}/${encodeURIComponent(user)}`;
+    };
+
     $effect(() => {
         // fetch available dates
         if (!channelName || !userName) return;
@@ -219,7 +239,7 @@
             chatLogs = [];
             loading = true;
 
-            const res = await fetch(`https://logs.zonian.dev/list?channel=${encodeURIComponent(channelName)}&user=${encodeURIComponent(userName)}`);
+            const res = await fetch(`https://logs.zonian.dev/list?${parseChannelUser(channelName, userName, true)}`);
             if (~~(res.status / 100) !== 2) {
                 if (res.status === 404) error = "No logs found for this channel and user";
                 else error = `Error from server: ${res.status} ${res.statusText}`;
@@ -246,7 +266,7 @@
             error = null;
             loading = true;
 
-            const res = await fetch(`https://logs.zonian.dev/channel/${encodeURIComponent(channelName)}/user/${encodeURIComponent(userName)}/${date.year}/${date.month}?jsonBasic=1`);
+            const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}?jsonBasic=1`);
             if (~~(res.status / 100) !== 2) {
                 error = `Error from server: ${res.status} ${res.statusText}`;
                 loading = false;
