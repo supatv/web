@@ -205,7 +205,7 @@
         if (!year || !month) {
             const firstDate = availableDates[0];
             if (!firstDate) return;
-            untrack(() => (dateValue = `${firstDate.year}-${firstDate.month}`));
+            untrack(() => (dateValue = `${firstDate.year}-${firstDate.month.padStart(2, "0")}`));
             return firstDate;
         }
         return { year, month };
