@@ -492,7 +492,7 @@
                             <ArrowDownWideNarrowIcon />
                         {/if}
                     </Button>
-                    <Button variant="ghost" size="icon" class="size-8 border" target="_blank" href="https://logs.zonian.dev/channel/{encodeURIComponent(channelName)}/user/{encodeURIComponent(userName)}/{dateContent.year}/{dateContent.month}">
+                    <Button variant="ghost" size="icon" class="size-8 border" target="_blank" href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}">
                         <FileTextIcon />
                     </Button>
                 </div>
