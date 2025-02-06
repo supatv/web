@@ -218,14 +218,17 @@
         let channelType = "channel";
         if (channel.startsWith("id:")) {
             channelType += "id";
-            channel = channel.slice(3).trim();
+            channel = channel.slice(3);
         }
 
         let userType = "user";
         if (user.startsWith("id:")) {
             userType += "id";
-            user = user.slice(3).trim();
+            user = user.slice(3);
         }
+
+        channel = channel.trim();
+        user = user.trim();
 
         if (params) return `${channelType}=${encodeURIComponent(channel)}&${userType}=${encodeURIComponent(user)}`;
         else return `${channelType}/${encodeURIComponent(channel)}/${userType}/${encodeURIComponent(user)}`;
