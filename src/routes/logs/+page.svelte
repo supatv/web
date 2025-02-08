@@ -324,7 +324,7 @@
             for (const emote of [...(bttvData?.channelEmotes || []), ...(bttvData?.sharedEmotes || [])]) {
                 channelEmotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`);
             }
-            
+
             emoteUpdates++;
         });
     });
@@ -354,7 +354,7 @@
     };
 
     const fetchGlobalEmotes = async () => {
-        const stvRes = await fetch('https://7tv.io/v3/emote-sets/global');
+        const stvRes = await fetch("https://7tv.io/v3/emote-sets/global");
         if (~~(stvRes.status / 100) !== 2) {
             throw new Error("Failed fetching 7TV global emotes", { cause: stvRes });
         }
@@ -364,20 +364,18 @@
             globalEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.avif`);
         }
 
-        const ffzRes = await fetch('https://api.frankerfacez.com/v1/set/global');
+        const ffzRes = await fetch("https://api.frankerfacez.com/v1/set/global");
         if (~~(ffzRes.status / 100) !== 2) {
             throw new Error("Failed fetching FrankerFaceZ global emotes", { cause: ffzRes });
         }
 
         const ffzData = await ffzRes.json();
-        const ffzSet = [].concat(
-            ...(ffzData?.default_sets?.map((id: number) => ffzData.sets?.[id]?.emoticons ?? []) ?? [])
-        ) as { name: string; id: number }[];
+        const ffzSet = [].concat(...(ffzData?.default_sets?.map((id: number) => ffzData.sets?.[id]?.emoticons ?? []) ?? [])) as { name: string; id: number }[];
         for (const emote of ffzSet) {
             globalEmotes.set(emote.name, `https://cdn.frankerfacez.com/emote/${emote.id}/1`);
         }
 
-        const bttvRes = await fetch('https://api.betterttv.net/3/cached/emotes/global');
+        const bttvRes = await fetch("https://api.betterttv.net/3/cached/emotes/global");
         if (~~(bttvRes.status / 100) !== 2) {
             throw new Error("Failed fetching BetterTTV global emotes", { cause: bttvRes });
         }
