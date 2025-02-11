@@ -13,6 +13,7 @@
 
     import TextFragment from "$lib/components/message/text-fragment.svelte";
     import Emote from "$lib/components/message/emote.svelte";
+    import Link from "$lib/components/message/link.svelte";
 
     import { onMount, tick, untrack, type Component } from "svelte";
     import { page } from "$app/state";
@@ -20,7 +21,7 @@
 
     import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon } from "lucide-svelte";
 
-    import Link from "$lib/components/message/link.svelte";
+    import * as TwitchServices from "$lib/twitch/services/index.js";
 
     type LogsDate = {
         year: string;
@@ -285,7 +286,7 @@
     });
 
     $effect(() => {
-        // fetch 7tv emotes
+        // fetch channel emotes
 
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
         channelId;
@@ -294,36 +295,25 @@
             emoteUpdates++;
             if (!channelId) return;
 
-            const stvRes = await fetch(`https://7tv.io/v3/users/twitch/${encodeURIComponent(channelId)}`);
-            if (~~(stvRes.status / 100) !== 2) {
-                throw new Error("Failed fetching 7TV channel emotes", { cause: stvRes });
-            }
+            const [stvEmotes, bttvEmotes, ffzEmotes] = (
+                await Promise.allSettled([
+                    TwitchServices.SevenTV.getChannelEmotes(channelId),
+                    TwitchServices.BetterTTV.getChannelEmotes(channelId),
+                    TwitchServices.FrankerFaceZ.getChannelEmotes(channelId),
+                ])
+            ).map((p) => (p.status === "fulfilled" ? p.value : []));
 
-            const stvData = await stvRes.json();
-            for (const emote of stvData.emote_set?.emotes ?? []) {
-                channelEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.avif`);
-            }
+            stvEmotes.forEach((emote) => {
+                channelEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
+            });
 
-            const ffzRes = await fetch(`https://api.frankerfacez.com/v1/room/id/${encodeURIComponent(channelId)}`);
-            if (~~(ffzRes.status / 100) !== 2) {
-                throw new Error("Failed fetching FrankerFaceZ channel emotes", { cause: ffzRes });
-            }
-
-            const ffzData = await ffzRes.json();
-            const ffzSet = Object.values(ffzData.sets)[0] as { emoticons?: { id: string; name: string }[] } | undefined;
-            for (const emote of ffzSet?.emoticons || []) {
-                channelEmotes.set(emote.name, `https://cdn.frankerfacez.com/emote/${emote.id}/1`);
-            }
-
-            const bttvRes = await fetch(`https://api.betterttv.net/3/cached/users/twitch/${encodeURIComponent(channelId)}`);
-            if (~~(bttvRes.status / 100) !== 2) {
-                throw new Error("Failed fetching BetterTTV channel emotes", { cause: bttvRes });
-            }
-
-            const bttvData = await bttvRes.json();
-            for (const emote of [...(bttvData?.channelEmotes || []), ...(bttvData?.sharedEmotes || [])]) {
+            bttvEmotes.forEach((emote) => {
                 channelEmotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`);
-            }
+            });
+
+            ffzEmotes.forEach((emote) => {
+                channelEmotes.set(emote.name, `https://cdn.frankerfacez.com/emote/${emote.id}/1`);
+            });
 
             emoteUpdates++;
         });
@@ -354,36 +344,21 @@
     };
 
     const fetchGlobalEmotes = async () => {
-        const stvRes = await fetch("https://7tv.io/v3/emote-sets/global");
-        if (~~(stvRes.status / 100) !== 2) {
-            throw new Error("Failed fetching 7TV global emotes", { cause: stvRes });
-        }
+        const [stvEmotes, bttvEmotes, ffzEmotes] = (
+            await Promise.allSettled([TwitchServices.SevenTV.getGlobalEmotes(), TwitchServices.BetterTTV.getGlobalEmotes(), TwitchServices.FrankerFaceZ.getGlobalEmotes()])
+        ).map((p) => (p.status === "fulfilled" ? p.value : []));
 
-        const stvData = await stvRes.json();
-        for (const emote of stvData.emotes ?? []) {
-            globalEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.avif`);
-        }
+        stvEmotes.forEach((emote) => {
+            globalEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
+        });
 
-        const ffzRes = await fetch("https://api.frankerfacez.com/v1/set/global");
-        if (~~(ffzRes.status / 100) !== 2) {
-            throw new Error("Failed fetching FrankerFaceZ global emotes", { cause: ffzRes });
-        }
-
-        const ffzData = await ffzRes.json();
-        const ffzSet = [].concat(...(ffzData?.default_sets?.map((id: number) => ffzData.sets?.[id]?.emoticons ?? []) ?? [])) as { name: string; id: number }[];
-        for (const emote of ffzSet) {
-            globalEmotes.set(emote.name, `https://cdn.frankerfacez.com/emote/${emote.id}/1`);
-        }
-
-        const bttvRes = await fetch("https://api.betterttv.net/3/cached/emotes/global");
-        if (~~(bttvRes.status / 100) !== 2) {
-            throw new Error("Failed fetching BetterTTV global emotes", { cause: bttvRes });
-        }
-
-        const bttvData = await bttvRes.json();
-        for (const emote of bttvData || []) {
+        bttvEmotes.forEach((emote) => {
             globalEmotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`);
-        }
+        });
+
+        ffzEmotes.forEach((emote) => {
+            globalEmotes.set(emote.name, `https://cdn.frankerfacez.com/emote/${emote.id}/1`);
+        });
 
         emoteUpdates++;
     };
@@ -539,7 +514,13 @@
                             <ArrowDownWideNarrowIcon />
                         {/if}
                     </Button>
-                    <Button variant="ghost" size="icon" class="size-8 border" target="_blank" href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        class="size-8 border"
+                        target="_blank"
+                        href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}"
+                    >
                         <FileTextIcon />
                     </Button>
                 </div>
