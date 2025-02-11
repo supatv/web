@@ -1,7 +1,7 @@
 type Emote = {
     id: string;
-    name: string;
-    [key: string]: any;
+    name?: string;
+    code?: string;
 };
 
 export type { Emote };
