@@ -85,9 +85,8 @@
     <Sidebar.Footer class="text-xs opacity-60">
         <p class="text-[0.7rem]">
             <a href="https://github.com/0Supa/twitch-utilities/commit/{__COMMIT_HASH}" target="_blank">
-                {dayjs(__BUILD_DATE).format("D MMM")}, beta build <span class="font-mono">{__COMMIT_HASH.slice(0, 7)}</span>
+                {dayjs(__BUILD_DATE).format("D MMM")}, commit <span class="font-mono">{__COMMIT_HASH.slice(0, 7)}</span>
             </a>
-            <br />feedback appreciated :3
         </p>
         <p>
             not affiliated with Twitch Interactive Inc.
