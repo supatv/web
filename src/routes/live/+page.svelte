@@ -68,7 +68,12 @@
                         <div class="max-w-full">
                             <div class="relative rounded-sm overflow-hidden">
                                 <span class="text-xs absolute right-0 bg-black/50 text-white px-0.5 rounded-bl-sm">{formatUptime(stream.started)}</span>
-                                <img src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-600x338.jpg?t={~~(Date.now() / 1000 / 120)}" loading="lazy" alt="Thumbnail" class="aspect-video w-full stream-preview" />
+                                <img
+                                    src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-600x338.jpg?t={~~(Date.now() / 1000 / 120)}"
+                                    loading="lazy"
+                                    alt="Thumbnail"
+                                    class="aspect-video w-full stream-preview"
+                                />
                             </div>
 
                             <div class="flex h-12 items-center mt-0 mx-1">
