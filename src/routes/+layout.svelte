@@ -20,8 +20,8 @@
 <ModeWatcher />
 <Sidebar.Provider onOpenChange={sidebarOpenChange} open={sidebarOpened}>
 	<AppSidebar />
-	<main class="flex flex-1 flex-col p-1">
-		<div class="flex gap-1 sticky top-1 z-50 w-fit">
+	<main class="flex flex-1 flex-col">
+		<div class="flex gap-1 sticky top-1 z-50 px-1 w-fit">
 			<Sidebar.Trigger class="size-7" />
 			<Button onclick={toggleMode} variant="ghost" size="icon" class="size-7">
 				<SunIcon class="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
