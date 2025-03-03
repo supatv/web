@@ -1,18 +1,23 @@
 <script lang="ts">
-    import { onMount } from "svelte";
+    import { onDestroy, onMount } from "svelte";
     import Hls from "hls.js";
     import { page } from "$app/state";
 
     let video: HTMLVideoElement;
+    let hls: Hls;
 
     onMount(() => {
         if (!Hls.isSupported()) {
             throw new Error("HLS.js not supported");
         }
 
-        const hls = new Hls({ startPosition: 0 });
+        hls = new Hls({ startPosition: 0 });
         hls.loadSource(`https://r2-vods.supa.sh/${page.params.vod}/master.m3u8`);
         hls.attachMedia(video);
+    });
+
+    onDestroy(() => {
+        if (hls) hls.destroy();
     });
 </script>
 
