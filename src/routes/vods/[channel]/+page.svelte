@@ -6,10 +6,22 @@
     import dayjs from "dayjs";
 
     import relativeTime from "dayjs/plugin/relativeTime";
+    import duration from "dayjs/plugin/duration";
     dayjs.extend(relativeTime);
+    dayjs.extend(duration);
 
-    let user: User | null = null;
-    let streams: Stream[] | null = null;
+    const formatDuration = (time: number, unit?: duration.DurationUnitType) => {
+        const d = dayjs.duration(time, unit);
+
+        const hours = Math.floor(d.asHours());
+        const minutes = d.minutes().toString();
+        const secs = d.seconds().toString().padStart(2, "0");
+
+        return hours > 0 ? `${hours}:${minutes.padStart(2, "0")}:${secs}` : `${minutes}:${secs}`;
+    };
+
+    let user: User | null = $state(null);
+    let streams: Stream[] | null = $state(null);
 
     const fetchStreams = async (userId: number) => {
         const res = await fetch(`https://api-tv.supa.sh/streams?user_id=${encodeURIComponent(userId)}`);
@@ -22,6 +34,11 @@
         fetchStreams(user!.id);
     };
     fetchUser();
+
+    let liveTicker = $state(0);
+    setInterval(() => {
+        liveTicker++;
+    }, 1000);
 </script>
 
 {#if user === null}
@@ -43,13 +60,24 @@
         {:else}
             <div class="self-center grid gap-5 max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
                 {#each streams as stream (stream.id)}
+                    {@const createdAt = new Date(stream.created_at)}
+                    {@const endedAt = stream.ended_at ? new Date(stream.ended_at) : null}
                     <a href="/vods/{page.params.channel}/{stream.id.toString()}">
                         <div class="relative rounded-sm overflow-hidden">
-                            {#if stream.state === "RECORDING"}
-                                <span class="text-xs absolute left-0 m-1 bg-black/50 text-white px-0.5 rounded-sm"> Recording...</span>
-                            {/if}
-                            <span class="text-xs absolute right-0 m-1 bg-black/50 text-white px-0.5 rounded-sm" title={new Date(stream.created_at).toLocaleString()}>
+                            <span class="text-xs absolute left-0 m-1 bg-black/50 text-white px-0.5 rounded-sm" title={createdAt.toLocaleString()}>
                                 {dayjs(stream.created_at).fromNow()}
+                            </span>
+                            {#if stream.state === "RECORDING"}
+                                <span class="text-xs absolute left-0 bottom-0 m-1 bg-black/50 text-white px-0.5 rounded-sm"> Recording...</span>
+                            {/if}
+                            <span class="text-xs absolute right-0 bottom-0 m-1 bg-black/50 text-white px-0.5 rounded-sm tabular-nums">
+                                {#if endedAt == null}
+                                    {#key liveTicker}
+                                        {formatDuration(Date.now() - createdAt.getTime(), "ms")}
+                                    {/key}
+                                {:else}
+                                    {formatDuration(endedAt.getTime() - createdAt.getTime(), "ms")}
+                                {/if}
                             </span>
                             <img src="https://r2-vods.supa.sh/{stream.id}/thumbnail.jpg" loading="lazy" alt="Thumbnail" class="aspect-video w-full" />
                         </div>
