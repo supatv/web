@@ -53,7 +53,7 @@
         </div>
 
         <hr class="my-5" />
-        {#if streams == null}
+        {#if streams === null}
             <div class="flex self-center">
                 <LoaderCircleIcon class="animate-spin size-8" />
             </div>
@@ -61,7 +61,7 @@
             <div class="self-center grid gap-5 max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
                 {#each streams as stream (stream.id)}
                     {@const createdAt = new Date(stream.created_at)}
-                    {@const endedAt = stream.ended_at ? new Date(stream.ended_at) : null}
+                    {@const duration = stream.duration_ms}
                     <a href="/vods/{page.params.channel}/{stream.id.toString()}">
                         <div class="relative rounded-sm overflow-hidden">
                             <span class="text-xs absolute left-0 m-1 bg-black/50 text-white px-0.5 rounded-sm" title={createdAt.toLocaleString()}>
@@ -71,12 +71,12 @@
                                 <span class="text-xs absolute left-0 bottom-0 m-1 bg-black/50 text-white px-0.5 rounded-sm"> Recording...</span>
                             {/if}
                             <span class="text-xs absolute right-0 bottom-0 m-1 bg-black/50 text-white px-0.5 rounded-sm tabular-nums">
-                                {#if endedAt == null}
+                                {#if duration === null}
                                     {#key liveTicker}
                                         {formatDuration(Date.now() - createdAt.getTime(), "ms")}
                                     {/key}
                                 {:else}
-                                    {formatDuration(endedAt.getTime() - createdAt.getTime(), "ms")}
+                                    {formatDuration(duration, "ms")}
                                 {/if}
                             </span>
                             <img src="https://r2-vods.supa.sh/{stream.id}/thumbnail.jpg" loading="lazy" alt="Thumbnail" class="aspect-video w-full" />

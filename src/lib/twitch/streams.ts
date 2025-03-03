@@ -38,7 +38,8 @@ type Stream = {
     id: number;
     twitch_video_id: string | null;
     created_at: string;
-    ended_at: string;
+    ended_at: string | null;
+    duration_ms: number | null;
     game_name: string;
     title: string;
     is_mature: boolean;
