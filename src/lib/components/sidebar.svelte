@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { TvIcon, ScrollIcon, GemIcon, BookUserIcon, HeartIcon, SparklesIcon } from "lucide-svelte";
+    import { TvIcon, ScrollIcon, GemIcon, BookUserIcon, HeartIcon, SparklesIcon, FilmIcon, ClapperboardIcon } from "lucide-svelte";
 
     import * as Sidebar from "$lib/components/ui/sidebar/index.js";
     import { page } from "$app/state";
@@ -26,7 +26,29 @@
                             {#snippet child({ props })}
                                 <a href="/live" {...props}>
                                     <TvIcon />
-                                    <span>Directory</span>
+                                    <span>Livestreams</span>
+                                </a>
+                            {/snippet}
+                        </Sidebar.MenuButton>
+                    </Sidebar.MenuItem>
+
+                    <Sidebar.MenuItem>
+                        <Sidebar.MenuButton isActive={page.url.pathname === "/vods"}>
+                            {#snippet child({ props })}
+                                <a href="/vods" {...props}>
+                                    <FilmIcon />
+                                    <span>VODs</span>
+                                </a>
+                            {/snippet}
+                        </Sidebar.MenuButton>
+                    </Sidebar.MenuItem>
+
+                    <Sidebar.MenuItem>
+                        <Sidebar.MenuButton aria-disabled={true} isActive={page.url.pathname === "/clips"}>
+                            {#snippet child({ props })}
+                                <a href="/clips" {...props}>
+                                    <ClapperboardIcon />
+                                    <span>Clips</span>
                                 </a>
                             {/snippet}
                         </Sidebar.MenuButton>
@@ -89,7 +111,7 @@
             </a>
         </p>
         <p>
-            not affiliated with Twitch Interactive Inc.
+            not affiliated with Twitch or its creators
             <br />
             <a href="https://supa.sh" target="_blank">
                 &copy; supa.codes {new Date().getFullYear()}

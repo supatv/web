@@ -38,6 +38,7 @@
 		"@fontsource/inter": "^5.1.0",
 		"dayjs": "^1.11.13",
 		"fuzzysort": "^3.1.0",
+		"hls.js": "^1.5.20",
 		"mode-watcher": "^0.5.0",
 		"svelte-tiny-virtual-list": "^2.1.2"
 	}
