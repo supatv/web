@@ -2,7 +2,7 @@
     import { onDestroy, onMount } from "svelte";
     import { page } from "$app/state";
 
-    import { LoaderCircleIcon } from "lucide-svelte";
+    import { LoaderCircleIcon, EyeOffIcon } from "lucide-svelte";
 
     import type { User, Stream } from "$lib/twitch/streams";
     import { dateFormat } from "$lib/common";
@@ -63,7 +63,14 @@
     <div class="flex flex-col p-5">
         <div class="flex flex-wrap w-fit items-center justify-center gap-3">
             <img src={user.avatar_url} alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
-            <span class="drop-shadow text-3xl lg:text-5xl break-all">{user.display_name}</span>
+            <div class="flex flex-col">
+                <span class="drop-shadow text-3xl lg:text-5xl break-all">{user.display_name}</span>
+                {#if user.unlisted}
+                    <span class="flex items-center text-sm text-gray-500">
+                        <EyeOffIcon class="inline size-4 mx-1" /> Unlisted
+                    </span>
+                {/if}
+            </div>
         </div>
 
         <hr class="my-5" />
