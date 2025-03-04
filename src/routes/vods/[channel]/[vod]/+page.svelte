@@ -11,7 +11,7 @@
             throw new Error("HLS.js not supported");
         }
 
-        hls = new Hls({ startPosition: 0 });
+        hls = new Hls({ startPosition: Number(page.url.searchParams.get("t")) || 0 });
         hls.loadSource(`https://r2-vods.supa.sh/${page.params.vod}/master.m3u8`);
         hls.attachMedia(video);
     });
@@ -25,6 +25,6 @@
 
 <div class="flex flex-1 items-center justify-center overflow-hidden">
     <!-- svelte-ignore a11y_media_has_caption -->
-    <video bind:this={video} controls class="h-full max-w-full"></video>
+    <video bind:this={video} controls autoplay class="h-full max-w-full"></video>
 </div>
 <p class="text-xs text-gray-500 px-1">Prototype &mdash; UI subject to change</p>
