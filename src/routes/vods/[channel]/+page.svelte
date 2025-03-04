@@ -1,10 +1,12 @@
 <script lang="ts">
+    import { onDestroy, onMount } from "svelte";
+    import { page } from "$app/state";
+
     import { LoaderCircleIcon } from "lucide-svelte";
 
     import type { User, Stream } from "$lib/twitch/streams";
-    import { page } from "$app/state";
-    import dayjs from "dayjs";
 
+    import dayjs from "dayjs";
     import relativeTime from "dayjs/plugin/relativeTime";
     import duration from "dayjs/plugin/duration";
     dayjs.extend(relativeTime);
@@ -36,9 +38,20 @@
     fetchUser();
 
     let liveTicker = $state(0);
-    setInterval(() => {
-        liveTicker++;
-    }, 1000);
+    let secInterval: number | NodeJS.Timeout | null = null;
+
+    onMount(() => {
+        secInterval = setInterval(() => {
+            liveTicker++;
+        }, 1000);
+    });
+
+    onDestroy(() => {
+        if (secInterval) {
+            clearTimeout(secInterval);
+            secInterval = null;
+        }
+    });
 </script>
 
 {#if user === null}
