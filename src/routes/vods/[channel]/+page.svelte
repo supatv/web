@@ -61,9 +61,9 @@
     </div>
 {:else}
     <div class="flex flex-col p-5">
-        <div class="flex flex-wrap items-center gap-3">
+        <div class="flex flex-wrap w-fit items-center justify-center gap-3">
             <img src={user.avatar_url} alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
-            <span class="text-5xl drop-shadow">{user.display_name}</span>
+            <span class="drop-shadow text-3xl lg:text-5xl break-all">{user.display_name}</span>
         </div>
 
         <hr class="my-5" />
