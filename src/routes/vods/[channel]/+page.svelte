@@ -78,8 +78,12 @@
                     {@const duration = stream.duration_ms}
                     <a href="/vods/{page.params.channel}/{stream.id.toString()}">
                         <div class="relative rounded-sm overflow-hidden">
-                            <span class="text-xs absolute left-0 m-1 bg-black/50 text-white px-0.5 rounded-sm" title={dayjs(createdAt).format(dateFormat)}>
-                                {dayjs(stream.created_at).fromNow()}
+                            <span
+                                class="text-xs absolute left-0 m-1 bg-black/50 text-white px-0.5 rounded-sm
+                                    {duration === null ? 'bg-red-600' : ''}"
+                                title={dayjs(createdAt).format(dateFormat)}
+                            >
+                                {duration === null ? "Live" : dayjs(stream.created_at).fromNow()}
                             </span>
                             {#if stream.state === "RECORDING"}
                                 <span class="text-xs absolute left-0 bottom-0 m-1 bg-black/50 text-white px-0.5 rounded-sm">Recording...</span>
