@@ -21,6 +21,8 @@
 
     import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon } from "lucide-svelte";
 
+    import { dateFormat } from "$lib/common";
+
     import * as TwitchServices from "$lib/twitch/services/index.js";
 
     type LogsDate = {
@@ -536,7 +538,7 @@
                 <VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} bind:scrollOffset>
                     <div class="flex flex-row gap-x-1 h-5 text-nowrap" slot="item" let:index let:style {style}>
                         {@const msg = filteredChatLogs[index]}
-                        <span class="tabular-nums text-neutral-500 text-xs">{dayjs(msg.timestamp).format("YYYY-MM-DD HH:mm:ss")}</span>
+                        <span class="tabular-nums text-neutral-500 text-xs">{dayjs(msg.timestamp).format(dateFormat)}</span>
                         <span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s 70%)" class="font-bold">{msg.displayName}:</span>
                         <span class:text-neutral-500={msg.tags["target-user-id"]}>
                             {#key emoteUpdates}

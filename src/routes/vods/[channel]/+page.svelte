@@ -5,6 +5,7 @@
     import { LoaderCircleIcon } from "lucide-svelte";
 
     import type { User, Stream } from "$lib/twitch/streams";
+    import { dateFormat } from "$lib/common";
 
     import dayjs from "dayjs";
     import relativeTime from "dayjs/plugin/relativeTime";
@@ -77,11 +78,11 @@
                     {@const duration = stream.duration_ms}
                     <a href="/vods/{page.params.channel}/{stream.id.toString()}">
                         <div class="relative rounded-sm overflow-hidden">
-                            <span class="text-xs absolute left-0 m-1 bg-black/50 text-white px-0.5 rounded-sm" title={createdAt.toLocaleString()}>
+                            <span class="text-xs absolute left-0 m-1 bg-black/50 text-white px-0.5 rounded-sm" title={dayjs(createdAt).format(dateFormat)}>
                                 {dayjs(stream.created_at).fromNow()}
                             </span>
                             {#if stream.state === "RECORDING"}
-                                <span class="text-xs absolute left-0 bottom-0 m-1 bg-black/50 text-white px-0.5 rounded-sm"> Recording...</span>
+                                <span class="text-xs absolute left-0 bottom-0 m-1 bg-black/50 text-white px-0.5 rounded-sm">Recording...</span>
                             {/if}
                             <span class="text-xs absolute right-0 bottom-0 m-1 bg-black/50 text-white px-0.5 rounded-sm tabular-nums">
                                 {#if duration === null}
