@@ -46,4 +46,10 @@ type Stream = {
     state: StreamState;
 }
 
-export type { User, Stream }
+type BucketUsage = {
+    payload_bytes: number;
+    metadata_bytes: number;
+    object_count: number;
+}
+
+export type { User, Stream, BucketUsage }
