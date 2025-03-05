@@ -66,9 +66,11 @@
             <div class="flex flex-col">
                 <span class="drop-shadow text-3xl lg:text-5xl break-all">{user.display_name}</span>
                 {#if user.unlisted}
-                    <span class="flex items-center text-sm text-gray-500">
-                        <EyeOffIcon class="inline size-4 mx-1" /> Unlisted
-                    </span>
+                    <div class="mx-1">
+                        <span class="flex items-center whitespace-pre text-sm text-gray-500">
+                            <EyeOffIcon class="inline size-4" /> Unlisted
+                        </span>
+                    </div>
                 {/if}
             </div>
         </div>
