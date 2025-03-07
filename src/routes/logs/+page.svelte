@@ -15,13 +15,13 @@
     import Emote from "$lib/components/message/emote.svelte";
     import Link from "$lib/components/message/link.svelte";
 
-    import { onMount, tick, untrack, type Component } from "svelte";
+    import { getContext, onMount, tick, untrack, type Component } from "svelte";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
     import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon } from "lucide-svelte";
 
-    import { dateFormat } from "$lib/common";
+    import { dateFormat, type TitleContext } from "$lib/common";
 
     import * as TwitchServices from "$lib/twitch/services/index.js";
 
@@ -50,6 +50,8 @@
         type: Component<any>;
         props: object;
     }[];
+
+    getContext<TitleContext>("title").set("Logs");
 
     let error: string | null = $state(null);
     let loading = $state(false);

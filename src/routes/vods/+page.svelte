@@ -1,9 +1,12 @@
 <script lang="ts">
+    import { getContext } from "svelte";
+
     import { LoaderCircleIcon, HardDriveIcon } from "lucide-svelte";
 
-    import { humanFileSize } from "$lib/common";
-
+    import { humanFileSize, type TitleContext } from "$lib/common";
     import type { User, BucketUsage } from "$lib/twitch/streams";
+
+    getContext<TitleContext>("title").set("VODs");
 
     let users: User[] | null = $state(null);
     let bucketUsage: BucketUsage | null = $state(null);

@@ -1,9 +1,13 @@
 <script lang="ts">
     import * as Card from "$lib/components/ui/card/index.js";
 
+    import type { TitleContext } from "$lib/common";
+
     import { LoaderCircleIcon, BadgeCheckIcon, UserIcon } from "lucide-svelte";
 
-    import { onDestroy, onMount } from "svelte";
+    import { onDestroy, onMount, getContext } from "svelte";
+
+    getContext<TitleContext>("title").set("Livestreams");
 
     type Stream = {
         uid: string;

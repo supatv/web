@@ -1,15 +1,18 @@
 <script lang="ts">
-    import { onDestroy, onMount } from "svelte";
+    import { getContext, onDestroy, onMount } from "svelte";
     import { page } from "$app/state";
 
     import { LoaderCircleIcon, EyeOffIcon } from "lucide-svelte";
 
     import type { User, Stream } from "$lib/twitch/streams";
-    import { dateFormat } from "$lib/common";
+    import { dateFormat, type TitleContext } from "$lib/common";
 
     import dayjs from "dayjs";
     import relativeTime from "dayjs/plugin/relativeTime";
     import duration from "dayjs/plugin/duration";
+
+    const title = getContext<TitleContext>("title");
+
     dayjs.extend(relativeTime);
     dayjs.extend(duration);
 
@@ -35,6 +38,7 @@
         const res = await fetch(`https://api-tv.supa.sh/user?login=${encodeURIComponent(page.params.channel)}`);
         user = await res.json();
         fetchStreams(user!.id);
+        title.set(`${user!.display_name}: VODs`);
     };
     fetchUser();
 

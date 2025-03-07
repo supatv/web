@@ -3,6 +3,11 @@
 	import "../app.css";
 
 	let { children } = $props();
+
+	import { randomEmoji, type TitleContext } from "$lib/common";
+
+	import { setContext } from "svelte";
+
 	import { ModeWatcher, toggleMode } from "mode-watcher";
 
 	import { Button } from "$lib/components/ui/button/index.js";
@@ -15,7 +20,24 @@
 	const sidebarOpenChange = (open: boolean) => {
 		window.localStorage.setItem("sidebar-provider-state", open.toString());
 	};
+
+	let emoji = $state(randomEmoji());
+
+	let title = $state("");
+	setContext<TitleContext>("title", {
+		value: () => title,
+		set: (newTitle: string) => {
+			title = newTitle;
+			emoji = randomEmoji();
+		},
+	});
 </script>
+
+<svelte:head>
+	{#if title}
+		<title>{title} {emoji} tv.supa.sh</title>
+	{/if}
+</svelte:head>
 
 <ModeWatcher />
 <Sidebar.Provider onOpenChange={sidebarOpenChange} open={sidebarOpened}>
