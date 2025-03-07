@@ -89,7 +89,7 @@
             q.set("u", q.get("username") || "");
             q.delete("username");
         }
-        goto(page.url.search);
+        goto(page.url.search, { replaceState: true, keepFocus: true });
 
         inputChannelName = channelName = q.get("c") || "";
         inputUserName = userName = q.get("u") || "";
@@ -127,7 +127,7 @@
             if (s) q.set("s", s);
             else q.delete("s");
 
-            goto(page.url.search);
+            goto(page.url.search, { replaceState: true, keepFocus: true });
         });
     });
 
@@ -450,7 +450,7 @@
             <div class="flex gap-2">
                 <div class="flex flex-col w-1/2 relative">
                     <Label for="input-channel" class="text-base">Channel</Label>
-                    <Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} />
+                    <Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} autofocus />
 
                     {#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
                         <div class="absolute top-full left-0 right-0 z-10 mt-1">
@@ -510,7 +510,7 @@
             </div>
             {#if chatLogs.length}
                 <div class="flex flex-1 gap-1">
-                    <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} autofocus />
+                    <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} />
                     <Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
                         {#if scrollFromBottom}
                             <ArrowUpNarrowWideIcon />

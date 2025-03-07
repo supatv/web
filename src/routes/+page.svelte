@@ -1,4 +1,4 @@
 <script lang="ts">
     import { goto } from "$app/navigation";
-    goto("/live");
+    goto("/live", { replaceState: true });
 </script>
