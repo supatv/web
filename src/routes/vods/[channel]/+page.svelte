@@ -114,7 +114,7 @@
                             </span>
                             <img src="https://r2-vods.supa.sh/{stream.id}/thumbnail.jpg" loading="lazy" alt="Thumbnail" class="aspect-video w-full" />
                         </div>
-                        <p class="text-gray line-clamp-2" title={stream.title}>{stream.title}</p>
+                        <p class="text-gray line-clamp-2 leading-snug" title={stream.title}>{stream.title}</p>
                     </a>
                 {/each}
             </div>
