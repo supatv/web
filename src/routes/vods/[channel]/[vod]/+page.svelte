@@ -11,7 +11,25 @@
             throw new Error("HLS.js not supported");
         }
 
-        hls = new Hls({ startPosition: Number(page.url.searchParams.get("t")) || 0 });
+        hls = new Hls({
+            startPosition: Number(page.url.searchParams.get("t")) || 0,
+            fragLoadPolicy: {
+                default: {
+                    maxTimeToFirstByteMs: 10000,
+                    maxLoadTimeMs: 120000,
+                    timeoutRetry: {
+                        maxNumRetry: 4,
+                        retryDelayMs: 0,
+                        maxRetryDelayMs: 0,
+                    },
+                    errorRetry: {
+                        maxNumRetry: Infinity,
+                        retryDelayMs: 3000,
+                        maxRetryDelayMs: 15000,
+                    },
+                },
+            },
+        });
         hls.loadSource(`https://r2-vods.supa.sh/${page.params.vod}/master.m3u8`);
         hls.attachMedia(video);
     });
