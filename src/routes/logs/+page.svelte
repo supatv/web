@@ -102,6 +102,7 @@
     let channelName = $state("");
     let inputUserName = $state("");
     let userName = $state("");
+    let searchInput: HTMLInputElement | null = $state(null);
 
     let scrollFromBottom = $state(window.localStorage.getItem("logs-bottom-scroll-state") === "true" ? true : false);
 
@@ -167,6 +168,7 @@
 
     const windowKeydown = (event: KeyboardEvent) => {
         if (event.ctrlKey && event.key === "f") {
+            searchInput?.focus();
             event.preventDefault();
         }
     };
@@ -510,7 +512,7 @@
             </div>
             {#if chatLogs.length}
                 <div class="flex flex-1 gap-1">
-                    <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:value={searchValue} />
+                    <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
                     <Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
                         {#if scrollFromBottom}
                             <ArrowUpNarrowWideIcon />
