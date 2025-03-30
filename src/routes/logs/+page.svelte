@@ -6,6 +6,7 @@
     import { Button } from "$lib/components/ui/button/index.js";
     import { Input } from "$lib/components/ui/input/index.js";
     import { Label } from "$lib/components/ui/label/index.js";
+    import { Skeleton } from "$lib/components/ui/skeleton/index.js";
     import * as Select from "$lib/components/ui/select/index.js";
     import * as Card from "$lib/components/ui/card/index.js";
 
@@ -443,7 +444,15 @@
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="p-5 relative flex flex-col flex-1 h-full min-h-0">
-    <h1 class="text-2xl font-bold">Search logs{channels.length ? ` in ${channels.length.toLocaleString()} channels` : ""}</h1>
+    <h1 class="text-2xl font-bold">
+        Search logs in
+        {#if !channels.length}
+            <Skeleton class="h-7 w-[4ch] inline-block align-middle" />
+        {:else}
+            {channels.length.toLocaleString()}
+        {/if}
+        channels
+    </h1>
     <div class="flex flex-row my-4 justify-between min-h-0">
         <form class="flex relative gap-2 align-middle" onsubmit={formSubmit}>
             <div class="flex gap-2">

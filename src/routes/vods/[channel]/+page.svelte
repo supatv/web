@@ -2,6 +2,7 @@
     import { getContext, onDestroy, onMount } from "svelte";
     import { page } from "$app/state";
 
+    import { Skeleton } from "$lib/components/ui/skeleton/index.js";
     import { LoaderCircleIcon, EyeOffIcon } from "lucide-svelte";
 
     import type { User, Stream } from "$lib/twitch/streams";
@@ -61,12 +62,15 @@
     });
 </script>
 
-{#if user === null}
-    <div class="flex p-5 self-center">
-        <LoaderCircleIcon class="animate-spin size-8" />
-    </div>
-{:else}
-    <div class="flex flex-col p-5">
+<div class="flex flex-col p-5">
+    {#if user === null}
+        <div class="flex flex-wrap w-fit items-center justify-center gap-3">
+            <Skeleton class="size-28 rounded-full" />
+            <div class="flex flex-col gap-2">
+                <Skeleton class="h-12 w-48" />
+            </div>
+        </div>
+    {:else}
         <div class="flex flex-wrap w-fit items-center justify-center gap-3">
             <img src={user.avatar_url} alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
             <div class="flex flex-col">
@@ -80,44 +84,49 @@
                 {/if}
             </div>
         </div>
+    {/if}
 
-        <hr class="my-5" />
+    <hr class="my-5" />
+    <div class="self-center grid gap-5 w-full max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
         {#if streams === null}
-            <div class="flex self-center">
-                <LoaderCircleIcon class="animate-spin size-8" />
-            </div>
+            {#each { length: 20 }}
+                <div class="size-full">
+                    <Skeleton class="aspect-video w-full rounded-sm" />
+                    <div class="h-5 mt-1">
+                        <Skeleton class="h-4 w-full" />
+                    </div>
+                </div>
+            {/each}
         {:else}
-            <div class="self-center grid gap-5 max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
-                {#each streams as stream (stream.id)}
-                    {@const createdAt = new Date(stream.created_at)}
-                    {@const duration = stream.duration_ms}
-                    <a href="/vods/{page.params.channel}/{stream.id.toString()}">
-                        <div class="relative rounded-sm overflow-hidden">
-                            <span
-                                class="text-xs absolute left-0 m-1 text-white px-0.5 rounded-sm
+            {#each streams as stream (stream.id)}
+                {@const createdAt = new Date(stream.created_at)}
+                {@const duration = stream.duration_ms}
+                <a href="/vods/{page.params.channel}/{stream.id.toString()}">
+                    <div class="relative rounded-sm overflow-hidden">
+                        <span
+                            class="text-xs absolute left-0 m-1 text-white px-0.5 rounded-sm
                                     {duration === null ? 'bg-red-600' : 'bg-black/60'}"
-                                title={dayjs(createdAt).format(dateFormat)}
-                            >
-                                {duration === null ? "Live" : dayjs(stream.created_at).fromNow()}
-                            </span>
-                            {#if stream.state === "RECORDING"}
-                                <span class="text-xs absolute left-0 bottom-0 m-1 bg-black/60 text-white px-0.5 rounded-sm">Recording...</span>
+                            title={dayjs(createdAt).format(dateFormat)}
+                        >
+                            {duration === null ? "Live" : dayjs(stream.created_at).fromNow()}
+                        </span>
+                        {#if stream.state === "RECORDING"}
+                            <span class="text-xs absolute left-0 bottom-0 m-1 bg-black/60 text-white px-0.5 rounded-sm">Recording...</span>
+                        {/if}
+                        <span class="text-xs absolute right-0 bottom-0 m-1 bg-black/60 text-white px-0.5 rounded-sm tabular-nums">
+                            {#if duration === null}
+                                {#key liveTicker}
+                                    {formatDuration(Date.now() - createdAt.getTime(), "ms")}
+                                {/key}
+                            {:else}
+                                {formatDuration(duration, "ms")}
                             {/if}
-                            <span class="text-xs absolute right-0 bottom-0 m-1 bg-black/60 text-white px-0.5 rounded-sm tabular-nums">
-                                {#if duration === null}
-                                    {#key liveTicker}
-                                        {formatDuration(Date.now() - createdAt.getTime(), "ms")}
-                                    {/key}
-                                {:else}
-                                    {formatDuration(duration, "ms")}
-                                {/if}
-                            </span>
-                            <img src="https://r2-vods.supa.sh/{stream.id}/thumbnail.jpg" loading="lazy" alt="Thumbnail" class="aspect-video w-full" />
-                        </div>
-                        <p class="text-gray line-clamp-2 leading-snug" title={stream.title}>{stream.title}</p>
-                    </a>
-                {/each}
-            </div>
+                        </span>
+                        <img src="https://r2-vods.supa.sh/{stream.id}/thumbnail.jpg" loading="lazy" alt="Thumbnail" class="aspect-video w-full" />
+                    </div>
+                    <p class="text-gray line-clamp-2" title={stream.title}>{stream.title}</p>
+                </a>
+            {/each}
         {/if}
     </div>
-{/if}
+</div>

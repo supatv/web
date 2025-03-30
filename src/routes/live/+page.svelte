@@ -1,9 +1,10 @@
 <script lang="ts">
     import * as Card from "$lib/components/ui/card/index.js";
+    import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 
     import type { TitleContext } from "$lib/common";
 
-    import { LoaderCircleIcon, BadgeCheckIcon, UserIcon } from "lucide-svelte";
+    import { BadgeCheckIcon, UserIcon } from "lucide-svelte";
 
     import { onDestroy, onMount, getContext } from "svelte";
 
@@ -58,9 +59,34 @@
     });
 </script>
 
-<div class="flex flex-col p-5 self-center">
+<div class="flex flex-col w-full p-5">
     {#if streams === null}
-        <LoaderCircleIcon class="animate-spin size-8" />
+        <h1 class="text-2xl font-bold mb-2">
+            Browse
+            <Skeleton class="h-7 w-[2ch] inline-block align-middle" />
+            livestreams with
+            <Skeleton class="h-7 w-[4ch] inline-block align-middle" />
+            viewers
+        </h1>
+        <div class="grid gap-5 max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
+            {#each { length: 30 }}
+                <Card.Root class="p-1 bg-neutral-100 dark:bg-neutral-900">
+                    <Skeleton class="w-full aspect-video rounded-sm" />
+                    <div class="flex h-12 items-center mt-0 mx-1">
+                        <Skeleton class="size-10 min-w-10 rounded-full" />
+                        <div class="flex-1 ml-1">
+                            <Skeleton class="h-5 max-w-32 mb-1" />
+                            <Skeleton class="h-4 max-w-20" />
+                        </div>
+                        <div class="flex flex-col ml-2">
+                            <Skeleton class="h-5 w-16 mb-1 self-end" />
+                            <Skeleton class="h-4 w-24" />
+                        </div>
+                    </div>
+                    <Skeleton class="h-5 w-full mt-1" />
+                </Card.Root>
+            {/each}
+        </div>
     {:else}
         <h1 class="text-2xl font-bold mb-2">
             Browse {streams.length.toLocaleString()} livestreams with {streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()} viewers
