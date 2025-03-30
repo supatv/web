@@ -267,12 +267,9 @@
     $effect(() => {
         // fetch logs
         const date = dateContent;
-        untrack(async () => {
-            if (!date) {
-                loading = false;
-                return;
-            }
+        if (!date) return;
 
+        untrack(async () => {
             error = null;
             loading = true;
 
