@@ -40,7 +40,7 @@
 
     let streams: Stream[] | null = null;
     const fetchStreams = async () => {
-        const res = await fetch("https://tv.supa.sh/tags/ro");
+        const res = await fetch("https://api-tv.supa.sh/tags/ro");
         streams = await res.json();
         fetchTimeout = setTimeout(() => {
             fetchStreams();
