@@ -3,7 +3,7 @@ import type { Emote } from "./common";
 export default {
     getChannelEmotes: async (channelId: string): Promise<Emote[]> => {
         const res = await fetch(`https://api.frankerfacez.com/v1/room/id/${encodeURIComponent(channelId)}`, { signal: AbortSignal.timeout(10000) });
-        if (~~(res.status / 100) !== 2) {
+        if (!res.ok) {
             throw new Error("Failed fetching FrankerFaceZ channel emotes", { cause: res });
         }
 
@@ -13,7 +13,7 @@ export default {
     },
     getGlobalEmotes: async (): Promise<Emote[]> => {
         const res = await fetch(`https://api.frankerfacez.com/v1/set/global`, { signal: AbortSignal.timeout(10000) });
-        if (~~(res.status / 100) !== 2) {
+        if (!res.ok) {
             throw new Error("Failed fetching FrankerFaceZ global emotes", { cause: res });
         }
 

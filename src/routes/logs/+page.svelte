@@ -66,7 +66,7 @@
         error = null;
         // loading = true;
         const res = await fetch("https://logs.zonian.dev/channels");
-        if (~~(res.status / 100) !== 2) {
+        if (!res.ok) {
             // error = `Error from server: ${res.status} ${res.statusText}`;
             // loading = false;
             throw error;
@@ -252,7 +252,7 @@
             loading = true;
 
             const res = await fetch(`https://logs.zonian.dev/list?${parseChannelUser(channelName, userName, true)}`);
-            if (~~(res.status / 100) !== 2) {
+            if (!res.ok) {
                 if (res.status === 404) error = "No logs found for this channel and user";
                 else error = `Error from server: ${res.status} ${res.statusText}`;
                 loading = false;
@@ -276,7 +276,7 @@
             loading = true;
 
             const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}?jsonBasic=1`);
-            if (~~(res.status / 100) !== 2) {
+            if (!res.ok) {
                 error = `Error from server: ${res.status} ${res.statusText}`;
                 loading = false;
                 throw error;
