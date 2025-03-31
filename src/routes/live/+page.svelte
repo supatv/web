@@ -75,7 +75,7 @@
         </h1>
         <div class="grid gap-5 max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
             {#each { length: 30 }}
-                <Card.Root class="p-1 bg-neutral-100 dark:bg-neutral-900">
+                <Card.Root class="p-1 bg-neutral-200 dark:bg-neutral-900">
                     <Skeleton class="w-full aspect-video rounded-sm" />
                     <div class="flex h-12 items-center mt-0 mx-1">
                         <Skeleton class="size-10 min-w-10 rounded-full" />
@@ -99,7 +99,7 @@
         <div class="grid gap-5 max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
             {#each streams as stream (stream.login)}
                 <a href="https://www.twitch.tv/{stream.login}" target="_blank">
-                    <Card.Root class="text-left p-1 hover:scale-105 bg-neutral-100 hover:bg-neutral-200 dark:bg-neutral-900 dark:hover:bg-neutral-800 transition">
+                    <Card.Root class="text-left p-1 hover:scale-105 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800 transition">
                         <div class="max-w-full">
                             <div class="relative rounded-sm overflow-hidden">
                                 <span class="text-xs absolute right-0 bg-black/60 text-white px-0.5 rounded-bl-sm">{formatUptime(stream.started)}</span>
