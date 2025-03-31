@@ -1,4 +1,4 @@
-name: Deploy build
+name: Build
 
 on:
   push:
@@ -22,28 +22,8 @@ jobs:
         cache-dependency-path: ./package.json
     - run: npm i
     - run: npm run build
-    - name: Upload build artifacts
-      uses: actions/upload-artifact@v4
-      with:
-        name: build
-        path: build/
-
-  deploy:
-    runs-on: ubuntu-latest
-    needs: build
-
-    steps:
-    - name: Download build artifacts
-      uses: actions/download-artifact@v4
-      with:
-        name: build
-        path: build/
-    - name: Deploy to tv.supa.sh
-      uses: easingthemes/ssh-deploy@v5.1.0
-      with:
-        REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
-        REMOTE_PORT: ${{ secrets.REMOTE_PORT }}
-        REMOTE_USER: ${{ secrets.REMOTE_USER }}
-        SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-        SOURCE: "build/"
-        TARGET: "/var/www/twitch-utilities"
+    # - name: Upload build artifacts
+    #   uses: actions/upload-artifact@v4
+    #   with:
+    #     name: build
+    #     path: build/
