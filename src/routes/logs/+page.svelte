@@ -505,7 +505,7 @@
                     </Select.Trigger>
                     <Select.Content>
                         <Select.Group>
-                            {#each availableDates as date, index}
+                            {#each availableDates as date, index (index)}
                                 {#if index > 0 && date.year !== availableDates[index - 1].year}
                                     <Select.Separator class="mx-0" />
                                 {/if}
@@ -552,7 +552,7 @@
                         <span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s 70%)" class="font-bold">{msg.displayName}:</span>
                         <span class:text-neutral-500={msg.tags["target-user-id"]}>
                             {#key emoteUpdates}
-                                {#each parseMessage(msg) as { type: Component, props }}
+                                {#each parseMessage(msg) as { type: Component, props }, index (index)}
                                     <Component {...props} />
                                 {/each}
                             {/key}

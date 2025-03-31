@@ -3,7 +3,7 @@
     import { page } from "$app/state";
 
     import { Skeleton } from "$lib/components/ui/skeleton/index.js";
-    import { LoaderCircleIcon, EyeOffIcon } from "lucide-svelte";
+    import { EyeOffIcon } from "lucide-svelte";
 
     import type { User, Stream } from "$lib/twitch/streams";
     import { dateFormat, type TitleContext } from "$lib/common";
