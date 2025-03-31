@@ -6,6 +6,7 @@
 
 	import { randomEmoji, type TitleContext } from "$lib/common";
 
+	import { browser } from "$app/environment";
 	import { setContext } from "svelte";
 
 	import { ModeWatcher, toggleMode } from "mode-watcher";
@@ -16,7 +17,7 @@
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import AppSidebar from "$lib/components/sidebar.svelte";
 
-	let sidebarOpened = $state(window.localStorage.getItem("sidebar-provider-state") === "false" ? false : true);
+	let sidebarOpened = $state(browser && window.localStorage.getItem("sidebar-provider-state") === "false" ? false : true);
 	const sidebarOpenChange = (open: boolean) => {
 		window.localStorage.setItem("sidebar-provider-state", open.toString());
 	};

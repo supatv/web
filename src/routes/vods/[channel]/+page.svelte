@@ -5,7 +5,8 @@
     import { Skeleton } from "$lib/components/ui/skeleton/index.js";
     import { EyeOffIcon } from "lucide-svelte";
 
-    import type { User, Stream } from "$lib/twitch/streams";
+    import type { PageProps } from "./$types";
+    import type { Stream } from "$lib/twitch/streams";
     import { dateFormat, type TitleContext } from "$lib/common";
 
     import dayjs from "dayjs";
@@ -29,7 +30,11 @@
         return hours > 0 ? `${hours}:${minutes.padStart(2, "0")}:${secs}` : `${minutes}:${secs}`;
     };
 
-    let user: User | null = $state(null);
+    let { data }: PageProps = $props();
+    let { user } = data;
+
+    title.set(`${user.display_name}: VODs`);
+
     let streams: Stream[] | null = $state(null);
 
     const fetchStreams = async (userId: number) => {
@@ -37,18 +42,12 @@
         streams = await res.json();
     };
 
-    const fetchUser = async () => {
-        const res = await fetch(`https://api-tv.supa.sh/user?login=${encodeURIComponent(page.params.channel)}`);
-        user = await res.json();
-        fetchStreams(user!.id);
-        title.set(`${user!.display_name}: VODs`);
-    };
-    fetchUser();
-
     let liveTicker = $state(0);
     let secInterval: number | NodeJS.Timeout | null = null;
 
     onMount(() => {
+        fetchStreams(user.id);
+
         secInterval = setInterval(() => {
             liveTicker++;
         }, 1000);
@@ -62,29 +61,27 @@
     });
 </script>
 
+<svelte:head>
+    <title>{user.display_name} - VODs</title>
+    <meta property="og:title" content="{user.display_name} - VODs" />
+    <meta property="og:description" content={user.description} />
+    <meta property="og:image" content={user.avatar_url} />
+</svelte:head>
+
 <div class="flex flex-col p-5">
-    {#if user === null}
-        <div class="flex flex-wrap w-fit items-center justify-center gap-3">
-            <Skeleton class="size-28 rounded-full" />
-            <div class="flex flex-col gap-2">
-                <Skeleton class="h-12 w-48" />
-            </div>
+    <div class="flex flex-wrap w-fit items-center justify-center gap-3">
+        <img src={user.avatar_url} alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
+        <div class="flex flex-col">
+            <span class="drop-shadow text-3xl lg:text-5xl break-all">{user.display_name}</span>
+            {#if user.unlisted}
+                <div class="mx-1">
+                    <span class="flex items-center whitespace-pre text-sm text-gray-500">
+                        <EyeOffIcon class="inline size-4" /> Unlisted
+                    </span>
+                </div>
+            {/if}
         </div>
-    {:else}
-        <div class="flex flex-wrap w-fit items-center justify-center gap-3">
-            <img src={user.avatar_url} alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
-            <div class="flex flex-col">
-                <span class="drop-shadow text-3xl lg:text-5xl break-all">{user.display_name}</span>
-                {#if user.unlisted}
-                    <div class="mx-1">
-                        <span class="flex items-center whitespace-pre text-sm text-gray-500">
-                            <EyeOffIcon class="inline size-4" /> Unlisted
-                        </span>
-                    </div>
-                {/if}
-            </div>
-        </div>
-    {/if}
+    </div>
 
     <hr class="my-5" />
     <div class="self-center grid gap-5 w-full max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">

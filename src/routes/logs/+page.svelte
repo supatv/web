@@ -17,6 +17,7 @@
     import Link from "$lib/components/message/link.svelte";
 
     import { getContext, onMount, tick, untrack, type Component } from "svelte";
+    import { browser } from "$app/environment";
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
@@ -105,7 +106,7 @@
     let userName = $state("");
     let searchInput: HTMLInputElement | null = $state(null);
 
-    let scrollFromBottom = $state(window.localStorage.getItem("logs-bottom-scroll-state") === "true" ? true : false);
+    let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true" ? true : false);
 
     let channelId = $state("");
     let emoteUpdates = $state(0);
@@ -438,6 +439,11 @@
         }
     };
 </script>
+
+<svelte:head>
+    <title>Twitch Logs</title>
+    <meta name="description" content="View chat logs across all Twitch channels." />
+</svelte:head>
 
 <svelte:window on:keydown={windowKeydown} />
 

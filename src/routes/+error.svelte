@@ -3,6 +3,6 @@
 </script>
 
 <div class="text-center">
-    <h1 class="text-2xl">Error</h1>
-    <p class="text-xl">{page.status} {page?.error?.message}</p>
+    <h1 class="text-2xl">Error {page.status}</h1>
+    <p class="text-xl">{page?.error?.message}</p>
 </div>

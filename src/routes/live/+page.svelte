@@ -59,6 +59,11 @@
     });
 </script>
 
+<svelte:head>
+    <title>Twitch Romanian Livestreams</title>
+    <meta name="description" content="Browse every Romanian Twitch livestream and channel." />
+</svelte:head>
+
 <div class="flex flex-col w-full p-5">
     {#if streams === null}
         <h1 class="text-2xl font-bold mb-2">
