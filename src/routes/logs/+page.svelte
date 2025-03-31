@@ -442,7 +442,7 @@
 
 <svelte:head>
     <title>Twitch Logs</title>
-    <meta name="description" content="View chat logs across all Twitch channels." />
+    <meta name="description" content="View chat logs in any Twitch channel." />
 </svelte:head>
 
 <svelte:window on:keydown={windowKeydown} />

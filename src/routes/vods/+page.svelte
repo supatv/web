@@ -25,7 +25,7 @@
 </script>
 
 <svelte:head>
-    <title>Twitch Archived VODs</title>
+    <title>Twitch VODs Archive</title>
     <meta name="description" content="View archived Twitch VODs in {users.length} channels." />
 </svelte:head>
 
