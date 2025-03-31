@@ -64,7 +64,7 @@
     <meta name="description" content="Browse every Romanian Twitch livestream and channel." />
 </svelte:head>
 
-<div class="flex flex-col w-full p-5">
+<div class="flex flex-col self-center w-full max-w-[2500px] p-5">
     {#if streams === null}
         <h1 class="text-2xl font-bold mb-2">
             Browse
@@ -73,7 +73,7 @@
             <Skeleton class="h-7 w-[4ch] inline-block align-middle" />
             viewers
         </h1>
-        <div class="grid gap-5 max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
+        <div class="grid gap-5 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
             {#each { length: 30 }}
                 <Card.Root class="p-1 bg-neutral-200 dark:bg-neutral-900">
                     <Skeleton class="w-full aspect-video rounded-sm" />
@@ -96,7 +96,7 @@
         <h1 class="text-2xl font-bold mb-2">
             Browse {streams.length.toLocaleString()} livestreams with {streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()} viewers
         </h1>
-        <div class="grid gap-5 max-w-[2500px] grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
+        <div class="grid gap-5 grid-cols-1 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
             {#each streams as stream (stream.login)}
                 <a href="https://www.twitch.tv/{stream.login}" target="_blank">
                     <Card.Root class="text-left p-1 hover:scale-105 bg-neutral-200 hover:bg-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800 transition">
