@@ -1,5 +1,8 @@
 <script lang="ts">
-    import { TvIcon, ScrollIcon, GemIcon, BookUserIcon, HeartIcon, SparklesIcon, FilmIcon, ClapperboardIcon } from "lucide-svelte";
+    import { TvIcon, ScrollIcon, GemIcon, BookUserIcon, HeartIcon, SparklesIcon, FilmIcon, ClapperboardIcon, ExternalLinkIcon } from "lucide-svelte";
+
+    import potatLogo from "$lib/assets/logos/potat.png";
+    import bestlogsLogo from "$lib/assets/logos/bestlogs.png";
 
     import * as Sidebar from "$lib/components/ui/sidebar/index.js";
     import { page } from "$app/state";
@@ -16,6 +19,7 @@
             </div>
         </div>
     </Sidebar.Header>
+    <hr />
     <Sidebar.Content>
         <Sidebar.Group>
             <Sidebar.GroupLabel>Romanian</Sidebar.GroupLabel>
@@ -43,7 +47,7 @@
                         </Sidebar.MenuButton>
                     </Sidebar.MenuItem>
 
-                    <Sidebar.MenuItem>
+                    <!-- <Sidebar.MenuItem>
                         <Sidebar.MenuButton aria-disabled={true} isActive={page.url.pathname === "/clips"}>
                             {#snippet child({ props })}
                                 <a href="/clips" {...props}>
@@ -52,7 +56,7 @@
                                 </a>
                             {/snippet}
                         </Sidebar.MenuButton>
-                    </Sidebar.MenuItem>
+                    </Sidebar.MenuItem> -->
                 </Sidebar.Menu>
             </Sidebar.GroupContent>
         </Sidebar.Group>
@@ -72,7 +76,7 @@
                         </Sidebar.MenuButton>
                     </Sidebar.MenuItem>
 
-                    <Sidebar.MenuItem>
+                    <!-- <Sidebar.MenuItem>
                         <Sidebar.MenuButton aria-disabled={true} isActive={page.url.pathname === "/roles"}>
                             {#snippet child({ props })}
                                 <a href="/roles" {...props}>
@@ -81,12 +85,12 @@
                                 </a>
                             {/snippet}
                         </Sidebar.MenuButton>
-                    </Sidebar.MenuItem>
+                    </Sidebar.MenuItem> -->
                 </Sidebar.Menu>
             </Sidebar.GroupContent>
         </Sidebar.Group>
 
-        <Sidebar.Group>
+        <!-- <Sidebar.Group>
             <Sidebar.GroupLabel>Miscellaneous</Sidebar.GroupLabel>
             <Sidebar.GroupContent>
                 <Sidebar.Menu>
@@ -102,8 +106,40 @@
                     </Sidebar.MenuItem>
                 </Sidebar.Menu>
             </Sidebar.GroupContent>
+        </Sidebar.Group> -->
+
+        <Sidebar.Group class="opacity-60 hover:opacity-100 transition-opacity mt-auto">
+            <Sidebar.GroupLabel>Related Projects</Sidebar.GroupLabel>
+            <Sidebar.GroupContent>
+                <Sidebar.Menu>
+                    <Sidebar.MenuItem>
+                        <Sidebar.MenuButton>
+                            {#snippet child({ props })}
+                                <a href="https://logs.zonian.dev/status" target="_blank" {...props}>
+                                    <img alt="Best Logs" src={bestlogsLogo} class="size-4" />
+                                    <span>Best Logs</span>
+                                    <ExternalLinkIcon class="ml-auto" />
+                                </a>
+                            {/snippet}
+                        </Sidebar.MenuButton>
+                    </Sidebar.MenuItem>
+
+                    <Sidebar.MenuItem>
+                        <Sidebar.MenuButton>
+                            {#snippet child({ props })}
+                                <a href="https://potat.app" target="_blank" {...props}>
+                                    <img alt="PotatBotat" src={potatLogo} class="size-4" />
+                                    <span>PotatBotat</span>
+                                    <ExternalLinkIcon class="ml-auto" />
+                                </a>
+                            {/snippet}
+                        </Sidebar.MenuButton>
+                    </Sidebar.MenuItem>
+                </Sidebar.Menu>
+            </Sidebar.GroupContent>
         </Sidebar.Group>
     </Sidebar.Content>
+    <hr />
     <Sidebar.Footer class="text-xs opacity-60">
         <p class="text-[0.7rem]">
             <a href="https://github.com/supatv/web/commit/{__COMMIT_HASH}" target="_blank">
