@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { TvIcon, ScrollIcon, GemIcon, BookUserIcon, HeartIcon, SparklesIcon, FilmIcon, ClapperboardIcon, ExternalLinkIcon } from "lucide-svelte";
+    import { TvIcon, ScrollIcon, HeartIcon, SparklesIcon, FilmIcon, ExternalLinkIcon } from "lucide-svelte";
 
     import potatLogo from "$lib/assets/logos/potat.png";
     import bestlogsLogo from "$lib/assets/logos/bestlogs.png";
