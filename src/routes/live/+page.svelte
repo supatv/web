@@ -4,7 +4,7 @@
 
     import type { TitleContext } from "$lib/common";
 
-    import { BadgeCheckIcon, UserIcon } from "lucide-svelte";
+    import { BadgeCheckIcon, UserIcon } from "@lucide/svelte";
 
     import { onDestroy, onMount, getContext } from "svelte";
 

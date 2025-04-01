@@ -3,7 +3,7 @@
     import { page } from "$app/state";
 
     import { Skeleton } from "$lib/components/ui/skeleton/index.js";
-    import { EyeOffIcon } from "lucide-svelte";
+    import { EyeOffIcon } from "@lucide/svelte";
 
     import type { PageProps } from "./$types";
     import type { Stream } from "$lib/twitch/streams";

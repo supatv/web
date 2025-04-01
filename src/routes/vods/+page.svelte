@@ -1,7 +1,7 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
 
-    import { HardDriveIcon } from "lucide-svelte";
+    import { HardDriveIcon } from "@lucide/svelte";
 
     import { humanFileSize, type TitleContext } from "$lib/common";
     import type { BucketUsage } from "$lib/twitch/streams";

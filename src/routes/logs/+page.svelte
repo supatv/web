@@ -21,7 +21,7 @@
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
-    import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon } from "lucide-svelte";
+    import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon } from "@lucide/svelte";
 
     import { dateFormat, type TitleContext } from "$lib/common";
 

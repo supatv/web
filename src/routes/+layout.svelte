@@ -12,7 +12,7 @@
 	import { ModeWatcher, toggleMode } from "mode-watcher";
 
 	import { Button } from "$lib/components/ui/button/index.js";
-	import { SunIcon, MoonIcon } from "lucide-svelte";
+	import { SunIcon, MoonIcon } from "@lucide/svelte";
 
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import AppSidebar from "$lib/components/sidebar.svelte";
