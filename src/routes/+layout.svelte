@@ -32,6 +32,17 @@
 			emoji = randomEmoji();
 		},
 	});
+
+	let joker = $state(browser && window.localStorage.getItem("aprilfools-2025") === "false" ? false : true);
+	$effect(() => {
+		if (joker) return document.documentElement.classList.add("font-joker");
+		document.documentElement.classList.remove("font-joker");
+	});
+
+	const toggleJoker = () => {
+		joker = !joker;
+		window.localStorage.setItem("aprilfools-2025", joker.toString());
+	};
 </script>
 
 <svelte:head>
@@ -50,6 +61,9 @@
 				<SunIcon class="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
 				<MoonIcon class="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
 				<span class="sr-only">Toggle theme</span>
+			</Button>
+			<Button onclick={toggleJoker} variant="ghost" size="icon" class="size-7">
+				<img src="/trollface.webp" class="size-5 {!joker ? 'opacity-50' : ''}" alt="tf" />
 			</Button>
 		</div>
 
