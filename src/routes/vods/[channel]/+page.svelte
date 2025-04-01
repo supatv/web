@@ -2,6 +2,8 @@
     import { getContext, onDestroy, onMount } from "svelte";
     import { page } from "$app/state";
 
+    import Image from "$lib/components/image.svelte";
+
     import { Skeleton } from "$lib/components/ui/skeleton/index.js";
     import { EyeOffIcon } from "@lucide/svelte";
 
@@ -70,7 +72,7 @@
 
 <div class="flex flex-col p-5">
     <div class="flex flex-wrap w-fit items-center justify-center gap-3">
-        <img src={user.avatar_url} alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
+        <Image src={user.avatar_url} alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
         <div class="flex flex-col">
             <span class="drop-shadow text-3xl lg:text-5xl break-all">{user.display_name}</span>
             {#if user.unlisted}
@@ -119,7 +121,7 @@
                                 {formatDuration(duration, "ms")}
                             {/if}
                         </span>
-                        <img src="https://r2-vods.supa.sh/{stream.id}/thumbnail.jpg" loading="lazy" alt="Thumbnail" class="aspect-video w-full" />
+                        <Image src="https://r2-vods.supa.sh/{stream.id}/thumbnail.jpg" loading="lazy" alt="Thumbnail" class="aspect-video w-full" />
                     </div>
                     <p class="text-gray line-clamp-2" title={stream.title}>{stream.title}</p>
                 </a>

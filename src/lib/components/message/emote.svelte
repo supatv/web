@@ -1,9 +1,11 @@
 <script>
+    import Image from "../image.svelte";
+
     // import * as Tooltip from "$lib/components/ui/tooltip";
     let { src, name } = $props();
 </script>
 
-<img {src} alt={name} title={name} class="inline-block max-h-5" />
+<Image {src} alt={name} title={name} class="inline-block max-h-5 rounded-sm" />
 
 <!-- <Tooltip.Provider>
     <Tooltip.Root delayDuration={200} disableHoverableContent={true}>

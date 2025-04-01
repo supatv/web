@@ -1,6 +1,8 @@
 <script lang="ts">
     import { getContext, onMount } from "svelte";
 
+    import Image from "$lib/components/image.svelte";
+
     import { HardDriveIcon } from "@lucide/svelte";
 
     import { humanFileSize, type TitleContext } from "$lib/common";
@@ -39,7 +41,7 @@
         {#each users as user (user.id)}
             <a href="/vods/{user.login}">
                 <div class="flex flex-col items-center w-32 p-2 hover:scale-105 transition">
-                    <img src={user.avatar_url} loading="lazy" alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
+                    <Image src={user.avatar_url} loading="lazy" alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
                     <p class="text-lg">{user.display_name}</p>
                 </div>
             </a>

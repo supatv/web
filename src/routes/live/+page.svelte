@@ -2,6 +2,8 @@
     import * as Card from "$lib/components/ui/card/index.js";
     import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 
+    import Image from "$lib/components/image.svelte";
+
     import type { TitleContext } from "$lib/common";
 
     import { BadgeCheckIcon, UserIcon } from "@lucide/svelte";
@@ -103,7 +105,7 @@
                         <div class="max-w-full">
                             <div class="relative rounded-sm overflow-hidden">
                                 <span class="text-xs absolute right-0 bg-black/60 text-white px-0.5 rounded-bl-sm">{formatUptime(stream.started)}</span>
-                                <img
+                                <Image
                                     src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-600x338.jpg?t={~~(Date.now() / 1000 / 120)}"
                                     loading="lazy"
                                     alt="Thumbnail"
@@ -112,7 +114,7 @@
                             </div>
 
                             <div class="flex h-12 items-center mt-0 mx-1">
-                                <img src={stream.avatar} loading="lazy" alt="Avatar" class="mr-1 rounded-full size-10 text-[0]" />
+                                <Image src={stream.avatar} loading="lazy" alt="Avatar" class="mr-1 rounded-full size-10 text-[0]" />
 
                                 <div class="flex flex-1 overflow-hidden leading-tight items-center h-full">
                                     <div class="flex-1 min-w-[50%] overflow-hidden">
@@ -142,10 +144,3 @@
         </div>
     {/if}
 </div>
-
-<style>
-    .stream-preview {
-        background-image: url("https://static-cdn.jtvnw.net/ttv-static/404_preview-350x197.jpg");
-        background-size: cover;
-    }
-</style>
