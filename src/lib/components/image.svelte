@@ -6,6 +6,7 @@
     let ref: HTMLImageElement;
 
     const onComplete = (event: Event) => {
+        if (!ref) return;
         ref.classList.remove("animate-pulse");
         if (event.type !== "error") ref.classList.remove("bg-muted");
     };
