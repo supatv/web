@@ -366,7 +366,13 @@
             emoteUpdates++;
             if (!channelId) return;
 
-            const [stvEmotes, bttvEmotes, ffzEmotes] = (await Promise.allSettled([TwitchServices.SevenTV.getChannelEmotes(channelId), TwitchServices.BetterTTV.getChannelEmotes(channelId), TwitchServices.FrankerFaceZ.getChannelEmotes(channelId)])).map((p) => (p.status === "fulfilled" ? p.value : []));
+            const [stvEmotes, bttvEmotes, ffzEmotes] = (
+                await Promise.allSettled([
+                    TwitchServices.SevenTV.getChannelEmotes(channelId),
+                    TwitchServices.BetterTTV.getChannelEmotes(channelId),
+                    TwitchServices.FrankerFaceZ.getChannelEmotes(channelId),
+                ])
+            ).map((p) => (p.status === "fulfilled" ? p.value : []));
 
             stvEmotes.forEach((emote) => {
                 channelEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
@@ -409,7 +415,9 @@
     };
 
     const fetchGlobalEmotes = async () => {
-        const [stvEmotes, bttvEmotes, ffzEmotes] = (await Promise.allSettled([TwitchServices.SevenTV.getGlobalEmotes(), TwitchServices.BetterTTV.getGlobalEmotes(), TwitchServices.FrankerFaceZ.getGlobalEmotes()])).map((p) => (p.status === "fulfilled" ? p.value : []));
+        const [stvEmotes, bttvEmotes, ffzEmotes] = (
+            await Promise.allSettled([TwitchServices.SevenTV.getGlobalEmotes(), TwitchServices.BetterTTV.getGlobalEmotes(), TwitchServices.FrankerFaceZ.getGlobalEmotes()])
+        ).map((p) => (p.status === "fulfilled" ? p.value : []));
 
         stvEmotes.forEach((emote) => {
             globalEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
@@ -576,7 +584,15 @@
                         <CalendarIcon class="opacity-50" />
                     </Popover.Trigger>
                     <Popover.Content bind:ref={contentRef} class="w-auto p-0" align="start">
-                        <CalendarPrimitive.Root type="single" weekdayFormat="short" class={cn("rounded-md border p-3")} bind:value={calendarValue} bind:placeholder={calendarValue} minValue={new CalendarDate(parseInt(availableDates.slice(-1)[0].year), parseInt(availableDates.slice(-1)[0].month), parseInt(availableDates.slice(-1)[0].day || "1"))} maxValue={currentDate}>
+                        <CalendarPrimitive.Root
+                            type="single"
+                            weekdayFormat="short"
+                            class={cn("rounded-md border p-3")}
+                            bind:value={calendarValue}
+                            bind:placeholder={calendarValue}
+                            minValue={new CalendarDate(parseInt(availableDates.slice(-1)[0].year), parseInt(availableDates.slice(-1)[0].month), parseInt(availableDates.slice(-1)[0].day || "1"))}
+                            maxValue={currentDate}
+                        >
                             {#snippet children({ months, weekdays })}
                                 <Calendar.Header class="flex w-full items-center justify-between gap-2">
                                     <Select.Root
@@ -676,7 +692,13 @@
                             <ArrowDownWideNarrowIcon />
                         {/if}
                     </Button>
-                    <Button variant="ghost" size="icon" class="size-8 border" target="_blank" href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}{dateContent.day ? `/${dateContent.day}` : ''}">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        class="size-8 border"
+                        target="_blank"
+                        href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}{dateContent.day ? `/${dateContent.day}` : ''}"
+                    >
                         <FileTextIcon />
                     </Button>
                 </div>
