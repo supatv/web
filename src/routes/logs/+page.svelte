@@ -549,7 +549,7 @@
     {#if error}
         <p class="text-red-500">{error}</p>
     {:else if chatLogs.length}
-        <div class="flex flex-1 min-h-0 w-full font-sans" bind:clientHeight={logsBoxHeight}>
+        <div class="flex flex-1 min-h-0 w-full" bind:clientHeight={logsBoxHeight}>
             <Card.Root class="h-full w-full flex-col leading-none p-3">
                 <VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} bind:scrollOffset>
                     <div class="flex flex-row gap-x-1 h-5 text-nowrap" slot="item" let:index let:style {style}>
