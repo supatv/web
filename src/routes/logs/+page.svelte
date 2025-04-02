@@ -1,12 +1,17 @@
 <script lang="ts">
+    import { Calendar as CalendarPrimitive } from "bits-ui";
     import fuzzysort from "fuzzysort";
     import dayjs from "dayjs";
 
+    import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
     import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
-    import { Button } from "$lib/components/ui/button/index.js";
+    import { Skeleton } from "$lib/components/ui/skeleton/index.js";
     import { Input } from "$lib/components/ui/input/index.js";
     import { Label } from "$lib/components/ui/label/index.js";
-    import { Skeleton } from "$lib/components/ui/skeleton/index.js";
+    import { cn } from "$lib/utils.js";
+
+    import * as Calendar from "$lib/components/ui/calendar/index.js";
+    import * as Popover from "$lib/components/ui/popover/index.js";
     import * as Select from "$lib/components/ui/select/index.js";
     import * as Card from "$lib/components/ui/card/index.js";
 
@@ -21,15 +26,18 @@
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
-    import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon } from "@lucide/svelte";
+    import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon } from "@lucide/svelte";
 
     import { dateFormat, type TitleContext } from "$lib/common";
+
+    import { CalendarDate, DateFormatter, getLocalTimeZone, today, type DateValue } from "@internationalized/date";
 
     import * as TwitchServices from "$lib/twitch/services/index.js";
 
     type LogsDate = {
         year: string;
         month: string;
+        day?: string;
     };
 
     type Message = {
@@ -61,6 +69,49 @@
     let channels: { name: string; userID: string }[] = $state([]);
     let channelTargets: Fuzzysort.Prepared[] = $state([]);
     let selectedIndex = $state(0); // Track selected item
+
+    let availableDates: LogsDate[] = $state([]);
+    let calendarValue = $state<DateValue>();
+    let dateValue = $state("");
+
+    const currentDate = today(getLocalTimeZone());
+
+    const monthFmt = new DateFormatter("en-US", {
+        month: "long",
+    });
+
+    const monthOptions = Array.from({ length: 12 }, (_, i) => {
+        const month = currentDate.set({ month: i + 1 });
+        return {
+            value: month.month,
+            label: `${String(month.month).padStart(2, "0")} (${monthFmt.format(month.toDate(getLocalTimeZone()))})`,
+        };
+    });
+
+    const yearOptions = $derived(
+        Array.from(
+            {
+                length: new Date().getFullYear() - Number(availableDates.slice(-1)[0]?.year ?? 0) + 1,
+            },
+            (_, i) => ({
+                label: String(Number(availableDates.slice(-1)[0]?.year ?? 0) + i),
+                value: Number(availableDates.slice(-1)[0]?.year ?? 0) + i,
+            }),
+        ),
+    );
+
+    const defaultYear = $derived(calendarValue ? { value: calendarValue.year, label: String(calendarValue.year) } : undefined);
+
+    const defaultMonth = $derived(
+        calendarValue
+            ? {
+                  value: calendarValue.month,
+                  label: monthFmt.format(calendarValue.toDate(getLocalTimeZone())),
+              }
+            : undefined,
+    );
+
+    const monthLabel = $derived(monthOptions.find((m) => m.value === defaultMonth?.value)?.label ?? "Select a month");
 
     const loadChannels = async () => {
         error = null;
@@ -177,8 +228,7 @@
 
     let chatLogs: Message[] = $state([]);
 
-    let availableDates: LogsDate[] = $state([]);
-    let dateValue = $state("");
+    let contentRef = $state<HTMLElement | null>(null);
 
     let searchValue = $state("");
 
@@ -210,14 +260,14 @@
 
     // const dateContent = $derived(availableDates[Number(dateValue) ?? 0]);
     const dateContent = $derived.by(() => {
-        const [year, month] = dateValue.split("-");
+        const [year, month, day] = String(dateValue).split("-");
         if (!year || !month) {
             const firstDate = availableDates[0];
             if (!firstDate) return;
-            untrack(() => (dateValue = `${firstDate.year}-${firstDate.month.padStart(2, "0")}`));
+            untrack(() => (dateValue = `${firstDate.year}-${firstDate.month.padStart(2, "0")}${firstDate.day ? `-${firstDate.day.padStart(2, "0")}` : ""}`));
             return firstDate;
         }
-        return { year, month };
+        return { year, month, day };
     });
 
     const parseChannelUser = (channel: string, user: string, params: boolean) => {
@@ -239,13 +289,13 @@
         channel = channel.trim();
         user = user.trim();
 
-        if (params) return `${channelType}=${encodeURIComponent(channel)}&${userType}=${encodeURIComponent(user)}`;
-        else return `${channelType}/${encodeURIComponent(channel)}/${userType}/${encodeURIComponent(user)}`;
+        if (params) return `${channelType}=${encodeURIComponent(channel)}${user ? `&${userType}=${encodeURIComponent(user)}` : ""}`;
+        else return `${channelType}/${encodeURIComponent(channel)}${user ? `/${userType}/${encodeURIComponent(user)}` : ""}`;
     };
 
     $effect(() => {
         // fetch available dates
-        if (!channelName || !userName) return;
+        if (!channelName) return;
         untrack(async () => {
             availableDates = [];
             chatLogs = [];
@@ -275,7 +325,7 @@
             error = null;
             loading = true;
 
-            const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}?jsonBasic=1`);
+            const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`);
             if (!res.ok) {
                 error = `Error from server: ${res.status} ${res.statusText}`;
                 loading = false;
@@ -291,6 +341,22 @@
     });
 
     $effect(() => {
+        if (dateValue) {
+            const [year, month, day] = dateValue.split("-");
+            calendarValue = new CalendarDate(parseInt(year), parseInt(month), parseInt(day));
+        }
+    });
+
+    $effect(() => {
+        if (calendarValue) {
+            const year = calendarValue.year;
+            const month = String(calendarValue.month).padStart(2, "0");
+            const day = calendarValue.day ? String(calendarValue.day).padStart(2, "0") : undefined;
+            dateValue = `${year}-${month}${day ? `-${day}` : ""}`;
+        }
+    });
+
+    $effect(() => {
         // fetch channel emotes
 
         // eslint-disable-next-line @typescript-eslint/no-unused-expressions
@@ -300,13 +366,7 @@
             emoteUpdates++;
             if (!channelId) return;
 
-            const [stvEmotes, bttvEmotes, ffzEmotes] = (
-                await Promise.allSettled([
-                    TwitchServices.SevenTV.getChannelEmotes(channelId),
-                    TwitchServices.BetterTTV.getChannelEmotes(channelId),
-                    TwitchServices.FrankerFaceZ.getChannelEmotes(channelId),
-                ])
-            ).map((p) => (p.status === "fulfilled" ? p.value : []));
+            const [stvEmotes, bttvEmotes, ffzEmotes] = (await Promise.allSettled([TwitchServices.SevenTV.getChannelEmotes(channelId), TwitchServices.BetterTTV.getChannelEmotes(channelId), TwitchServices.FrankerFaceZ.getChannelEmotes(channelId)])).map((p) => (p.status === "fulfilled" ? p.value : []));
 
             stvEmotes.forEach((emote) => {
                 channelEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
@@ -326,7 +386,7 @@
 
     const formSubmit = async (event: SubmitEvent) => {
         event.preventDefault();
-        if (loading || !inputChannelName || !inputUserName) return;
+        if (loading || !inputChannelName) return;
 
         // force reload
         channelName = "";
@@ -349,9 +409,7 @@
     };
 
     const fetchGlobalEmotes = async () => {
-        const [stvEmotes, bttvEmotes, ffzEmotes] = (
-            await Promise.allSettled([TwitchServices.SevenTV.getGlobalEmotes(), TwitchServices.BetterTTV.getGlobalEmotes(), TwitchServices.FrankerFaceZ.getGlobalEmotes()])
-        ).map((p) => (p.status === "fulfilled" ? p.value : []));
+        const [stvEmotes, bttvEmotes, ffzEmotes] = (await Promise.allSettled([TwitchServices.SevenTV.getGlobalEmotes(), TwitchServices.BetterTTV.getGlobalEmotes(), TwitchServices.FrankerFaceZ.getGlobalEmotes()])).map((p) => (p.status === "fulfilled" ? p.value : []));
 
         stvEmotes.forEach((emote) => {
             globalEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
@@ -504,24 +562,110 @@
 
     <div class="flex flex-row flex-wrap-reverse gap-1 justify-between mb-1">
         {#if dateContent}
-            <div class="flex flex-row">
-                <Select.Root type="single" name="input-date" bind:value={dateValue}>
-                    <Select.Trigger class="w-28 h-8">
-                        {dateContent.year}-{String(dateContent.month).padStart(2, "0")}
-                    </Select.Trigger>
-                    <Select.Content>
-                        <Select.Group>
-                            {#each availableDates as date, index (index)}
-                                {#if index > 0 && date.year !== availableDates[index - 1].year}
-                                    <Select.Separator class="mx-0" />
-                                {/if}
-                                {@const str = `${date.year}-${date.month.padStart(2, "0")}`}
-                                <Select.Item class="tabular-nums p-1 m-0 justify-center" value={str} label={str} />
-                            {/each}
-                        </Select.Group>
-                    </Select.Content>
-                </Select.Root>
-            </div>
+            {#if dateContent.day}
+                <Popover.Root>
+                    <Popover.Trigger
+                        class={cn(
+                            buttonVariants({
+                                variant: "outline",
+                                class: "hover:bg-transparent focus:ring-ring flex items-center justify-between rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-40 h-8",
+                            }),
+                        )}
+                    >
+                        {dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
+                        <CalendarIcon class="opacity-50" />
+                    </Popover.Trigger>
+                    <Popover.Content bind:ref={contentRef} class="w-auto p-0" align="start">
+                        <CalendarPrimitive.Root type="single" weekdayFormat="short" class={cn("rounded-md border p-3")} bind:value={calendarValue} bind:placeholder={calendarValue} minValue={new CalendarDate(parseInt(availableDates.slice(-1)[0].year), parseInt(availableDates.slice(-1)[0].month), parseInt(availableDates.slice(-1)[0].day || "1"))} maxValue={currentDate}>
+                            {#snippet children({ months, weekdays })}
+                                <Calendar.Header class="flex w-full items-center justify-between gap-2">
+                                    <Select.Root
+                                        type="single"
+                                        value={`${defaultYear?.value}`}
+                                        onValueChange={(v) => {
+                                            if (!v || !calendarValue) return;
+                                            if (v === `${calendarValue?.year}`) return;
+                                            calendarValue = calendarValue.set({ year: Number.parseInt(v) });
+                                        }}
+                                    >
+                                        <Select.Trigger aria-label="Select year" class="h-8 w-[40%]">
+                                            {defaultYear?.label ?? "Select year"}
+                                        </Select.Trigger>
+                                        <Select.Content class="max-h-[200px] overflow-y-auto">
+                                            {#each yearOptions as { value, label } (value)}
+                                                <Select.Item value={`${value}`} {label} />
+                                            {/each}
+                                        </Select.Content>
+                                    </Select.Root>
+                                    <Select.Root
+                                        type="single"
+                                        value={`${defaultMonth?.value}`}
+                                        onValueChange={(v) => {
+                                            if (!calendarValue) return;
+                                            if (v === `${calendarValue.month}`) return;
+                                            calendarValue = calendarValue.set({ month: Number.parseInt(v) });
+                                        }}
+                                    >
+                                        <Select.Trigger aria-label="Select month" class="h-8 w-[60%]">
+                                            {monthLabel}
+                                        </Select.Trigger>
+                                        <Select.Content class="max-h-[200px] overflow-y-auto">
+                                            {#each monthOptions as { value, label } (value)}
+                                                <Select.Item value={`${value}`} {label} />
+                                            {/each}
+                                        </Select.Content>
+                                    </Select.Root>
+                                </Calendar.Header>
+                                <Calendar.Months>
+                                    {#each months as month (month)}
+                                        <Calendar.Grid>
+                                            <Calendar.GridHead>
+                                                <Calendar.GridRow class="flex">
+                                                    {#each weekdays as weekday (weekday)}
+                                                        <Calendar.HeadCell>
+                                                            {weekday.slice(0, 2)}
+                                                        </Calendar.HeadCell>
+                                                    {/each}
+                                                </Calendar.GridRow>
+                                            </Calendar.GridHead>
+                                            <Calendar.GridBody>
+                                                {#each month.weeks as weekDates (weekDates)}
+                                                    <Calendar.GridRow class="mt-2 w-full">
+                                                        {#each weekDates as date (date)}
+                                                            <Calendar.Cell class="select-none" {date} month={month.value}>
+                                                                <Calendar.Day />
+                                                            </Calendar.Cell>
+                                                        {/each}
+                                                    </Calendar.GridRow>
+                                                {/each}
+                                            </Calendar.GridBody>
+                                        </Calendar.Grid>
+                                    {/each}
+                                </Calendar.Months>
+                            {/snippet}
+                        </CalendarPrimitive.Root>
+                    </Popover.Content>
+                </Popover.Root>
+            {:else}
+                <div class="flex flex-row">
+                    <Select.Root type="single" name="input-date" bind:value={dateValue}>
+                        <Select.Trigger class="w-40 h-8">
+                            {dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
+                        </Select.Trigger>
+                        <Select.Content>
+                            <Select.Group>
+                                {#each availableDates as date, index (index)}
+                                    {#if index > 0 && date.year !== availableDates[index - 1].year}
+                                        <Select.Separator class="mx-0" />
+                                    {/if}
+                                    {@const str = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`}
+                                    <Select.Item class="tabular-nums p-1 m-0 justify-center" value={str} label={str} />
+                                {/each}
+                            </Select.Group>
+                        </Select.Content>
+                    </Select.Root>
+                </div>
+            {/if}
             {#if chatLogs.length}
                 <div class="flex flex-1 gap-1">
                     <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
@@ -532,13 +676,7 @@
                             <ArrowDownWideNarrowIcon />
                         {/if}
                     </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        class="size-8 border"
-                        target="_blank"
-                        href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}"
-                    >
+                    <Button variant="ghost" size="icon" class="size-8 border" target="_blank" href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}{dateContent.day ? `/${dateContent.day}` : ''}">
                         <FileTextIcon />
                     </Button>
                 </div>
