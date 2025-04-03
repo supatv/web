@@ -648,7 +648,7 @@
                                                 {#each month.weeks as weekDates (weekDates)}
                                                     <Calendar.GridRow class="mt-2 w-full">
                                                         {#each weekDates as date (date)}
-                                                            <Calendar.Cell class="select-none" {date} month={month.value}>
+                                                            <Calendar.Cell class="select-none [&[data-selected]]:pointer-events-none" {date} month={month.value}>
                                                                 <Calendar.Day />
                                                             </Calendar.Cell>
                                                         {/each}
