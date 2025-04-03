@@ -173,7 +173,9 @@
             const q = page.url.searchParams;
 
             if (c) q.set("c", c);
+
             if (u) q.set("u", u);
+            else q.delete("u");
 
             if (d) q.set("d", d);
             else q.delete("d");
