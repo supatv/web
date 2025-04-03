@@ -71,7 +71,7 @@
     let selectedIndex = $state(0); // Track selected item
 
     let availableDates: LogsDate[] = $state([]);
-    let calendarValue = $state<DateValue>();
+    let calendarDate = $state<DateValue>();
     let dateValue = $state("");
 
     const currentDate = today(getLocalTimeZone());
@@ -80,38 +80,60 @@
         month: "long",
     });
 
-    const monthOptions = Array.from({ length: 12 }, (_, i) => {
-        const month = currentDate.set({ month: i + 1 });
-        return {
-            value: month.month,
-            label: `${String(month.month).padStart(2, "0")} (${monthFmt.format(month.toDate(getLocalTimeZone()))})`,
-        };
-    });
-
-    const yearOptions = $derived(
-        Array.from(
-            {
-                length: new Date().getFullYear() - Number(availableDates.slice(-1)[0]?.year ?? 0) + 1,
+    const availableYears = $derived(new Set(availableDates.map((date) => date.year)));
+    const availableMonthsByYear = $derived(
+        availableDates.reduce(
+            (acc, date) => {
+                if (!acc[date.year]) {
+                    acc[date.year] = new Set();
+                }
+                acc[date.year].add(date.month);
+                return acc;
             },
-            (_, i) => ({
-                label: String(Number(availableDates.slice(-1)[0]?.year ?? 0) + i),
-                value: Number(availableDates.slice(-1)[0]?.year ?? 0) + i,
-            }),
+            {} as Record<string, Set<string>>,
         ),
     );
 
-    const defaultYear = $derived(calendarValue ? { value: calendarValue.year, label: String(calendarValue.year) } : undefined);
+    const monthOptions = $derived(
+        calendarDate
+            ? Array.from(availableMonthsByYear[calendarDate.year] || [])
+                  .map((month) => {
+                      const monthNum = parseInt(month);
+                      const date = currentDate.set({ month: monthNum });
+                      return {
+                          value: monthNum,
+                          label: `${String(monthNum).padStart(2, "0")} (${monthFmt.format(date.toDate(getLocalTimeZone()))})`,
+                      };
+                  })
+                  .sort((a, b) => a.value - b.value)
+            : [],
+    );
+
+    const yearOptions = $derived(
+        Array.from(availableYears)
+            .map((year) => ({
+                label: year,
+                value: parseInt(year),
+            }))
+            .sort((a, b) => a.value - b.value),
+    );
+
+    const defaultYear = $derived(calendarDate ? { value: calendarDate.year, label: String(calendarDate.year) } : undefined);
 
     const defaultMonth = $derived(
-        calendarValue
+        calendarDate
             ? {
-                  value: calendarValue.month,
-                  label: monthFmt.format(calendarValue.toDate(getLocalTimeZone())),
+                  value: calendarDate.month,
+                  label: monthFmt.format(calendarDate.toDate(getLocalTimeZone())),
               }
             : undefined,
     );
 
     const monthLabel = $derived(monthOptions.find((m) => m.value === defaultMonth?.value)?.label ?? "Select a month");
+
+    const isDateAvailable = (date: DateValue) => {
+        return availableDates.some((d) => d.year === String(date.year) && d.month === String(date.month) && (!d.day || d.day === String(date.day)));
+    };
 
     const loadChannels = async () => {
         error = null;
@@ -345,15 +367,15 @@
     $effect(() => {
         if (dateValue) {
             const [year, month, day] = dateValue.split("-");
-            calendarValue = new CalendarDate(parseInt(year), parseInt(month), parseInt(day));
+            calendarDate = new CalendarDate(parseInt(year), parseInt(month), parseInt(day));
         }
     });
 
     $effect(() => {
-        if (calendarValue) {
-            const year = calendarValue.year;
-            const month = String(calendarValue.month).padStart(2, "0");
-            const day = calendarValue.day ? String(calendarValue.day).padStart(2, "0") : undefined;
+        if (calendarDate) {
+            const year = calendarDate.year;
+            const month = String(calendarDate.month).padStart(2, "0");
+            const day = calendarDate.day ? String(calendarDate.day).padStart(2, "0") : undefined;
             dateValue = `${year}-${month}${day ? `-${day}` : ""}`;
         }
     });
@@ -590,10 +612,10 @@
                             type="single"
                             weekdayFormat="short"
                             class={cn("rounded-md border p-3")}
-                            bind:value={calendarValue}
-                            bind:placeholder={calendarValue}
-                            minValue={new CalendarDate(parseInt(availableDates.slice(-1)[0].year), parseInt(availableDates.slice(-1)[0].month), parseInt(availableDates.slice(-1)[0].day || "1"))}
-                            maxValue={currentDate}
+                            isDateDisabled={(date) => !isDateAvailable(date)}
+                            isDateUnavailable={(date) => !isDateAvailable(date)}
+                            bind:value={calendarDate}
+                            bind:placeholder={calendarDate}
                         >
                             {#snippet children({ months, weekdays })}
                                 <Calendar.Header class="flex w-full items-center justify-between gap-2">
@@ -601,9 +623,9 @@
                                         type="single"
                                         value={`${defaultYear?.value}`}
                                         onValueChange={(v) => {
-                                            if (!v || !calendarValue) return;
-                                            if (v === `${calendarValue?.year}`) return;
-                                            calendarValue = calendarValue.set({ year: Number.parseInt(v) });
+                                            if (!v || !calendarDate) return;
+                                            if (v === `${calendarDate?.year}`) return;
+                                            calendarDate = calendarDate.set({ year: Number.parseInt(v) });
                                         }}
                                     >
                                         <Select.Trigger aria-label="Select year" class="h-8 w-[40%]">
@@ -619,9 +641,9 @@
                                         type="single"
                                         value={`${defaultMonth?.value}`}
                                         onValueChange={(v) => {
-                                            if (!calendarValue) return;
-                                            if (v === `${calendarValue.month}`) return;
-                                            calendarValue = calendarValue.set({ month: Number.parseInt(v) });
+                                            if (!calendarDate) return;
+                                            if (v === `${calendarDate.month}`) return;
+                                            calendarDate = calendarDate.set({ month: Number.parseInt(v) });
                                         }}
                                     >
                                         <Select.Trigger aria-label="Select month" class="h-8 w-[60%]">
@@ -650,7 +672,7 @@
                                                 {#each month.weeks as weekDates (weekDates)}
                                                     <Calendar.GridRow class="mt-2 w-full">
                                                         {#each weekDates as date (date)}
-                                                            <Calendar.Cell class="select-none [&[data-selected]]:pointer-events-none" {date} month={month.value}>
+                                                            <Calendar.Cell class="select-none [&[data-selected]]:pointer-events-none [&[data-disabled]]:pointer-events-none" {date} month={month.value}>
                                                                 <Calendar.Day />
                                                             </Calendar.Cell>
                                                         {/each}
