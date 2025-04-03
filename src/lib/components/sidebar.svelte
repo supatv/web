@@ -116,7 +116,7 @@
                         <Sidebar.MenuButton>
                             {#snippet child({ props })}
                                 <a href="https://logs.zonian.dev/status" target="_blank" {...props}>
-                                    <img alt="Best Logs" src={bestlogsLogo} class="size-4" />
+                                    <img alt="" src={bestlogsLogo} class="size-4" />
                                     <span>Best Logs</span>
                                     <ExternalLinkIcon class="ml-auto" />
                                 </a>
@@ -128,7 +128,7 @@
                         <Sidebar.MenuButton>
                             {#snippet child({ props })}
                                 <a href="https://potat.app" target="_blank" {...props}>
-                                    <img alt="PotatBotat" src={potatLogo} class="size-4" />
+                                    <img alt="" src={potatLogo} class="size-4" />
                                     <span>PotatBotat</span>
                                     <ExternalLinkIcon class="ml-auto" />
                                 </a>

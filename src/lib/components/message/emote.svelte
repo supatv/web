@@ -5,7 +5,7 @@
     let { src, name } = $props();
 </script>
 
-<Image {src} alt={name} title={name} class="inline-block max-h-5 rounded-sm" />
+<Image {src} alt={name} title={name} class="inline-block max-h-5" />
 
 <!-- <Tooltip.Provider>
     <Tooltip.Root delayDuration={200} disableHoverableContent={true}>
