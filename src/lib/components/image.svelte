@@ -1,5 +1,6 @@
 <script lang="ts">
     import { onMount } from "svelte";
+    import { cn } from "$lib/utils";
 
     let props = $props();
 
@@ -16,4 +17,4 @@
     });
 </script>
 
-<img bind:this={ref} onload={onComplete} onerror={onComplete} {...props} class="text-center {props?.class}" />
+<img bind:this={ref} onload={onComplete} onerror={onComplete} {...props} class={cn("text-center", props.class)} />
