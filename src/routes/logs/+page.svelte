@@ -636,7 +636,7 @@
 						class={cn(
 							buttonVariants({
 								variant: "outline",
-								class: "flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+								class: "flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm tabular-nums hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
 							})
 						)}
 					>
@@ -647,7 +647,7 @@
 						<CalendarPrimitive.Root
 							type="single"
 							weekdayFormat="short"
-							class={cn("rounded-md border p-3")}
+							class="rounded-md border p-3 tabular-nums"
 							onPlaceholderChange={(date) => adjustDate(date)}
 							onValueChange={(date) => updateDateValue(date)}
 							isDateDisabled={(date) => !isDateAvailable(date)}
@@ -665,10 +665,10 @@
 											calendarDate = calendarDate.set({ year: Number.parseInt(v) });
 										}}
 									>
-										<Select.Trigger aria-label="Select year" class="h-8 max-w-24">
+										<Select.Trigger aria-label="Select year" class="h-8 max-w-24 tabular-nums">
 											{defaultYear?.label ?? "Year"}
 										</Select.Trigger>
-										<Select.Content class="max-h-[200px] overflow-y-auto">
+										<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
 											{#each yearOptions as { value, label } (value)}
 												<Select.Item value={`${value}`} {label} />
 											{/each}
@@ -683,10 +683,10 @@
 											calendarDate = calendarDate.set({ month: Number.parseInt(v) });
 										}}
 									>
-										<Select.Trigger aria-label="Select month" class="h-8 w-full break-keep">
+										<Select.Trigger aria-label="Select month" class="h-8 w-full break-keep tabular-nums">
 											{monthLabel}
 										</Select.Trigger>
-										<Select.Content class="max-h-[200px] overflow-y-auto">
+										<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
 											{#each monthOptions as { value, label } (value)}
 												<Select.Item value={`${value}`} {label} />
 											{/each}
@@ -730,7 +730,7 @@
 			{:else}
 				<div class="flex flex-row">
 					<Select.Root type="single" name="input-date" bind:value={dateValue}>
-						<Select.Trigger class="h-8 w-32">
+						<Select.Trigger class="h-8 w-32 tabular-nums">
 							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
 						</Select.Trigger>
 						<Select.Content>
