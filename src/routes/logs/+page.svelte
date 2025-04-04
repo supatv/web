@@ -129,7 +129,7 @@
             : undefined,
     );
 
-    const monthLabel = $derived(monthOptions.find((m) => m.value === defaultMonth?.value)?.label ?? "Select a month");
+    const monthLabel = $derived(monthOptions.find((m) => m.value === defaultMonth?.value)?.label ?? "Month");
 
     const isDateAvailable = (date: DateValue) => {
         return availableDates.some((d) => d.year === String(date.year) && d.month === String(date.month) && (!d.day || d.day === String(date.day)));
@@ -351,7 +351,8 @@
 
             const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`);
             if (!res.ok) {
-                error = `Error from server: ${res.status} ${res.statusText}`;
+                if (res.status === 404) error = "No logs found for this date";
+                else error = `Error from server: ${res.status} ${res.statusText}`;
                 loading = false;
                 throw error;
             }
@@ -364,6 +365,38 @@
         });
     });
 
+    const findClosestAvailableDate = (date: DateValue) => {
+        const year = String(date.year);
+        const month = String(date.month);
+
+        const availableDays = availableDates
+            .filter((d) => d.year === year && d.month === month)
+            .map((d) => parseInt(d.day || "1"))
+            .sort((a, b) => a - b);
+
+        if (availableDays.length > 0) {
+            const targetDay = date.day;
+            const closestDay = availableDays.reduce((prev, curr) => {
+                return Math.abs(curr - targetDay) < Math.abs(prev - targetDay) ? curr : prev;
+            });
+
+            return new CalendarDate(date.year, date.month, closestDay);
+        }
+
+        return null;
+    };
+
+    const adjustDate = (date: DateValue) => {
+        if (!isDateAvailable(date)) {
+            const closestDate = findClosestAvailableDate(date);
+            if (closestDate) {
+                updateDateValue(closestDate);
+            }
+        } else {
+            updateDateValue(date);
+        }
+    };
+
     $effect(() => {
         if (dateValue) {
             const [year, month, day] = dateValue.split("-");
@@ -371,14 +404,15 @@
         }
     });
 
-    $effect(() => {
-        if (calendarDate) {
+    const updateDateValue = (date: DateValue | undefined) => {
+        if (date) {
+            calendarDate = date;
             const year = calendarDate.year;
             const month = String(calendarDate.month).padStart(2, "0");
             const day = calendarDate.day ? String(calendarDate.day).padStart(2, "0") : undefined;
             dateValue = `${year}-${month}${day ? `-${day}` : ""}`;
         }
-    });
+    };
 
     $effect(() => {
         // fetch channel emotes
@@ -612,10 +646,11 @@
                             type="single"
                             weekdayFormat="short"
                             class={cn("rounded-md border p-3")}
+                            onPlaceholderChange={(date) => adjustDate(date)}
+                            onValueChange={(date) => updateDateValue(date)}
                             isDateDisabled={(date) => !isDateAvailable(date)}
                             isDateUnavailable={(date) => !isDateAvailable(date)}
                             bind:value={calendarDate}
-                            bind:placeholder={calendarDate}
                         >
                             {#snippet children({ months, weekdays })}
                                 <Calendar.Header class="flex w-full items-center justify-between gap-2">
@@ -629,7 +664,7 @@
                                         }}
                                     >
                                         <Select.Trigger aria-label="Select year" class="h-8 w-[40%]">
-                                            {defaultYear?.label ?? "Select year"}
+                                            {defaultYear?.label ?? "Year"}
                                         </Select.Trigger>
                                         <Select.Content class="max-h-[200px] overflow-y-auto">
                                             {#each yearOptions as { value, label } (value)}
@@ -672,7 +707,11 @@
                                                 {#each month.weeks as weekDates (weekDates)}
                                                     <Calendar.GridRow class="mt-2 w-full">
                                                         {#each weekDates as date (date)}
-                                                            <Calendar.Cell class="select-none [&[data-selected]]:pointer-events-none [&[data-disabled]]:pointer-events-none" {date} month={month.value}>
+                                                            <Calendar.Cell
+                                                                class="select-none [&[data-selected]]:pointer-events-none [&[data-disabled]]:pointer-events-none bg-opacity-10"
+                                                                {date}
+                                                                month={month.value}
+                                                            >
                                                                 <Calendar.Day />
                                                             </Calendar.Cell>
                                                         {/each}
