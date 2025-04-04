@@ -327,7 +327,7 @@
 
             const res = await fetch(`https://logs.zonian.dev/list?${parseChannelUser(channelName, userName, true)}`);
             if (!res.ok) {
-                if (res.status === 404) error = "No logs found for this channel and user";
+                if (res.status === 404) error = `No logs found for this channel ${userName ? "and user" : ""}`;
                 else error = `Error from server: ${res.status} ${res.statusText}`;
                 loading = false;
                 dateValue = "";
@@ -634,7 +634,7 @@
                         class={cn(
                             buttonVariants({
                                 variant: "outline",
-                                class: "hover:bg-transparent focus:ring-ring flex items-center justify-between rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-40 h-8",
+                                class: "hover:bg-transparent focus:ring-ring flex items-center justify-between rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-36 h-8",
                             }),
                         )}
                     >
@@ -663,7 +663,7 @@
                                             calendarDate = calendarDate.set({ year: Number.parseInt(v) });
                                         }}
                                     >
-                                        <Select.Trigger aria-label="Select year" class="h-8 w-[40%]">
+                                        <Select.Trigger aria-label="Select year" class="h-8 w-36">
                                             {defaultYear?.label ?? "Year"}
                                         </Select.Trigger>
                                         <Select.Content class="max-h-[200px] overflow-y-auto">
@@ -681,7 +681,7 @@
                                             calendarDate = calendarDate.set({ month: Number.parseInt(v) });
                                         }}
                                     >
-                                        <Select.Trigger aria-label="Select month" class="h-8 w-[60%]">
+                                        <Select.Trigger aria-label="Select month" class="h-8 w-full">
                                             {monthLabel}
                                         </Select.Trigger>
                                         <Select.Content class="max-h-[200px] overflow-y-auto">
@@ -728,7 +728,7 @@
             {:else}
                 <div class="flex flex-row">
                     <Select.Root type="single" name="input-date" bind:value={dateValue}>
-                        <Select.Trigger class="w-40 h-8">
+                        <Select.Trigger class="w-32 h-8">
                             {dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
                         </Select.Trigger>
                         <Select.Content>
