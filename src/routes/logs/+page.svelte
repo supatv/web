@@ -587,7 +587,9 @@
         <form class="flex relative gap-2 align-middle" onsubmit={formSubmit}>
             <div class="flex gap-2">
                 <div class="flex flex-col w-1/2 relative">
-                    <Label for="input-channel" class="text-base">Channel</Label>
+                    <Label for="input-channel" class="text-base">
+                        Channel<span class="text-red-500">*</span>
+                    </Label>
                     <Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} autofocus />
 
                     {#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
@@ -663,7 +665,7 @@
                                             calendarDate = calendarDate.set({ year: Number.parseInt(v) });
                                         }}
                                     >
-                                        <Select.Trigger aria-label="Select year" class="h-8 w-36">
+                                        <Select.Trigger aria-label="Select year" class="h-8 max-w-24">
                                             {defaultYear?.label ?? "Year"}
                                         </Select.Trigger>
                                         <Select.Content class="max-h-[200px] overflow-y-auto">
@@ -681,7 +683,7 @@
                                             calendarDate = calendarDate.set({ month: Number.parseInt(v) });
                                         }}
                                     >
-                                        <Select.Trigger aria-label="Select month" class="h-8 w-full">
+                                        <Select.Trigger aria-label="Select month" class="h-8 w-full break-keep">
                                             {monthLabel}
                                         </Select.Trigger>
                                         <Select.Content class="max-h-[200px] overflow-y-auto">
