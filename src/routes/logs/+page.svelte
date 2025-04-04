@@ -1,12 +1,17 @@
 <script lang="ts">
+    import { Calendar as CalendarPrimitive } from "bits-ui";
     import fuzzysort from "fuzzysort";
     import dayjs from "dayjs";
 
+    import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
     import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
-    import { Button } from "$lib/components/ui/button/index.js";
+    import { Skeleton } from "$lib/components/ui/skeleton/index.js";
     import { Input } from "$lib/components/ui/input/index.js";
     import { Label } from "$lib/components/ui/label/index.js";
-    import { Skeleton } from "$lib/components/ui/skeleton/index.js";
+    import { cn } from "$lib/utils.js";
+
+    import * as Calendar from "$lib/components/ui/calendar/index.js";
+    import * as Popover from "$lib/components/ui/popover/index.js";
     import * as Select from "$lib/components/ui/select/index.js";
     import * as Card from "$lib/components/ui/card/index.js";
 
@@ -21,15 +26,18 @@
     import { page } from "$app/state";
     import { goto } from "$app/navigation";
 
-    import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon } from "@lucide/svelte";
+    import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon } from "@lucide/svelte";
 
     import { dateFormat, type TitleContext } from "$lib/common";
+
+    import { CalendarDate, DateFormatter, getLocalTimeZone, today, type DateValue } from "@internationalized/date";
 
     import * as TwitchServices from "$lib/twitch/services/index.js";
 
     type LogsDate = {
         year: string;
         month: string;
+        day?: string;
     };
 
     type Message = {
@@ -61,6 +69,71 @@
     let channels: { name: string; userID: string }[] = $state([]);
     let channelTargets: Fuzzysort.Prepared[] = $state([]);
     let selectedIndex = $state(0); // Track selected item
+
+    let availableDates: LogsDate[] = $state([]);
+    let calendarDate = $state<DateValue>();
+    let dateValue = $state("");
+
+    const currentDate = today(getLocalTimeZone());
+
+    const monthFmt = new DateFormatter("en-US", {
+        month: "long",
+    });
+
+    const availableYears = $derived(new Set(availableDates.map((date) => date.year)));
+    const availableMonthsByYear = $derived(
+        availableDates.reduce(
+            (acc, date) => {
+                if (!acc[date.year]) {
+                    acc[date.year] = new Set();
+                }
+                acc[date.year].add(date.month);
+                return acc;
+            },
+            {} as Record<string, Set<string>>,
+        ),
+    );
+
+    const monthOptions = $derived(
+        calendarDate
+            ? Array.from(availableMonthsByYear[calendarDate.year] || [])
+                  .map((month) => {
+                      const monthNum = parseInt(month);
+                      const date = currentDate.set({ month: monthNum });
+                      return {
+                          value: monthNum,
+                          label: `${String(monthNum).padStart(2, "0")} (${monthFmt.format(date.toDate(getLocalTimeZone()))})`,
+                      };
+                  })
+                  .sort((a, b) => a.value - b.value)
+            : [],
+    );
+
+    const yearOptions = $derived(
+        Array.from(availableYears)
+            .map((year) => ({
+                label: year,
+                value: parseInt(year),
+            }))
+            .sort((a, b) => a.value - b.value),
+    );
+
+    const defaultYear = $derived(calendarDate ? { value: calendarDate.year, label: String(calendarDate.year) } : undefined);
+
+    const defaultMonth = $derived(
+        calendarDate
+            ? {
+                  value: calendarDate.month,
+                  label: monthFmt.format(calendarDate.toDate(getLocalTimeZone())),
+              }
+            : undefined,
+    );
+
+    const monthLabel = $derived(monthOptions.find((m) => m.value === defaultMonth?.value)?.label ?? "Month");
+
+    const isDateAvailable = (date: DateValue) => {
+        return availableDates.some((d) => d.year === String(date.year) && d.month === String(date.month) && (!d.day || d.day === String(date.day)));
+    };
 
     const loadChannels = async () => {
         error = null;
@@ -122,7 +195,9 @@
             const q = page.url.searchParams;
 
             if (c) q.set("c", c);
+
             if (u) q.set("u", u);
+            else q.delete("u");
 
             if (d) q.set("d", d);
             else q.delete("d");
@@ -177,8 +252,7 @@
 
     let chatLogs: Message[] = $state([]);
 
-    let availableDates: LogsDate[] = $state([]);
-    let dateValue = $state("");
+    let contentRef = $state<HTMLElement | null>(null);
 
     let searchValue = $state("");
 
@@ -210,14 +284,14 @@
 
     // const dateContent = $derived(availableDates[Number(dateValue) ?? 0]);
     const dateContent = $derived.by(() => {
-        const [year, month] = dateValue.split("-");
+        const [year, month, day] = String(dateValue).split("-");
         if (!year || !month) {
             const firstDate = availableDates[0];
             if (!firstDate) return;
-            untrack(() => (dateValue = `${firstDate.year}-${firstDate.month.padStart(2, "0")}`));
+            untrack(() => (dateValue = `${firstDate.year}-${firstDate.month.padStart(2, "0")}${firstDate.day ? `-${firstDate.day.padStart(2, "0")}` : ""}`));
             return firstDate;
         }
-        return { year, month };
+        return { year, month, day };
     });
 
     const parseChannelUser = (channel: string, user: string, params: boolean) => {
@@ -239,13 +313,13 @@
         channel = channel.trim();
         user = user.trim();
 
-        if (params) return `${channelType}=${encodeURIComponent(channel)}&${userType}=${encodeURIComponent(user)}`;
-        else return `${channelType}/${encodeURIComponent(channel)}/${userType}/${encodeURIComponent(user)}`;
+        if (params) return `${channelType}=${encodeURIComponent(channel)}${user ? `&${userType}=${encodeURIComponent(user)}` : ""}`;
+        else return `${channelType}/${encodeURIComponent(channel)}${user ? `/${userType}/${encodeURIComponent(user)}` : ""}`;
     };
 
     $effect(() => {
         // fetch available dates
-        if (!channelName || !userName) return;
+        if (!channelName) return;
         untrack(async () => {
             availableDates = [];
             chatLogs = [];
@@ -253,7 +327,7 @@
 
             const res = await fetch(`https://logs.zonian.dev/list?${parseChannelUser(channelName, userName, true)}`);
             if (!res.ok) {
-                if (res.status === 404) error = "No logs found for this channel and user";
+                if (res.status === 404) error = `No logs found for this channel ${userName ? "and user" : ""}`;
                 else error = `Error from server: ${res.status} ${res.statusText}`;
                 loading = false;
                 dateValue = "";
@@ -275,9 +349,10 @@
             error = null;
             loading = true;
 
-            const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}?jsonBasic=1`);
+            const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`);
             if (!res.ok) {
-                error = `Error from server: ${res.status} ${res.statusText}`;
+                if (res.status === 404) error = "No logs found for this date";
+                else error = `Error from server: ${res.status} ${res.statusText}`;
                 loading = false;
                 throw error;
             }
@@ -289,6 +364,55 @@
             channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
         });
     });
+
+    const findClosestAvailableDate = (date: DateValue) => {
+        const year = String(date.year);
+        const month = String(date.month);
+
+        const availableDays = availableDates
+            .filter((d) => d.year === year && d.month === month)
+            .map((d) => parseInt(d.day || "1"))
+            .sort((a, b) => a - b);
+
+        if (availableDays.length > 0) {
+            const targetDay = date.day;
+            const closestDay = availableDays.reduce((prev, curr) => {
+                return Math.abs(curr - targetDay) < Math.abs(prev - targetDay) ? curr : prev;
+            });
+
+            return new CalendarDate(date.year, date.month, closestDay);
+        }
+
+        return null;
+    };
+
+    const adjustDate = (date: DateValue) => {
+        if (!isDateAvailable(date)) {
+            const closestDate = findClosestAvailableDate(date);
+            if (closestDate) {
+                updateDateValue(closestDate);
+            }
+        } else {
+            updateDateValue(date);
+        }
+    };
+
+    $effect(() => {
+        if (dateValue) {
+            const [year, month, day] = dateValue.split("-");
+            calendarDate = new CalendarDate(parseInt(year), parseInt(month), parseInt(day));
+        }
+    });
+
+    const updateDateValue = (date: DateValue | undefined) => {
+        if (date) {
+            calendarDate = date;
+            const year = calendarDate.year;
+            const month = String(calendarDate.month).padStart(2, "0");
+            const day = calendarDate.day ? String(calendarDate.day).padStart(2, "0") : undefined;
+            dateValue = `${year}-${month}${day ? `-${day}` : ""}`;
+        }
+    };
 
     $effect(() => {
         // fetch channel emotes
@@ -326,7 +450,7 @@
 
     const formSubmit = async (event: SubmitEvent) => {
         event.preventDefault();
-        if (loading || !inputChannelName || !inputUserName) return;
+        if (loading || !inputChannelName) return;
 
         // force reload
         channelName = "";
@@ -504,24 +628,123 @@
 
     <div class="flex flex-row flex-wrap-reverse gap-1 justify-between mb-1">
         {#if dateContent}
-            <div class="flex flex-row">
-                <Select.Root type="single" name="input-date" bind:value={dateValue}>
-                    <Select.Trigger class="w-28 h-8">
-                        {dateContent.year}-{String(dateContent.month).padStart(2, "0")}
-                    </Select.Trigger>
-                    <Select.Content>
-                        <Select.Group>
-                            {#each availableDates as date, index (index)}
-                                {#if index > 0 && date.year !== availableDates[index - 1].year}
-                                    <Select.Separator class="mx-0" />
-                                {/if}
-                                {@const str = `${date.year}-${date.month.padStart(2, "0")}`}
-                                <Select.Item class="tabular-nums p-1 m-0 justify-center" value={str} label={str} />
-                            {/each}
-                        </Select.Group>
-                    </Select.Content>
-                </Select.Root>
-            </div>
+            {#if dateContent.day}
+                <Popover.Root>
+                    <Popover.Trigger
+                        class={cn(
+                            buttonVariants({
+                                variant: "outline",
+                                class: "hover:bg-transparent focus:ring-ring flex items-center justify-between rounded-md border px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 w-36 h-8",
+                            }),
+                        )}
+                    >
+                        {dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
+                        <CalendarIcon class="opacity-50" />
+                    </Popover.Trigger>
+                    <Popover.Content bind:ref={contentRef} class="w-auto p-0" align="start">
+                        <CalendarPrimitive.Root
+                            type="single"
+                            weekdayFormat="short"
+                            class={cn("rounded-md border p-3")}
+                            onPlaceholderChange={(date) => adjustDate(date)}
+                            onValueChange={(date) => updateDateValue(date)}
+                            isDateDisabled={(date) => !isDateAvailable(date)}
+                            isDateUnavailable={(date) => !isDateAvailable(date)}
+                            bind:value={calendarDate}
+                        >
+                            {#snippet children({ months, weekdays })}
+                                <Calendar.Header class="flex w-full items-center justify-between gap-2">
+                                    <Select.Root
+                                        type="single"
+                                        value={`${defaultYear?.value}`}
+                                        onValueChange={(v) => {
+                                            if (!v || !calendarDate) return;
+                                            if (v === `${calendarDate?.year}`) return;
+                                            calendarDate = calendarDate.set({ year: Number.parseInt(v) });
+                                        }}
+                                    >
+                                        <Select.Trigger aria-label="Select year" class="h-8 w-36">
+                                            {defaultYear?.label ?? "Year"}
+                                        </Select.Trigger>
+                                        <Select.Content class="max-h-[200px] overflow-y-auto">
+                                            {#each yearOptions as { value, label } (value)}
+                                                <Select.Item value={`${value}`} {label} />
+                                            {/each}
+                                        </Select.Content>
+                                    </Select.Root>
+                                    <Select.Root
+                                        type="single"
+                                        value={`${defaultMonth?.value}`}
+                                        onValueChange={(v) => {
+                                            if (!calendarDate) return;
+                                            if (v === `${calendarDate.month}`) return;
+                                            calendarDate = calendarDate.set({ month: Number.parseInt(v) });
+                                        }}
+                                    >
+                                        <Select.Trigger aria-label="Select month" class="h-8 w-full">
+                                            {monthLabel}
+                                        </Select.Trigger>
+                                        <Select.Content class="max-h-[200px] overflow-y-auto">
+                                            {#each monthOptions as { value, label } (value)}
+                                                <Select.Item value={`${value}`} {label} />
+                                            {/each}
+                                        </Select.Content>
+                                    </Select.Root>
+                                </Calendar.Header>
+                                <Calendar.Months>
+                                    {#each months as month (month)}
+                                        <Calendar.Grid>
+                                            <Calendar.GridHead>
+                                                <Calendar.GridRow class="flex">
+                                                    {#each weekdays as weekday (weekday)}
+                                                        <Calendar.HeadCell>
+                                                            {weekday.slice(0, 2)}
+                                                        </Calendar.HeadCell>
+                                                    {/each}
+                                                </Calendar.GridRow>
+                                            </Calendar.GridHead>
+                                            <Calendar.GridBody>
+                                                {#each month.weeks as weekDates (weekDates)}
+                                                    <Calendar.GridRow class="mt-2 w-full">
+                                                        {#each weekDates as date (date)}
+                                                            <Calendar.Cell
+                                                                class="select-none [&[data-selected]]:pointer-events-none [&[data-disabled]]:pointer-events-none bg-opacity-10"
+                                                                {date}
+                                                                month={month.value}
+                                                            >
+                                                                <Calendar.Day />
+                                                            </Calendar.Cell>
+                                                        {/each}
+                                                    </Calendar.GridRow>
+                                                {/each}
+                                            </Calendar.GridBody>
+                                        </Calendar.Grid>
+                                    {/each}
+                                </Calendar.Months>
+                            {/snippet}
+                        </CalendarPrimitive.Root>
+                    </Popover.Content>
+                </Popover.Root>
+            {:else}
+                <div class="flex flex-row">
+                    <Select.Root type="single" name="input-date" bind:value={dateValue}>
+                        <Select.Trigger class="w-32 h-8">
+                            {dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
+                        </Select.Trigger>
+                        <Select.Content>
+                            <Select.Group>
+                                {#each availableDates as date, index (index)}
+                                    {#if index > 0 && date.year !== availableDates[index - 1].year}
+                                        <Select.Separator class="mx-0" />
+                                    {/if}
+                                    {@const str = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`}
+                                    <Select.Item class="tabular-nums p-1 m-0 justify-center" value={str} label={str} />
+                                {/each}
+                            </Select.Group>
+                        </Select.Content>
+                    </Select.Root>
+                </div>
+            {/if}
             {#if chatLogs.length}
                 <div class="flex flex-1 gap-1">
                     <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
@@ -537,7 +760,7 @@
                         size="icon"
                         class="size-8 border"
                         target="_blank"
-                        href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}"
+                        href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}{dateContent.day ? `/${dateContent.day}` : ''}"
                     >
                         <FileTextIcon />
                     </Button>
