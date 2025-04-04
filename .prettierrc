@@ -1,0 +1,33 @@
+{
+	"endOfLine": "crlf",
+	"useTabs": true,
+	"tabWidth": 4,
+	"printWidth": 200,
+	"trailingComma": "es5",
+	"singleQuote": false,
+	"plugins": ["prettier-plugin-svelte", "prettier-plugin-tailwindcss"],
+	"overrides": [
+		{
+			"files": "*.svelte",
+			"options": {
+				"parser": "svelte"
+			}
+		},
+		{
+			"files": "*.md",
+			"options": {
+				"tabWidth": 2,
+				"useTabs": false,
+				"printWidth": 79
+			}
+		},
+		{
+			"files": "*.yml",
+			"options": {
+				"tabWidth": 2,
+				"useTabs": false
+			}
+		}
+	],
+	"tailwindFunctions": ["clsx", "cn", "tv"]
+}

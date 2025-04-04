@@ -1,5 +1,5 @@
 <script>
-    let { text, href } = $props();
+	let { text, href } = $props();
 </script>
 
-<a {href} target="_blank" class="dark:text-primary text-blue-600 hover:underline" rel="noopener noreferrer">{text}</a>
+<a {href} target="_blank" class="text-blue-600 hover:underline dark:text-primary" rel="noopener noreferrer">{text}</a>

@@ -1,8 +1,8 @@
 <script>
-    import Image from "../image.svelte";
+	import Image from "../image.svelte";
 
-    // import * as Tooltip from "$lib/components/ui/tooltip";
-    let { src, name } = $props();
+	// import * as Tooltip from "$lib/components/ui/tooltip";
+	let { src, name } = $props();
 </script>
 
 <Image {src} alt={name} title={name} class="inline-block max-h-5" />
