@@ -20,6 +20,7 @@
 	import TextFragment from "$lib/components/message/text-fragment.svelte";
 	import Emote from "$lib/components/message/emote.svelte";
 	import Link from "$lib/components/message/link.svelte";
+	import Badge from "$lib/components/message/badge.svelte";
 
 	import { getContext, onMount, tick, untrack, type Component } from "svelte";
 	import { browser } from "$app/environment";
@@ -182,9 +183,16 @@
 	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true" ? true : false);
 
 	let channelId = $state("");
-	let emoteUpdates = $state(0);
+
+	// Emotes
 	const channelEmotes = new Map();
 	const globalEmotes = new Map();
+	let emoteUpdates = $state(0);
+
+	// Badges
+	const channelBadges = new Map();
+	const globalBadges = new Map();
+	let badgeUpdates = $state(0);
 
 	$effect(() => {
 		const c = channelName;
@@ -362,8 +370,76 @@
 			loading = false;
 
 			channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
+
+			if (channelId) {
+				fetchBadges(channelId);
+			}
 		});
 	});
+
+	const fetchBadges = async (channelId: string) => {
+		channelBadges.clear();
+		globalBadges.clear();
+
+		try {
+			const [channelBadgesList, globalBadgesList] = await Promise.all([TwitchServices.Twitch.getChannelBadges(channelId), TwitchServices.Twitch.getGlobalBadges()]);
+
+			channelBadgesList.forEach((badge) => {
+				badge.versions.forEach((version) => {
+					channelBadges.set(`${badge.set_id}/${version.id}`, {
+						url: version.image_url_1x,
+						title: version.title,
+					});
+				});
+			});
+
+			globalBadgesList.forEach((badge) => {
+				badge.versions.forEach((version) => {
+					globalBadges.set(`${badge.set_id}/${version.id}`, {
+						url: version.image_url_1x,
+						title: version.title,
+					});
+				});
+			});
+
+			badgeUpdates++;
+		} catch (err) {
+			console.error("Error fetching badges:", err);
+		}
+	};
+
+	const getBadges = (msg: Message) => {
+		const badges: { src: string; title: string; alt: string }[] = [];
+
+		if (msg.tags["badges"]) {
+			const badgeList = msg.tags["badges"].split(",");
+			for (const badge of badgeList) {
+				const [name, version] = badge.split("/");
+				const key = `${name}/${version}`;
+
+				const channelBadge = channelBadges.get(key);
+				if (channelBadge) {
+					badges.push({
+						src: channelBadge.url,
+						title: channelBadge.title,
+						alt: channelBadge.title,
+					});
+					continue;
+				}
+
+				const globalBadge = globalBadges.get(key);
+				if (globalBadge) {
+					badges.push({
+						src: globalBadge.url,
+						title: globalBadge.title,
+						alt: globalBadge.title,
+					});
+				}
+			}
+		}
+
+		return badges;
+	};
 
 	const findClosestAvailableDate = (date: DateValue) => {
 		const year = String(date.year);
@@ -780,6 +856,13 @@
 					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateFormat)}</span>
+						<span class="self-center">
+							{#key badgeUpdates}
+								{#each getBadges(msg) as badge}
+									<Badge src={badge.src} title={badge.title} alt={badge.alt} />
+								{/each}
+							{/key}
+						</span>
 						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s 70%)" class="font-bold">{msg.displayName}:</span>
 						<span class:text-neutral-500={msg.tags["target-user-id"]}>
 							{#key emoteUpdates}
