@@ -858,7 +858,7 @@
 						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateFormat)}</span>
 						<span class="flex items-center">
 							{#key badgeUpdates}
-								{#each getBadges(msg) as badge}
+								{#each getBadges(msg) as badge, index (index)}
 									<Badge src={badge.src} title={badge.title} alt={badge.alt} />
 								{/each}
 							{/key}
