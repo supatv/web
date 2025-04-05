@@ -370,18 +370,17 @@
 			loading = false;
 
 			channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
-
-			if (channelId) {
-				fetchBadges(channelId);
-			}
 		});
 	});
 
-	const fetchBadges = async (channelId: string) => {
+	$effect(() => {
+		// fetch badges
+		if (!channelId) return;
+
 		channelBadges.clear();
 		globalBadges.clear();
 
-		try {
+		untrack(async () => {
 			const [channelBadgesList, globalBadgesList] = await Promise.all([TwitchServices.Twitch.getChannelBadges(channelId), TwitchServices.Twitch.getGlobalBadges()]);
 
 			channelBadgesList.forEach((badge) => {
@@ -403,38 +402,36 @@
 			});
 
 			badgeUpdates++;
-		} catch (err) {
-			console.error("Error fetching badges:", err);
-		}
-	};
+		});
+	});
 
 	const getBadges = (msg: Message) => {
-		const badges: { src: string; title: string; alt: string }[] = [];
+		const badges: { id: string; src: string; title: string; alt: string }[] = [];
 
-		if (msg.tags["badges"]) {
-			const badgeList = msg.tags["badges"].split(",");
-			for (const badge of badgeList) {
-				const [name, version] = badge.split("/");
-				const key = `${name}/${version}`;
+		const badgeList = msg.tags["badges"].split(",");
+		for (const badge of badgeList) {
+			const [id, version] = badge.split("/");
+			const key = `${id}/${version}`;
 
-				const channelBadge = channelBadges.get(key);
-				if (channelBadge) {
-					badges.push({
-						src: channelBadge.url,
-						title: channelBadge.title,
-						alt: channelBadge.title,
-					});
-					continue;
-				}
+			const channelBadge = channelBadges.get(key);
+			if (channelBadge) {
+				badges.push({
+					id,
+					src: channelBadge.url,
+					title: channelBadge.title,
+					alt: channelBadge.title,
+				});
+				continue;
+			}
 
-				const globalBadge = globalBadges.get(key);
-				if (globalBadge) {
-					badges.push({
-						src: globalBadge.url,
-						title: globalBadge.title,
-						alt: globalBadge.title,
-					});
-				}
+			const globalBadge = globalBadges.get(key);
+			if (globalBadge) {
+				badges.push({
+					id,
+					src: globalBadge.url,
+					title: globalBadge.title,
+					alt: globalBadge.title,
+				});
 			}
 		}
 
@@ -853,16 +850,18 @@
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
 			<Card.Root class="h-full w-full flex-col p-3 leading-none">
 				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} bind:scrollOffset>
-					<div class="flex h-5 flex-row items-center gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
+					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateFormat)}</span>
-						<span class="flex items-center gap-x-0.5">
-							{#key badgeUpdates}
-								{#each getBadges(msg) as badge, index (index)}
-									<Badge src={badge.src} title={badge.title} alt={badge.alt} />
-								{/each}
-							{/key}
-						</span>
+						{#if msg.tags["badges"]}
+							<div class="flex gap-x-0.5">
+								{#key badgeUpdates}
+									{#each getBadges(msg) as badge (badge.id)}
+										<Badge src={badge.src} title={badge.title} alt="" />
+									{/each}
+								{/key}
+							</div>
+						{/if}
 						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s 70%)" class="font-bold">{msg.displayName}:</span>
 						<span class:text-neutral-500={msg.tags["target-user-id"]}>
 							{#key emoteUpdates}
