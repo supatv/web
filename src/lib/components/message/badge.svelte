@@ -4,4 +4,4 @@
 	let { src, title = "", alt = "" } = $props();
 </script>
 
-<Image {src} {title} {alt} class="mr-0.5 inline-block max-h-4" />
+<Image {src} {title} {alt} class="mr-0.5 inline-block min-w-4 max-h-4" />
