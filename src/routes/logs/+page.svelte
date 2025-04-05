@@ -386,6 +386,7 @@
 				badge.versions.forEach((version) => {
 					channelBadges.set(`${badge.set_id}/${version.id}`, {
 						url: version.image_url_1x,
+						preview: version.image_url_4x,
 						title: version.title,
 					});
 				});
@@ -396,7 +397,7 @@
 	});
 
 	const getBadges = (msg: Message) => {
-		const badges: { id: string; src: string; title: string; alt: string }[] = [];
+		const badges: { id: string; src: string; preview: string; title: string; alt: string }[] = [];
 
 		const badgeList = msg.tags["badges"].split(",");
 		for (const badge of badgeList) {
@@ -408,6 +409,7 @@
 				badges.push({
 					id,
 					src: channelBadge.url,
+					preview: channelBadge.preview,
 					title: channelBadge.title,
 					alt: channelBadge.title,
 				});
@@ -419,6 +421,7 @@
 				badges.push({
 					id,
 					src: globalBadge.url,
+					preview: globalBadge.preview,
 					title: globalBadge.title,
 					alt: globalBadge.title,
 				});
@@ -495,16 +498,33 @@
 				])
 			).map((p) => (p.status === "fulfilled" ? p.value : []));
 
+			const mode = "Channel";
+
 			stvEmotes.forEach((emote) => {
-				channelEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
+				channelEmotes.set(emote.name, {
+					mode,
+					src: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
+					preview: `https://cdn.7tv.app/emote/${emote.id}/4x.webp`,
+					provider: "7TV",
+				});
 			});
 
 			bttvEmotes.forEach((emote) => {
-				channelEmotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`);
+				channelEmotes.set(emote.code, {
+					mode,
+					src: `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`,
+					preview: `https://cdn.betterttv.net/emote/${emote.id}/3x.webp`,
+					provider: "BetterTTV",
+				});
 			});
 
 			ffzEmotes.forEach((emote) => {
-				channelEmotes.set(emote.name, `https://cdn.frankerfacez.com/emote/${emote.id}/1`);
+				channelEmotes.set(emote.name, {
+					mode,
+					src: `https://cdn.frankerfacez.com/emote/${emote.id}/1`,
+					preview: `https://cdn.frankerfacez.com/emote/${emote.id}/4`,
+					provider: "FrankerFaceZ",
+				});
 			});
 
 			emoteUpdates++;
@@ -542,6 +562,7 @@
 			badge.versions.forEach((version) => {
 				globalBadges.set(`${badge.set_id}/${version.id}`, {
 					url: version.image_url_1x,
+					preview: version.image_url_4x,
 					title: version.title,
 				});
 			});
@@ -555,16 +576,33 @@
 			await Promise.allSettled([TwitchServices.SevenTV.getGlobalEmotes(), TwitchServices.BetterTTV.getGlobalEmotes(), TwitchServices.FrankerFaceZ.getGlobalEmotes()])
 		).map((p) => (p.status === "fulfilled" ? p.value : []));
 
+		const mode = "Global";
+
 		stvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
+			globalEmotes.set(emote.name, {
+				mode,
+				src: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
+				preview: `https://cdn.7tv.app/emote/${emote.id}/4x.webp`,
+				provider: "7TV",
+			});
 		});
 
 		bttvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`);
+			globalEmotes.set(emote.code, {
+				mode,
+				src: `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`,
+				preview: `https://cdn.betterttv.net/emote/${emote.id}/3x.webp`,
+				provider: "BetterTTV",
+			});
 		});
 
 		ffzEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name, `https://cdn.frankerfacez.com/emote/${emote.id}/1`);
+			globalEmotes.set(emote.name, {
+				mode,
+				src: `https://cdn.frankerfacez.com/emote/${emote.id}/1`,
+				preview: `https://cdn.frankerfacez.com/emote/${emote.id}/4`,
+				provider: "FrankerFaceZ",
+			});
 		});
 
 		emoteUpdates++;
@@ -599,6 +637,8 @@
 					props: {
 						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
 						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
+						preview: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/3.0`,
+						provider: "Twitch",
 					},
 				});
 				i = nextEmote.pos[1];
@@ -624,9 +664,9 @@
 	};
 
 	const processWord = (word: string, components: ChatComponents) => {
-		const emoteUrl = channelEmotes.get(word) || globalEmotes.get(word);
-		if (emoteUrl) {
-			components.push({ type: Emote, props: { name: word, src: emoteUrl } });
+		const emoteData = channelEmotes.get(word) || globalEmotes.get(word);
+		if (emoteData) {
+			components.push({ type: Emote, props: { ...emoteData, name: word } });
 			return;
 		}
 
@@ -862,7 +902,7 @@
 							<div class="flex gap-x-0.5">
 								{#key badgeUpdates}
 									{#each getBadges(msg) as badge (badge.id)}
-										<Badge src={badge.src} title={badge.title} alt="" />
+										<Badge src={badge.src} preview={badge.preview} title={badge.title} alt="" />
 									{/each}
 								{/key}
 							</div>
