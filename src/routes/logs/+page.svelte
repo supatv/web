@@ -154,6 +154,7 @@
 
 	onMount(() => {
 		loadChannels();
+		fetchGlobalBadges();
 		fetchGlobalEmotes();
 
 		const q = page.url.searchParams;
@@ -378,23 +379,12 @@
 		if (!channelId) return;
 
 		channelBadges.clear();
-		globalBadges.clear();
-
 		untrack(async () => {
-			const [channelBadgesList, globalBadgesList] = await Promise.all([TwitchServices.Twitch.getChannelBadges(channelId), TwitchServices.Twitch.getGlobalBadges()]);
+			const channelBadgesList = await TwitchServices.IVR.getChannelBadges(channelId);
 
 			channelBadgesList.forEach((badge) => {
 				badge.versions.forEach((version) => {
 					channelBadges.set(`${badge.set_id}/${version.id}`, {
-						url: version.image_url_1x,
-						title: version.title,
-					});
-				});
-			});
-
-			globalBadgesList.forEach((badge) => {
-				badge.versions.forEach((version) => {
-					globalBadges.set(`${badge.set_id}/${version.id}`, {
 						url: version.image_url_1x,
 						title: version.title,
 					});
@@ -543,6 +533,21 @@
 	const scrollFromBottomToggle = () => {
 		scrollFromBottom = !scrollFromBottom;
 		window.localStorage.setItem("logs-bottom-scroll-state", scrollFromBottom.toString());
+	};
+
+	const fetchGlobalBadges = async () => {
+		const globalBadgesList = await TwitchServices.IVR.getGlobalBadges();
+
+		globalBadgesList.forEach((badge) => {
+			badge.versions.forEach((version) => {
+				globalBadges.set(`${badge.set_id}/${version.id}`, {
+					url: version.image_url_1x,
+					title: version.title,
+				});
+			});
+		});
+
+		badgeUpdates++;
 	};
 
 	const fetchGlobalEmotes = async () => {
