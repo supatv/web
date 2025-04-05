@@ -856,7 +856,7 @@
 					<div class="flex h-5 flex-row items-center gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateFormat)}</span>
-						<span class="flex items-center">
+						<span class="flex items-center gap-x-0.5">
 							{#key badgeUpdates}
 								{#each getBadges(msg) as badge, index (index)}
 									<Badge src={badge.src} title={badge.title} alt={badge.alt} />
