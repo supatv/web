@@ -2,6 +2,7 @@
 	import { Calendar as CalendarPrimitive } from "bits-ui";
 	import fuzzysort from "fuzzysort";
 	import dayjs from "dayjs";
+	import linkParser from "$lib/linkParser";
 
 	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
@@ -654,13 +655,13 @@
 			return;
 		}
 
-		try {
-			const url = new URL(word);
+		const url = linkParser.parse(word);
+		if (url) {
 			components.push({
 				type: Link,
-				props: { href: url.href, text: word },
+				props: { href: `${url.protocol || "//"}${url.host}${url.rest}`, text: word },
 			});
-		} catch {
+		} else {
 			components.push({ type: TextFragment, props: { text: word } });
 		}
 	};
