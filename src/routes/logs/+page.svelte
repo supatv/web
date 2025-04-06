@@ -381,9 +381,11 @@
 
 	$effect(() => {
 		// fetch badges
+		channelBadges.clear();
+		untrack(() => badgeUpdates++);
+
 		if (!channelId) return;
 
-		channelBadges.clear();
 		untrack(async () => {
 			const channelBadgesList = await TwitchServices.IVR.getChannelBadges(channelId);
 
@@ -484,14 +486,12 @@
 
 	$effect(() => {
 		// fetch channel emotes
+		channelEmotes.clear();
+		untrack(() => emoteUpdates++);
 
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		channelId;
+		if (!channelId) return;
+
 		untrack(async () => {
-			channelEmotes.clear();
-			emoteUpdates++;
-			if (!channelId) return;
-
 			const [stvEmotes, bttvEmotes, ffzEmotes] = (
 				await Promise.allSettled([
 					TwitchServices.SevenTV.getChannelEmotes(channelId),
