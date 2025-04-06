@@ -62,6 +62,11 @@
 		props: object;
 	}[];
 
+	type EmoteProps = {
+		url: string;
+		src: string;
+	};
+
 	getContext<TitleContext>("title").set("Logs");
 
 	let error: string | null = $state(null);
@@ -186,8 +191,8 @@
 	let channelId = $state("");
 
 	// Emotes
-	const channelEmotes = new Map();
-	const globalEmotes = new Map();
+	const channelEmotes = new Map<string, EmoteProps>();
+	const globalEmotes = new Map<string, EmoteProps>();
 	let emoteUpdates = $state(0);
 
 	// Badges
@@ -496,15 +501,24 @@
 			).map((p) => (p.status === "fulfilled" ? p.value : []));
 
 			stvEmotes.forEach((emote) => {
-				channelEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
+				channelEmotes.set(emote.name!, {
+					url: `https://7tv.app/emotes/${emote.id}`,
+					src: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
+				});
 			});
 
 			bttvEmotes.forEach((emote) => {
-				channelEmotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`);
+				channelEmotes.set(emote.code!, {
+					url: `https://betterttv.com/emotes/${emote.id}`,
+					src: `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`,
+				});
 			});
 
 			ffzEmotes.forEach((emote) => {
-				channelEmotes.set(emote.name, `https://cdn.frankerfacez.com/emote/${emote.id}/1`);
+				channelEmotes.set(emote.name!, {
+					url: `https://www.frankerfacez.com/emoticon/${emote.id}-${emote.name}`,
+					src: `https://cdn.frankerfacez.com/emote/${emote.id}/1`,
+				});
 			});
 
 			emoteUpdates++;
@@ -556,15 +570,24 @@
 		).map((p) => (p.status === "fulfilled" ? p.value : []));
 
 		stvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name, `https://cdn.7tv.app/emote/${emote.id}/1x.webp`);
+			globalEmotes.set(emote.name!, {
+				url: `https://7tv.app/emotes/${emote.id}`,
+				src: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
+			});
 		});
 
 		bttvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.code, `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`);
+			globalEmotes.set(emote.code!, {
+				url: `https://betterttv.com/emotes/${emote.id}`,
+				src: `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`,
+			});
 		});
 
 		ffzEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name, `https://cdn.frankerfacez.com/emote/${emote.id}/1`);
+			globalEmotes.set(emote.name!, {
+				url: `https://www.frankerfacez.com/emoticon/${emote.id}-${emote.name}`,
+				src: `https://cdn.frankerfacez.com/emote/${emote.id}/1`,
+			});
 		});
 
 		emoteUpdates++;
@@ -599,6 +622,7 @@
 					props: {
 						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
 						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
+						url: `https://emotes.awoo.nl/twitch/emote/${nextEmote.id}`,
 					},
 				});
 				i = nextEmote.pos[1];
@@ -624,9 +648,9 @@
 	};
 
 	const processWord = (word: string, components: ChatComponents) => {
-		const emoteUrl = channelEmotes.get(word) || globalEmotes.get(word);
-		if (emoteUrl) {
-			components.push({ type: Emote, props: { name: word, src: emoteUrl } });
+		const emoteProps = channelEmotes.get(word) || globalEmotes.get(word);
+		if (emoteProps) {
+			components.push({ type: Emote, props: { name: word, ...emoteProps } });
 			return;
 		}
 

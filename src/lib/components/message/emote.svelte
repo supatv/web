@@ -2,11 +2,13 @@
 	import Image from "../image.svelte";
 
 	// import * as Tooltip from "$lib/components/ui/tooltip";
-	let { src, name } = $props();
+
+	let { name, src, url } = $props();
 </script>
 
-<Image {src} alt={name} title={name} class="inline-block max-h-5" />
-
+<a href={url} target="_blank">
+	<Image {src} alt={name} title={name} class="inline-block max-h-5" />
+</a>
 <!-- <Tooltip.Provider>
     <Tooltip.Root delayDuration={200} disableHoverableContent={true}>
         <Tooltip.Trigger class="align-middle">
@@ -17,5 +19,5 @@
             <p class="text-base">{name}</p>
             <span class="text-xs opacity-60">Twitch Emote</span>
         </Tooltip.Content>
-    </Tooltip.Root>z
+    </Tooltip.Root>
 </Tooltip.Provider> -->
