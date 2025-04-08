@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Calendar as CalendarPrimitive } from "bits-ui";
+	import { mode } from "mode-watcher";
 	import fuzzysort from "fuzzysort";
 	import dayjs from "dayjs";
 	import linkParser from "$lib/linkParser";
@@ -892,7 +893,9 @@
 								{/key}
 							</div>
 						{/if}
-						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s 70%)" class="font-bold">{msg.displayName}:</span>
+						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+							{msg.displayName}:
+						</span>
 						<span class:text-neutral-500={msg.tags["target-user-id"]}>
 							{#key emoteUpdates}
 								{#each parseMessage(msg) as { type: Component, props }, index (index)}
