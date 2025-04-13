@@ -31,7 +31,7 @@
 
 	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon } from "@lucide/svelte";
 
-	import { dateFormat, type TitleContext } from "$lib/common";
+	import { dateTimeFormat, type TitleContext } from "$lib/common";
 
 	import { CalendarDate, DateFormatter, getLocalTimeZone, today, type DateValue } from "@internationalized/date";
 
@@ -883,7 +883,7 @@
 				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} bind:scrollOffset>
 					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
-						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateFormat)}</span>
+						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
 						{#if msg.tags["badges"]}
 							<div class="flex gap-x-0.5">
 								{#key badgeUpdates}
