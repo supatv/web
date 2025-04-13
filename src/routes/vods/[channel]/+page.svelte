@@ -9,7 +9,7 @@
 
 	import type { PageProps } from "./$types";
 	import type { Stream } from "$lib/twitch/streams";
-	import { dateFormat, type TitleContext } from "$lib/common";
+	import { dateFormat, dateTimeFormat, type TitleContext } from "$lib/common";
 
 	import dayjs from "dayjs";
 	import relativeTime from "dayjs/plugin/relativeTime";
@@ -100,12 +100,8 @@
 				{@const duration = stream.duration_ms}
 				<a href="/vods/{page.params.channel}/{stream.id.toString()}">
 					<div class="relative overflow-hidden rounded-sm">
-						<span
-							class="absolute left-0 m-1 rounded-sm px-0.5 text-xs text-white
-                                    {duration === null ? 'bg-red-600' : 'bg-black/60'}"
-							title={dayjs(createdAt).format(dateFormat)}
-						>
-							{duration === null ? "Live" : dayjs(stream.created_at).fromNow()}
+						<span class="absolute left-0 m-1 rounded-sm px-0.5 text-xs text-white {duration === null ? 'bg-red-600' : 'bg-black/60'}" title={dayjs(createdAt).format(dateTimeFormat)}>
+							{duration === null ? "Live" : dayjs().diff(stream.created_at, "year") >= 1 ? dayjs(stream.created_at).format(dateFormat) : dayjs(stream.created_at).fromNow()}
 						</span>
 						{#if stream.state === "RECORDING"}
 							<span class="absolute bottom-0 left-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white">Recording...</span>
