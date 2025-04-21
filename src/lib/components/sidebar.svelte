@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TvIcon, ScrollIcon, HeartIcon, SparklesIcon, FilmIcon, ExternalLinkIcon } from "@lucide/svelte";
+	import { TvIcon, ScrollIcon, HeartIcon, SparklesIcon, FilmIcon, ExternalLinkIcon, FlameIcon } from "@lucide/svelte";
 
 	import potatLogo from "$lib/assets/logos/potat.png";
 	import bestlogsLogo from "$lib/assets/logos/bestlogs.png";
@@ -71,6 +71,17 @@
 								<a href="/logs" {...props}>
 									<ScrollIcon />
 									<span>Logs</span>
+								</a>
+							{/snippet}
+						</Sidebar.MenuButton>
+					</Sidebar.MenuItem>
+
+					<Sidebar.MenuItem>
+						<Sidebar.MenuButton isActive={page.url.pathname === "/firehose"}>
+							{#snippet child({ props })}
+								<a href="/firehose" {...props}>
+									<FlameIcon />
+									<span>Firehose</span>
 								</a>
 							{/snippet}
 						</Sidebar.MenuButton>
