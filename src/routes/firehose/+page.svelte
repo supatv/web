@@ -384,8 +384,8 @@
 					</div>
 				</VirtualList>
 				{#if scrollPaused}
-					<div class="absolute bottom-14 left-0 right-0 flex h-8 items-center justify-center">
-						<Button variant="secondary" class="px-8" onclick={resumeScroll}>
+					<div class="pointer-events-none absolute bottom-14 left-0 right-0 flex h-8 items-center justify-center">
+						<Button variant="secondary" class="pointer-events-auto px-8" onclick={resumeScroll}>
 							<ChevronsDownIcon class="size-4" />
 							More messages below
 						</Button>
