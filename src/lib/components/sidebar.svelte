@@ -119,12 +119,7 @@
             </Sidebar.GroupContent>
         </Sidebar.Group> -->
 
-		<div class="group/easter mt-auto h-min">
-			<p class="text-center italic text-pink-100 opacity-0 transition-opacity group-hover/easter:opacity-100">happy easter~</p>
-			<img src="https://kappa.lol/f0NvcF.webp" alt="" class="w-full opacity-60 transition-opacity group-hover/easter:opacity-100" />
-		</div>
-
-		<Sidebar.Group class="opacity-60 transition-opacity hover:opacity-100">
+		<Sidebar.Group class="mt-auto opacity-60 transition-opacity hover:opacity-100">
 			<Sidebar.GroupLabel>Related Projects</Sidebar.GroupLabel>
 			<Sidebar.GroupContent>
 				<Sidebar.Menu>
