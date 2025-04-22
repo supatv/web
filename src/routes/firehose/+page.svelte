@@ -23,6 +23,8 @@
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
 	import { browser } from "$app/environment";
+	import Button from "$lib/components/ui/button/button.svelte";
+	import { ChevronsDownIcon } from "@lucide/svelte";
 
 	type Message = {
 		text: string;
@@ -57,10 +59,9 @@
 	let scrollOffset: number | undefined = $state();
 
 	let error: string | null = $state(null);
-	let loading = $state(false);
+	// let loading = $state(false);
 
 	let messagesPerSecond = $state(0);
-	let messageId = 0;
 
 	let instanceValue = $state("logs.spanix.team");
 
@@ -73,7 +74,7 @@
 		}
 	};
 
-	let logsBox: HTMLDivElement | null = $state(null);
+	// let logsBox: HTMLDivElement | null = $state(null);
 	let searchInput: HTMLInputElement | null = $state(null);
 
 	// Emotes
@@ -84,40 +85,34 @@
 	const globalBadges = new Map();
 	let badgeUpdates = $state(0);
 
-	// const windowKeydown = (event: KeyboardEvent) => {
-	// 	if (event.ctrlKey && event.key === "f") {
-	// 		searchInput?.focus();
-	// 		event.preventDefault();
-	// 	}
-	// };
-
-	type Logs = Array<[number, Message]>;
+	const windowKeydown = (event: KeyboardEvent) => {
+		if (event.ctrlKey && event.key === "f") {
+			searchInput?.focus();
+			event.preventDefault();
+		}
+	};
 
 	let chatRenderTimeout: number | NodeJS.Timeout | null = null;
 
-	let chatLogs: Logs = $state([]);
-	let chatBuffer: Logs = [];
+	let chatLogs: Message[] = $state([]);
+	let chatBuffer: Message[] = [];
+
+	let scrollPaused = $state(false);
 
 	const renderChat = async () => {
-		chatLogs = chatLogs.concat(chatBuffer).slice(-5000);
+		chatLogs = chatLogs.concat(chatBuffer).slice(!scrollPaused ? -10_000 : 0);
 		chatBuffer = [];
 		await tick();
-		const scrollHeight = chatLogs.length * 20;
-		if (logsBoxHeight - 24 < scrollHeight) {
-			scrollOffset = scrollHeight;
-		}
-		// logsBox?.scrollTo(0, logsBox.scrollHeight);
 		chatRenderTimeout = setTimeout(renderChat, 250);
 	};
 	if (browser) renderChat();
 
 	$effect(() => {
-		instanceValue;
+		if (!instanceValue) return;
 		untrack(() => {
 			destroySocket();
 			chatLogs = [];
 			chatBuffer = [];
-			messageId = 0;
 
 			socket = new WebSocket(`wss://${instanceValue}/firehose?jsonBasic=true`);
 			socket.addEventListener("message", async (event) => {
@@ -126,22 +121,46 @@
 					messagesPerSecond--;
 				}, 1000);
 
-				chatBuffer.push([messageId++, JSON.parse(event.data)]);
+				chatBuffer.push(JSON.parse(event.data));
 			});
 		});
 	});
 
 	let searchValue = $state("");
 
-	// let filteredChatLogs = $derived.by(() => {
-	// 	let logs = searchValue
-	// 		? fuzzysort
-	// 				.go(searchValue, chatLogs, { key: "text", threshold: 0.5, limit: 5000 })
-	// 				.map((x) => x.obj)
-	// 				.sort((a, b) => Date.parse(a[1].timestamp) - Date.parse(b[1].timestamp))
-	// 		: chatLogs;
-	// 	return logs;
-	// });
+	let filteredChatLogs = $derived.by(() => {
+		let logs = searchValue
+			? fuzzysort
+					.go(searchValue, chatLogs, { keys: ["channel", "displayName", "text"], threshold: 0.5 })
+					.map((x) => x.obj)
+					.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
+			: chatLogs;
+		return logs;
+	});
+
+	const logsAfterScroll = ({ detail }: { detail: { event: Event; offset: number } }) => {
+		const el = detail.event.target as HTMLDivElement;
+		const remScroll = Math.abs(el.scrollHeight - el.clientHeight - detail.offset);
+		scrollPaused = remScroll >= 4;
+	};
+
+	const resumeScroll = async () => {
+		scrollOffset = 0;
+		await tick();
+		const scrollHeight = filteredChatLogs.length * 20;
+		if (logsBoxHeight - 24 > scrollHeight) return;
+		scrollPaused = false;
+		scrollOffset = scrollHeight;
+	};
+
+	$effect(() => {
+		if (!filteredChatLogs) return;
+		untrack(() => {
+			if (!scrollPaused) {
+				resumeScroll();
+			}
+		});
+	});
 
 	const getBadges = (msg: Message) => {
 		const badges: { id: string; src: string; title: string; alt: string }[] = [];
@@ -297,7 +316,7 @@
 	<meta name="description" content="View every Twitch chat message in real-time." />
 </svelte:head>
 
-<!-- <svelte:window on:keydown={windowKeydown} /> -->
+<svelte:window on:keydown={windowKeydown} />
 
 <div id="main-fit-screen" class="hidden"></div>
 
@@ -326,15 +345,15 @@
 			</div>
 
 			<div class="w-full self-end">
-				<!-- <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} /> -->
+				<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
 			</div>
 		</div>
 
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
 			<Card.Root class="h-full w-full flex-col p-3 leading-none">
-				<VirtualList height={logsBoxHeight - 24} itemCount={chatLogs.length} itemSize={20} bind:scrollOffset>
+				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} bind:scrollOffset on:afterScroll={logsAfterScroll}>
 					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
-						{@const msg = chatLogs[index][1]}
+						{@const msg = filteredChatLogs[index]}
 						<div class="inline min-w-72 max-w-72 overflow-hidden">
 							<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
 							<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel}>
@@ -364,6 +383,14 @@
 						</span>
 					</div>
 				</VirtualList>
+				{#if scrollPaused}
+					<div class="absolute bottom-14 left-0 right-0 flex h-8 items-center justify-center">
+						<Button variant="secondary" class="px-8" onclick={resumeScroll}>
+							<ChevronsDownIcon class="size-4" />
+							More messages below
+						</Button>
+					</div>
+				{/if}
 			</Card.Root>
 		</div>
 	{/if}
