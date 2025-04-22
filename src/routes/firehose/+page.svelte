@@ -5,8 +5,12 @@
 	import linkParser from "$lib/linkParser";
 
 	import { Input } from "$lib/components/ui/input/index.js";
+	import { Label } from "$lib/components/ui/label/index.js";
 
+	import * as Select from "$lib/components/ui/select/index.js";
 	import * as Card from "$lib/components/ui/card/index.js";
+
+	import VirtualList from "svelte-tiny-virtual-list";
 
 	import TextFragment from "$lib/components/message/text-fragment.svelte";
 	import Emote from "$lib/components/message/emote.svelte";
@@ -18,6 +22,7 @@
 	import { dateTimeFormat, type TitleContext } from "$lib/common";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
+	import { browser } from "$app/environment";
 
 	type Message = {
 		text: string;
@@ -48,50 +53,25 @@
 
 	getContext<TitleContext>("title").set("Firehose");
 
+	let logsBoxHeight = $state(0);
+	let scrollOffset: number | undefined = $state();
+
 	let error: string | null = $state(null);
 	let loading = $state(false);
 
 	let messagesPerSecond = $state(0);
-	let messagesCounter = 0;
 	let messageId = 0;
 
-	let secInterval: number | NodeJS.Timeout | null = null;
+	let instanceValue = $state("logs.spanix.team");
 
 	let socket: WebSocket | null = $state(null);
 
-	onMount(() => {
-		secInterval = setInterval(() => {
-			messagesPerSecond = messagesCounter;
-			messagesCounter = 0;
-		}, 1000);
-
-		socket = new WebSocket("wss://logs.spanix.team/firehose?jsonBasic=true");
-		socket.addEventListener("message", async (event) => {
-			messagesCounter++;
-			chatLogs.push([messageId++, JSON.parse(event.data)]);
-			if (chatLogs.length > 100) {
-				chatLogs.shift();
-			}
-
-			await tick();
-			logsBox?.scrollTo(0, logsBox.scrollHeight);
-		});
-
-		fetchGlobalBadges();
-		fetchGlobalEmotes();
-	});
-
-	onDestroy(() => {
-		if (secInterval) {
-			clearTimeout(secInterval);
-			secInterval = null;
-		}
-
+	const destroySocket = () => {
 		if (socket) {
 			socket.close();
 			socket = null;
 		}
-	});
+	};
 
 	let logsBox: HTMLDivElement | null = $state(null);
 	let searchInput: HTMLInputElement | null = $state(null);
@@ -111,7 +91,45 @@
 	// 	}
 	// };
 
-	let chatLogs: Array<[number, Message]> = $state([]);
+	type Logs = Array<[number, Message]>;
+
+	let chatRenderTimeout: number | NodeJS.Timeout | null = null;
+
+	let chatLogs: Logs = $state([]);
+	let chatBuffer: Logs = [];
+
+	const renderChat = async () => {
+		chatLogs = chatLogs.concat(chatBuffer).slice(-5000);
+		chatBuffer = [];
+		await tick();
+		const scrollHeight = chatLogs.length * 20;
+		if (logsBoxHeight - 24 < scrollHeight) {
+			scrollOffset = scrollHeight;
+		}
+		// logsBox?.scrollTo(0, logsBox.scrollHeight);
+		chatRenderTimeout = setTimeout(renderChat, 250);
+	};
+	if (browser) renderChat();
+
+	$effect(() => {
+		instanceValue;
+		untrack(() => {
+			destroySocket();
+			chatLogs = [];
+			chatBuffer = [];
+			messageId = 0;
+
+			socket = new WebSocket(`wss://${instanceValue}/firehose?jsonBasic=true`);
+			socket.addEventListener("message", async (event) => {
+				messagesPerSecond++;
+				setTimeout(() => {
+					messagesPerSecond--;
+				}, 1000);
+
+				chatBuffer.push([messageId++, JSON.parse(event.data)]);
+			});
+		});
+	});
 
 	let searchValue = $state("");
 
@@ -262,6 +280,16 @@
 			components.push({ type: TextFragment, props: { text: word } });
 		}
 	};
+
+	onMount(() => {
+		fetchGlobalBadges();
+		fetchGlobalEmotes();
+	});
+
+	onDestroy(() => {
+		destroySocket();
+		if (chatRenderTimeout) clearTimeout(chatRenderTimeout);
+	});
 </script>
 
 <svelte:head>
@@ -276,49 +304,66 @@
 <div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
 	<div class="mb-4">
 		<h1 class="text-2xl font-bold">Twitch Chat Firehose</h1>
-		<p class="text-xs text-gray-500">Real-time stream of logged Twitch chats. {messagesPerSecond} messages per second...</p>
+		<p class="text-xs tabular-nums text-gray-500">Real-time stream of logged Twitch chats. {messagesPerSecond} messages per second...</p>
 	</div>
 
 	{#if error}
 		<p class="text-red-500">{error}</p>
 	{:else}
-		<!-- <div class="mb-1 flex flex-row gap-1">
-			<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
-		</div> -->
+		<div class="mb-1 flex flex-row gap-1">
+			<div class="flex w-48 flex-col">
+				<Label for="input-channel" class="text-base">Instance</Label>
 
-		<div class="flex min-h-0 flex-1 overflow-hidden">
-			<Card.Root class="flex-1 flex-col overflow-auto leading-none" bind:ref={logsBox}>
-				<div class="max-h-full max-w-0 p-3">
-					{#each chatLogs as [id, msg] (id)}
-						<div class="flex h-5 flex-row gap-x-1 text-nowrap">
-							<div class="inline min-w-72 max-w-72 overflow-hidden">
-								<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
-								<a href="https://www.twitch.tv/{msg.channel}" target="_blank" class="font-bold text-neutral-500" title={msg.channel}>
+				<Select.Root type="single" bind:value={instanceValue}>
+					<Select.Trigger class="h-8">
+						{instanceValue}
+					</Select.Trigger>
+					<Select.Content>
+						<Select.Item value="logs.spanix.team">🌐 logs.spanix.team</Select.Item>
+						<Select.Item value="logs.supa.codes">🇷🇴 logs.supa.codes</Select.Item>
+					</Select.Content>
+				</Select.Root>
+			</div>
+
+			<div class="w-full self-end">
+				<!-- <Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} /> -->
+			</div>
+		</div>
+
+		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
+			<Card.Root class="h-full w-full flex-col p-3 leading-none">
+				<VirtualList height={logsBoxHeight - 24} itemCount={chatLogs.length} itemSize={20} bind:scrollOffset>
+					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
+						{@const msg = chatLogs[index][1]}
+						<div class="inline min-w-72 max-w-72 overflow-hidden">
+							<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
+							<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel}>
+								<div class="inline-block w-full font-bold text-neutral-500">
 									#{msg.channel}
-								</a>
-							</div>
-							{#if msg.tags["badges"]}
-								<div class="flex gap-x-0.5">
-									{#key badgeUpdates}
-										{#each getBadges(msg) as badge (badge.id)}
-											<Badge src={badge.src} title={badge.title} alt="" />
-										{/each}
-									{/key}
 								</div>
-							{/if}
-							<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-								{msg.displayName}:
-							</span>
-							<span class:text-neutral-500={msg.tags["target-user-id"]}>
-								{#key emoteUpdates}
-									{#each parseMessage(msg) as { type: Component, props }, index (index)}
-										<Component {...props} />
+							</a>
+						</div>
+						{#if msg.tags["badges"]}
+							<div class="flex gap-x-0.5">
+								{#key badgeUpdates}
+									{#each getBadges(msg) as badge (badge.id)}
+										<Badge src={badge.src} title={badge.title} alt="" />
 									{/each}
 								{/key}
-							</span>
-						</div>
-					{/each}
-				</div>
+							</div>
+						{/if}
+						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+							{msg.displayName}:
+						</span>
+						<span class:text-neutral-500={msg.tags["target-user-id"]}>
+							{#key emoteUpdates}
+								{#each parseMessage(msg) as { type: Component, props }, index (index)}
+									<Component {...props} />
+								{/each}
+							{/key}
+						</span>
+					</div>
+				</VirtualList>
 			</Card.Root>
 		</div>
 	{/if}
@@ -326,6 +371,8 @@
 
 <style>
 	:global(.virtual-list-wrapper) {
+		overflow: scroll !important;
+
 		&::-webkit-scrollbar {
 			@apply size-1.5 bg-sidebar-border;
 		}
