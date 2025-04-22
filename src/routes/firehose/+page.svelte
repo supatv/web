@@ -56,7 +56,6 @@
 	getContext<TitleContext>("title").set("Firehose");
 
 	let logsBoxHeight = $state(0);
-	let scrollOffset: number | undefined = $state();
 
 	let error: string | null = $state(null);
 	// let loading = $state(false);
@@ -144,13 +143,10 @@
 		scrollPaused = remScroll >= 4;
 	};
 
-	const resumeScroll = async () => {
-		scrollOffset = 0;
-		await tick();
-		const scrollHeight = filteredChatLogs.length * 20;
-		if (logsBoxHeight - 24 > scrollHeight) return;
+	const resumeScroll = () => {
+		const virtualList = document.querySelector(".virtual-list-wrapper") as HTMLDivElement;
 		scrollPaused = false;
-		scrollOffset = scrollHeight;
+		virtualList.scrollTop = virtualList.scrollHeight;
 	};
 
 	$effect(() => {
@@ -351,7 +347,7 @@
 
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
 			<Card.Root class="h-full w-full flex-col p-3 leading-none">
-				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} bind:scrollOffset on:afterScroll={logsAfterScroll}>
+				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} on:afterScroll={logsAfterScroll}>
 					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						<div class="inline min-w-72 max-w-72 overflow-hidden">
@@ -408,4 +404,3 @@
 		}
 	}
 </style>
-

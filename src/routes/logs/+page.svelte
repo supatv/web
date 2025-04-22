@@ -272,8 +272,6 @@
 
 	let searchValue = $state("");
 
-	let scrollOffset: number | undefined = $state();
-
 	let filteredChatLogs = $derived.by(() => {
 		let logs = searchValue
 			? fuzzysort
@@ -286,15 +284,11 @@
 	});
 
 	$effect(() => {
-		const l = filteredChatLogs.length;
+		if (!filteredChatLogs) return;
 		untrack(async () => {
-			scrollOffset = 0;
-			if (scrollFromBottom) {
-				await tick();
-				const scrollHeight = l * 20;
-				if (logsBoxHeight - 24 > scrollHeight) return;
-				scrollOffset = scrollHeight;
-			}
+			await tick();
+			const virtualList = document.querySelector(".virtual-list-wrapper") as HTMLDivElement;
+			virtualList.scrollTop = scrollFromBottom ? virtualList.scrollHeight : 0;
 		});
 	});
 
@@ -880,7 +874,7 @@
 	{:else if chatLogs.length}
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
 			<Card.Root class="h-full w-full flex-col p-3 leading-none">
-				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} bind:scrollOffset>
+				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20}>
 					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
@@ -912,6 +906,8 @@
 
 <style>
 	:global(.virtual-list-wrapper) {
+		overflow: scroll !important;
+
 		&::-webkit-scrollbar {
 			@apply size-1.5 bg-sidebar-border;
 		}
