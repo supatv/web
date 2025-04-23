@@ -18,7 +18,7 @@
 	import Link from "$lib/components/message/link.svelte";
 	import Badge from "$lib/components/message/badge.svelte";
 
-	import { ChevronsDownIcon, Key } from "@lucide/svelte";
+	import { ChevronsDownIcon } from "@lucide/svelte";
 
 	import { getContext, onDestroy, onMount, tick, untrack, type Component } from "svelte";
 
@@ -366,7 +366,7 @@
 						{instanceValue}
 					</Select.Trigger>
 					<Select.Content>
-						{#each Object.entries(instances) as [instance, display]}
+						{#each Object.entries(instances) as [instance, display] (instance)}
 							<Select.Item value={instance}>{display}</Select.Item>
 						{/each}
 					</Select.Content>
