@@ -26,7 +26,7 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 
-	import { dateTimeFormat, type TitleContext } from "$lib/common";
+	import { timeFormat, type TitleContext } from "$lib/common";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
 
@@ -383,14 +383,14 @@
 				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} on:afterScroll={logsAfterScroll}>
 					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
-						<div class="inline min-w-72 max-w-72 overflow-hidden">
-							<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
+						<div class="inline min-w-48 max-w-48 overflow-hidden">
 							<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel}>
 								<div class="inline-block w-full font-bold text-neutral-500">
 									#{msg.channel}
 								</div>
 							</a>
 						</div>
+						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
 						{#if msg.tags["badges"]}
 							<div class="flex gap-x-0.5">
 								{#key badgeUpdates}
