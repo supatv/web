@@ -186,8 +186,9 @@
 	};
 
 	const resumeScroll = () => {
-		const virtualList = document.querySelector(".virtual-list-wrapper") as HTMLDivElement;
 		scrollPaused = false;
+		const virtualList = document.querySelector(".virtual-list-wrapper");
+		if (!virtualList) return;
 		virtualList.scrollTop = virtualList.scrollHeight;
 	};
 

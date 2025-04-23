@@ -287,7 +287,8 @@
 		if (!filteredChatLogs) return;
 		untrack(async () => {
 			await tick();
-			const virtualList = document.querySelector(".virtual-list-wrapper") as HTMLDivElement;
+			const virtualList = document.querySelector(".virtual-list-wrapper");
+			if (!virtualList) return;
 			virtualList.scrollTop = scrollFromBottom ? virtualList.scrollHeight : 0;
 		});
 	});
