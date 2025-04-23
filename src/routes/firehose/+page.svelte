@@ -337,6 +337,7 @@
 						<Select.Item value="logs.spanix.team">🌐 logs.spanix.team</Select.Item>
 						<Select.Item value="logs.supa.codes">🇷🇴 logs.supa.codes</Select.Item>
 						<Select.Item value="logs.susgee.dev">🇩🇪 logs.susgee.dev</Select.Item>
+						<Select.Item value="logs.nadeko.net">🧱 logs.nadeko.net</Select.Item>
 					</Select.Content>
 				</Select.Root>
 			</div>
