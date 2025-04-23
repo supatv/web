@@ -91,6 +91,27 @@
 	let instanceValue = $state("");
 	let searchValue = $state("");
 
+	onMount(() => {
+		fetchGlobalBadges();
+		fetchGlobalEmotes();
+
+		const q = page.url.searchParams;
+
+		const instanceParam = q.get("i")?.toLowerCase();
+		if (instanceParam && instanceParam in instances) {
+			instanceValue = instanceParam;
+		} else {
+			instanceValue = "logs.spanix.team";
+		}
+
+		searchValue = q.get("s") || "";
+	});
+
+	onDestroy(() => {
+		destroySocket();
+		if (chatRenderTimeout) clearTimeout(chatRenderTimeout);
+	});
+
 	$effect(() => {
 		const i = instanceValue;
 		const s = searchValue;
@@ -316,27 +337,6 @@
 			components.push({ type: TextFragment, props: { text: word } });
 		}
 	};
-
-	onMount(() => {
-		fetchGlobalBadges();
-		fetchGlobalEmotes();
-
-		const q = page.url.searchParams;
-
-		const instanceParam = q.get("i")?.toLowerCase();
-		if (instanceParam && instanceParam in instances) {
-			instanceValue = instanceParam;
-		} else {
-			instanceValue = "logs.spanix.team";
-		}
-
-		searchValue = q.get("s") || "";
-	});
-
-	onDestroy(() => {
-		destroySocket();
-		if (chatRenderTimeout) clearTimeout(chatRenderTimeout);
-	});
 </script>
 
 <svelte:head>
