@@ -6,6 +6,7 @@
 
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
+	import { Button } from "$lib/components/ui/button/index.js";
 
 	import * as Select from "$lib/components/ui/select/index.js";
 	import * as Card from "$lib/components/ui/card/index.js";
@@ -17,14 +18,19 @@
 	import Link from "$lib/components/message/link.svelte";
 	import Badge from "$lib/components/message/badge.svelte";
 
+	import { ChevronsDownIcon, Key } from "@lucide/svelte";
+
 	import { getContext, onDestroy, onMount, tick, untrack, type Component } from "svelte";
+
+	import { browser } from "$app/environment";
+	import { goto } from "$app/navigation";
+	import { page } from "$app/state";
 
 	import { dateTimeFormat, type TitleContext } from "$lib/common";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
-	import { browser } from "$app/environment";
-	import Button from "$lib/components/ui/button/button.svelte";
-	import { ChevronsDownIcon } from "@lucide/svelte";
+
+	import instances from "./instances.json";
 
 	type Message = {
 		text: string;
@@ -62,8 +68,6 @@
 
 	let messagesPerSecond = $state(0);
 
-	let instanceValue = $state("logs.spanix.team");
-
 	let socket: WebSocket | null = $state(null);
 
 	const destroySocket = () => {
@@ -83,6 +87,24 @@
 	// Badges
 	const globalBadges = new Map();
 	let badgeUpdates = $state(0);
+
+	let instanceValue = $state("");
+	let searchValue = $state("");
+
+	$effect(() => {
+		const i = instanceValue;
+		const s = searchValue;
+		untrack(() => {
+			const q = page.url.searchParams;
+
+			if (i) q.set("i", i);
+
+			if (s) q.set("s", s);
+			else q.delete("s");
+
+			goto(page.url.search, { replaceState: true, keepFocus: true });
+		});
+	});
 
 	const windowKeydown = (event: KeyboardEvent) => {
 		if (event.ctrlKey && event.key === "f") {
@@ -112,6 +134,7 @@
 			destroySocket();
 			chatLogs = [];
 			chatBuffer = [];
+			scrollPaused = false;
 
 			socket = new WebSocket(`wss://${instanceValue}/firehose?jsonBasic=true`);
 			socket.addEventListener("message", async (event) => {
@@ -124,8 +147,6 @@
 			});
 		});
 	});
-
-	let searchValue = $state("");
 
 	let filteredChatLogs = $derived.by(() => {
 		let logs = searchValue
@@ -299,6 +320,17 @@
 	onMount(() => {
 		fetchGlobalBadges();
 		fetchGlobalEmotes();
+
+		const q = page.url.searchParams;
+
+		const instanceParam = q.get("i")?.toLowerCase();
+		if (instanceParam && instanceParam in instances) {
+			instanceValue = instanceParam;
+		} else {
+			instanceValue = "logs.spanix.team";
+		}
+
+		searchValue = q.get("s") || "";
 	});
 
 	onDestroy(() => {
@@ -334,10 +366,9 @@
 						{instanceValue}
 					</Select.Trigger>
 					<Select.Content>
-						<Select.Item value="logs.spanix.team">🌐 logs.spanix.team</Select.Item>
-						<Select.Item value="logs.supa.codes">🇷🇴 logs.supa.codes</Select.Item>
-						<Select.Item value="logs.susgee.dev">🇩🇪 logs.susgee.dev</Select.Item>
-						<Select.Item value="logs.nadeko.net">🧱 logs.nadeko.net</Select.Item>
+						{#each Object.entries(instances) as [instance, display]}
+							<Select.Item value={instance}>{display}</Select.Item>
+						{/each}
 					</Select.Content>
 				</Select.Root>
 			</div>
