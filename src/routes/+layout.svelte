@@ -1,5 +1,5 @@
 <script lang="ts">
-	import "@fontsource/inter";
+	import "@fontsource-variable/inter";
 	import "../app.css";
 
 	let { children } = $props();
