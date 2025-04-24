@@ -17,6 +17,8 @@
 	import * as Select from "$lib/components/ui/select/index.js";
 	import * as Card from "$lib/components/ui/card/index.js";
 
+	import FocusTrap from "$lib/components/focus-trap.svelte";
+
 	import VirtualList from "svelte-tiny-virtual-list";
 
 	import TextFragment from "$lib/components/message/text-fragment.svelte";
@@ -73,6 +75,8 @@
 
 	let error: string | null = $state(null);
 	let loading = $state(false);
+
+	let isPopoverOpen = $state(false);
 
 	let channels: { name: string; userID: string }[] = $state([]);
 	let channelTargets: Fuzzysort.Prepared[] = $state([]);
@@ -730,7 +734,7 @@
 	<div class="mb-1 flex flex-row flex-wrap-reverse justify-between gap-1">
 		{#if dateContent}
 			{#if dateContent.day}
-				<Popover.Root>
+				<Popover.Root bind:open={isPopoverOpen}>
 					<Popover.Trigger
 						disabled={loading}
 						class={cn(
@@ -743,6 +747,7 @@
 						{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
 						<CalendarIcon class="opacity-50" />
 					</Popover.Trigger>
+
 					<Popover.Content bind:ref={contentRef} class="w-auto p-0" align="start">
 						<CalendarPrimitive.Root
 							type="single"
@@ -829,7 +834,7 @@
 				</Popover.Root>
 			{:else}
 				<div class="flex flex-row">
-					<Select.Root type="single" name="input-date" bind:value={dateValue} disabled={loading}>
+					<Select.Root type="single" name="input-date" bind:open={isPopoverOpen} bind:value={dateValue} disabled={loading}>
 						<Select.Trigger class="h-8 w-32 tabular-nums">
 							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
 						</Select.Trigger>
@@ -905,6 +910,10 @@
 		</div>
 	{/if}
 </div>
+
+{#if isPopoverOpen}
+	<FocusTrap />
+{/if}
 
 <style>
 	:global(.virtual-list-wrapper) {

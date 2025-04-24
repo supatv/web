@@ -11,6 +11,8 @@
 	import * as Select from "$lib/components/ui/select/index.js";
 	import * as Card from "$lib/components/ui/card/index.js";
 
+	import FocusTrap from "$lib/components/focus-trap.svelte";
+
 	import VirtualList from "svelte-tiny-virtual-list";
 
 	import TextFragment from "$lib/components/message/text-fragment.svelte";
@@ -65,6 +67,8 @@
 
 	let error: string | null = $state(null);
 	// let loading = $state(false);
+
+	let isPopoverOpen = $state(false);
 
 	let messagesPerSecond = $state(0);
 
@@ -362,7 +366,7 @@
 			<div class="flex w-48 flex-col">
 				<Label for="input-channel" class="text-base">Instance</Label>
 
-				<Select.Root type="single" bind:value={instanceValue}>
+				<Select.Root type="single" bind:open={isPopoverOpen} bind:value={instanceValue}>
 					<Select.Trigger class="h-8">
 						{instanceValue}
 					</Select.Trigger>
@@ -425,6 +429,10 @@
 		</div>
 	{/if}
 </div>
+
+{#if isPopoverOpen}
+	<FocusTrap />
+{/if}
 
 <style>
 	:global(.virtual-list-wrapper) {
