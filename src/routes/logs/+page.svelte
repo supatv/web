@@ -732,6 +732,7 @@
 			{#if dateContent.day}
 				<Popover.Root>
 					<Popover.Trigger
+						disabled={loading}
 						class={cn(
 							buttonVariants({
 								variant: "outline",
@@ -828,7 +829,7 @@
 				</Popover.Root>
 			{:else}
 				<div class="flex flex-row">
-					<Select.Root type="single" name="input-date" bind:value={dateValue}>
+					<Select.Root type="single" name="input-date" bind:value={dateValue} disabled={loading}>
 						<Select.Trigger class="h-8 w-32 tabular-nums">
 							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
 						</Select.Trigger>
