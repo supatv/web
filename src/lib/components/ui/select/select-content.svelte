@@ -31,6 +31,10 @@
 			class={cn(
 				"h-[var(--bits-select-anchor-height)] w-full min-w-[var(--bits-select-anchor-width)] p-1"
 			)}
+			style={{
+				"scrollbar-width": "thin !important",
+				"-ms-overflow-style": "scrollbar !important",
+			}}
 		>
 			{@render children?.()}
 		</SelectPrimitive.Viewport>
