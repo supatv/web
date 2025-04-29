@@ -162,7 +162,7 @@
 			scrollPaused = false;
 
 			socket = new WebSocket(`wss://${instanceValue}/firehose?jsonBasic=true`);
-			socket.addEventListener("message", async (event) => {
+			socket.addEventListener("message", (event) => {
 				messagesPerSecond++;
 				setTimeout(() => {
 					messagesPerSecond--;

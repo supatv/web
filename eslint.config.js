@@ -22,6 +22,9 @@ export default ts.config(
 				Fuzzysort: "readonly",
 			},
 		},
+		rules: {
+			"require-await": "error",
+		},
 	},
 	{
 		files: ["**/*.svelte"],

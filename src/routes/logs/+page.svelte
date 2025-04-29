@@ -526,7 +526,7 @@
 		});
 	});
 
-	const formSubmit = async (event: SubmitEvent) => {
+	const formSubmit = (event: SubmitEvent) => {
 		event.preventDefault();
 		if (loading || !inputChannelName) return;
 
