@@ -174,13 +174,24 @@
 	});
 
 	let filteredChatLogs = $derived.by(() => {
-		let logs = searchValue
-			? fuzzysort
-					.go(searchValue, chatLogs, { keys: ["channel", "displayName", "text"], threshold: 0.5 })
-					.map((x) => x.obj)
-					.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
-			: chatLogs;
-		return logs;
+		if (searchValue) {
+			const regexSearchPrefix = "regex:";
+			if (searchValue.startsWith(regexSearchPrefix)) {
+				try {
+					const regex = new RegExp(searchValue.slice(regexSearchPrefix.length), "i");
+					return chatLogs
+						.filter((msg) => regex.test(msg.text))
+						.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
+				} catch (e) { }
+			}
+
+			return fuzzysort
+				.go(searchValue, chatLogs, { keys: ["channel", "displayName", "text"], threshold: 0.5 })
+				.map((x) => x.obj)
+				.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
+		}
+		
+		return chatLogs;
 	});
 
 	const logsAfterScroll = ({ detail }: { detail: { event: Event; offset: number } }) => {
