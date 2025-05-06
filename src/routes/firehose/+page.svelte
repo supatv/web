@@ -179,10 +179,8 @@
 			if (searchValue.startsWith(regexSearchPrefix)) {
 				try {
 					const regex = new RegExp(searchValue.slice(regexSearchPrefix.length), "i");
-					return chatLogs
-						.filter((msg) => regex.test(msg.text))
-						.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
-				} catch (e) { }
+					return chatLogs.filter((msg) => regex.test(msg.text)).sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
+				} catch (e) {}
 			}
 
 			return fuzzysort
@@ -190,7 +188,7 @@
 				.map((x) => x.obj)
 				.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
 		}
-		
+
 		return chatLogs;
 	});
 
