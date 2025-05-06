@@ -179,7 +179,7 @@
 			if (searchValue.startsWith(regexSearchPrefix)) {
 				try {
 					const regex = new RegExp(searchValue.slice(regexSearchPrefix.length), "i");
-					return chatLogs.filter((msg) => regex.test(msg.text)).sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
+					return chatLogs.filter((msg) => regex.test(msg.text));
 				} catch (e) {}
 			}
 
