@@ -180,7 +180,9 @@
 				try {
 					const regex = new RegExp(searchValue.slice(regexSearchPrefix.length), "i");
 					return chatLogs.filter((msg) => regex.test(msg.text));
-				} catch (e) {}
+				} catch {
+					return [];
+				}
 			}
 
 			return fuzzysort
