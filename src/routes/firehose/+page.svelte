@@ -147,9 +147,7 @@
 		});
 	});
 
-	let filteredChatLogs = $derived.by(() => {
-		return messageSearch(searchValue, chatLogs, null);
-	});
+	let filteredChatLogs = $derived(messageSearch(searchValue, chatLogs, null));
 
 	const logsAfterScroll = ({ detail }: { detail: { event: Event; offset: number } }) => {
 		const el = detail.event.target as HTMLDivElement;

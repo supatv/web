@@ -251,9 +251,7 @@
 
 	let searchValue = $state("");
 
-	let filteredChatLogs = $derived.by(() => {
-		return messageSearch(searchValue, chatLogs, scrollFromBottom);
-	});
+	let filteredChatLogs = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
 
 	$effect(() => {
 		if (!filteredChatLogs) return;
