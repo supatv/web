@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { mode } from "mode-watcher";
-	import fuzzysort from "fuzzysort";
 	import dayjs from "dayjs";
 	import linkParser from "$lib/linkParser";
 

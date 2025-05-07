@@ -13,31 +13,29 @@ export function messageSearch(searchValue: string, chatLogs: Message[], scrollFr
 	};
 
 	if (!searchValue) {
-		return chatLogs;
+		return scrollFromBottom === false ? chatLogs.reverse() : chatLogs;
 	}
 
 	if (searchValue.startsWith(searchPrefixes.regexPrefix)) {
-		try {
-			const regex = new RegExp(searchValue.slice(searchPrefixes.regexPrefix.length), "i");
-			return chatLogs.filter((msg) => regex.test(msg.text));
-		} catch {
-			return [];
-		}
-	}
+        try {
+            const regex = new RegExp(searchValue.slice(searchPrefixes.regexPrefix.length), "i");
+            const logs = chatLogs.filter((msg) => regex.test(msg.text));
+            return scrollFromBottom === false ? logs.reverse() : logs;
+        } catch {
+            return [];
+        }
+    }
 
-	// Scroll From Bottom is only usable on logs. We pass in null here to indicate that we are searching firehose messages.
-	if (scrollFromBottom === null) {
-		return fuzzysort
-				.go(searchValue, chatLogs, { keys: ["channel", "displayName", "text"], threshold: 0.5 })
-				.map((x) => x.obj)
-				.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
-	}
+	const searchOptions = scrollFromBottom === null
+		? { keys: ["channel", "displayName", "text"], threshold: 0.5 }
+		: { keys: ["text"], threshold: 0.5, limit: 5000 };
+		
 
 	const logs = fuzzysort
-					.go(searchValue, chatLogs, { key: "text", threshold: 0.5, limit: 5000 })
+					.go(searchValue, chatLogs, searchOptions)
 					.map((x) => x.obj)
 					.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
 
 
-	return scrollFromBottom ? logs : logs.reverse();
+	return scrollFromBottom === false ? logs.reverse() : logs;
 }
