@@ -7,31 +7,27 @@ export function cn(...inputs: ClassValue[]) {
 	return twMerge(clsx(inputs));
 }
 
+const searchPrefixes = {
+	regex: "regex:",
+};
+
 export function messageSearch(searchValue: string, chatLogs: Message[], scrollFromBottom: boolean | null): Message[] {
-	const searchPrefixes = {
-		regexPrefix: "regex:",
-	};
-
-	if (!searchValue) {
-		return scrollFromBottom === false ? [...chatLogs].reverse() : chatLogs;
-	}
-
-	if (searchValue.startsWith(searchPrefixes.regexPrefix)) {
+	if (searchValue.startsWith(searchPrefixes.regex)) {
 		try {
-			const regex = new RegExp(searchValue.slice(searchPrefixes.regexPrefix.length), "i");
-			const logs = chatLogs.filter((msg) => regex.test(msg.text));
-			return scrollFromBottom === false ? [...logs].reverse() : logs;
+			const regex = new RegExp(searchValue.slice(searchPrefixes.regex.length), "i");
+
+			chatLogs = chatLogs.filter((msg) => regex.test(msg.text));
 		} catch {
 			return [];
 		}
+	} else if (searchValue) {
+		const searchOptions = scrollFromBottom === null ? { keys: ["channel", "displayName", "text"], threshold: 0.5 } : { keys: ["text"], threshold: 0.5, limit: 5000 };
+
+		chatLogs = fuzzysort
+			.go(searchValue, chatLogs, searchOptions)
+			.map((x) => x.obj)
+			.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
 	}
 
-	const searchOptions = scrollFromBottom === null ? { keys: ["channel", "displayName", "text"], threshold: 0.5 } : { keys: ["text"], threshold: 0.5, limit: 5000 };
-
-	const logs = fuzzysort
-		.go(searchValue, chatLogs, searchOptions)
-		.map((x) => x.obj)
-		.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
-
-	return scrollFromBottom === false ? [...logs].reverse() : logs;
+	return !scrollFromBottom ? [...chatLogs].reverse() : chatLogs;
 }
