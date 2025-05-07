@@ -13,14 +13,14 @@ export function messageSearch(searchValue: string, chatLogs: Message[], scrollFr
 	};
 
 	if (!searchValue) {
-		return scrollFromBottom === false ? chatLogs.reverse() : chatLogs;
+		return scrollFromBottom === false ? [...chatLogs].reverse() : chatLogs;
 	}
 
 	if (searchValue.startsWith(searchPrefixes.regexPrefix)) {
         try {
             const regex = new RegExp(searchValue.slice(searchPrefixes.regexPrefix.length), "i");
             const logs = chatLogs.filter((msg) => regex.test(msg.text));
-            return scrollFromBottom === false ? logs.reverse() : logs;
+            return scrollFromBottom === false ? [...logs].reverse() : logs;
         } catch {
             return [];
         }
@@ -37,5 +37,5 @@ export function messageSearch(searchValue: string, chatLogs: Message[], scrollFr
 					.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
 
 
-	return scrollFromBottom === false ? logs.reverse() : logs;
+	return scrollFromBottom === false ? [...logs].reverse() : logs;
 }
