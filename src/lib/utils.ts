@@ -29,5 +29,5 @@ export function messageSearch(searchValue: string, chatLogs: Message[], scrollFr
 			.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
 	}
 
-	return !scrollFromBottom ? [...chatLogs].reverse() : chatLogs;
+	return scrollFromBottom === false ? [...chatLogs].reverse() : chatLogs;
 }
