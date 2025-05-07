@@ -17,25 +17,21 @@ export function messageSearch(searchValue: string, chatLogs: Message[], scrollFr
 	}
 
 	if (searchValue.startsWith(searchPrefixes.regexPrefix)) {
-        try {
-            const regex = new RegExp(searchValue.slice(searchPrefixes.regexPrefix.length), "i");
-            const logs = chatLogs.filter((msg) => regex.test(msg.text));
-            return scrollFromBottom === false ? [...logs].reverse() : logs;
-        } catch {
-            return [];
-        }
-    }
+		try {
+			const regex = new RegExp(searchValue.slice(searchPrefixes.regexPrefix.length), "i");
+			const logs = chatLogs.filter((msg) => regex.test(msg.text));
+			return scrollFromBottom === false ? [...logs].reverse() : logs;
+		} catch {
+			return [];
+		}
+	}
 
-	const searchOptions = scrollFromBottom === null
-		? { keys: ["channel", "displayName", "text"], threshold: 0.5 }
-		: { keys: ["text"], threshold: 0.5, limit: 5000 };
-		
+	const searchOptions = scrollFromBottom === null ? { keys: ["channel", "displayName", "text"], threshold: 0.5 } : { keys: ["text"], threshold: 0.5, limit: 5000 };
 
 	const logs = fuzzysort
-					.go(searchValue, chatLogs, searchOptions)
-					.map((x) => x.obj)
-					.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
-
+		.go(searchValue, chatLogs, searchOptions)
+		.map((x) => x.obj)
+		.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
 
 	return scrollFromBottom === false ? [...logs].reverse() : logs;
 }
