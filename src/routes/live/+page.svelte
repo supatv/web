@@ -4,7 +4,7 @@
 
 	import Image from "$lib/components/image.svelte";
 
-	import type { TitleContext } from "$lib/common";
+	import type { TitleContext } from "$lib/types";
 
 	import { BadgeCheckIcon, UserIcon } from "@lucide/svelte";
 

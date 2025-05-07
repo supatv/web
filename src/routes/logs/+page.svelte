@@ -10,7 +10,7 @@
 	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
-	import { cn } from "$lib/utils.js";
+	import { cn, messageSearch } from "$lib/utils.js";
 
 	import * as Calendar from "$lib/components/ui/calendar/index.js";
 	import * as Popover from "$lib/components/ui/popover/index.js";
@@ -26,49 +26,24 @@
 	import Link from "$lib/components/message/link.svelte";
 	import Badge from "$lib/components/message/badge.svelte";
 
-	import { getContext, onMount, tick, untrack, type Component } from "svelte";
+	import { getContext, onMount, tick, untrack } from "svelte";
 	import { browser } from "$app/environment";
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
 	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon } from "@lucide/svelte";
 
-	import { dateTimeFormat, type TitleContext } from "$lib/common";
+	import { dateTimeFormat } from "$lib/common";
 
 	import { CalendarDate, DateFormatter, getLocalTimeZone, today, type DateValue } from "@internationalized/date";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
+	import type { EmoteProps, Message, ChatComponents, TMIEmote, TitleContext } from "$lib/types";
 
 	type LogsDate = {
 		year: string;
 		month: string;
 		day?: string;
-	};
-
-	type Message = {
-		text: string;
-		displayName: string;
-		timestamp: string;
-		id: string;
-		tags: {
-			[key: string]: string;
-		};
-	};
-
-	type TMIEmote = {
-		id: string;
-		pos: number[];
-	};
-
-	type ChatComponents = {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		type: Component<any>;
-		props: object;
-	}[];
-
-	type EmoteProps = {
-		url: string;
-		src: string;
 	};
 
 	getContext<TitleContext>("title").set("Logs");
@@ -276,16 +251,7 @@
 
 	let searchValue = $state("");
 
-	let filteredChatLogs = $derived.by(() => {
-		let logs = searchValue
-			? fuzzysort
-					.go(searchValue, chatLogs, { key: "text", threshold: 0.5, limit: 5000 })
-					.map((x) => x.obj)
-					.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp))
-			: chatLogs;
-		if (!scrollFromBottom) logs = logs.toReversed();
-		return logs;
-	});
+	let filteredChatLogs = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
 
 	$effect(() => {
 		if (!filteredChatLogs) return;

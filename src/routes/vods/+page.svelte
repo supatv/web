@@ -5,7 +5,8 @@
 
 	import { HardDriveIcon } from "@lucide/svelte";
 
-	import { humanFileSize, type TitleContext } from "$lib/common";
+	import { humanFileSize } from "$lib/common";
+	import type { TitleContext } from "$lib/types";
 	import type { BucketUsage } from "$lib/twitch/streams";
 	import type { PageProps } from "./$types";
 

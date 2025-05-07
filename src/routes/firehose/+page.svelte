@@ -1,6 +1,5 @@
 <script lang="ts">
 	import { mode } from "mode-watcher";
-	import fuzzysort from "fuzzysort";
 	import dayjs from "dayjs";
 	import linkParser from "$lib/linkParser";
 
@@ -22,44 +21,19 @@
 
 	import { ChevronsDownIcon } from "@lucide/svelte";
 
-	import { getContext, onDestroy, onMount, tick, untrack, type Component } from "svelte";
+	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
 
 	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 
-	import { timeFormat, type TitleContext } from "$lib/common";
+	import { timeFormat } from "$lib/common";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
 
 	import instances from "./instances.json";
-
-	type Message = {
-		text: string;
-		displayName: string;
-		channel?: string;
-		timestamp: string;
-		id: string;
-		tags: {
-			[key: string]: string;
-		};
-	};
-
-	type TMIEmote = {
-		id: string;
-		pos: number[];
-	};
-
-	type ChatComponents = {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		type: Component<any>;
-		props: object;
-	}[];
-
-	type EmoteProps = {
-		url: string;
-		src: string;
-	};
+	import type { EmoteProps, Message, ChatComponents, TMIEmote, TitleContext } from "$lib/types";
+	import { messageSearch } from "$lib/utils.js";
 
 	getContext<TitleContext>("title").set("Firehose");
 
@@ -173,26 +147,7 @@
 		});
 	});
 
-	let filteredChatLogs = $derived.by(() => {
-		if (searchValue) {
-			const regexSearchPrefix = "regex:";
-			if (searchValue.startsWith(regexSearchPrefix)) {
-				try {
-					const regex = new RegExp(searchValue.slice(regexSearchPrefix.length), "i");
-					return chatLogs.filter((msg) => regex.test(msg.text));
-				} catch {
-					return [];
-				}
-			}
-
-			return fuzzysort
-				.go(searchValue, chatLogs, { keys: ["channel", "displayName", "text"], threshold: 0.5 })
-				.map((x) => x.obj)
-				.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
-		}
-
-		return chatLogs;
-	});
+	let filteredChatLogs = $derived(messageSearch(searchValue, chatLogs, null));
 
 	const logsAfterScroll = ({ detail }: { detail: { event: Event; offset: number } }) => {
 		const el = detail.event.target as HTMLDivElement;
