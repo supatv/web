@@ -27,13 +27,14 @@
 	import { goto } from "$app/navigation";
 	import { page } from "$app/state";
 
-	import { timeFormat } from "$lib/common";
+	import { timeFormat, type TitleContext } from "$lib/common";
+
+	import type { EmoteProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
+	import { messageSearch } from "$lib/twitch/logs";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
 
 	import instances from "./instances.json";
-	import type { EmoteProps, Message, ChatComponents, TMIEmote, TitleContext } from "$lib/types";
-	import { messageSearch } from "$lib/utils.js";
 
 	getContext<TitleContext>("title").set("Firehose");
 

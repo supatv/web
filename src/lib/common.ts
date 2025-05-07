@@ -1,3 +1,8 @@
+export type TitleContext = {
+	value: () => string;
+	set: (newTitle: string) => void;
+};
+
 export const dateFormat = "YYYY-MM-DD";
 export const timeFormat = "HH:mm:ss";
 export const dateTimeFormat = `${dateFormat} ${timeFormat}`;

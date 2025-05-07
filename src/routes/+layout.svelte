@@ -4,8 +4,7 @@
 
 	let { children } = $props();
 
-	import { randomEmoji } from "$lib/common";
-	import type { TitleContext } from "$lib/types";
+	import { randomEmoji, type TitleContext } from "$lib/common";
 
 	import { browser } from "$app/environment";
 	import { setContext } from "svelte";
