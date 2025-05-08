@@ -30,6 +30,8 @@ export type EmoteProps = {
 
 const searchPrefixes = {
 	regex: "regex:",
+	channel: "in:",
+	user: "from:",
 };
 
 export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFromBottom: boolean | null): Message[] => {
@@ -41,6 +43,14 @@ export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFr
 		} catch {
 			return [];
 		}
+	} else if (searchValue.startsWith(searchPrefixes.channel)) {
+		const channels = searchValue.slice(searchPrefixes.channel.length).toLowerCase().split(",");
+
+		chatLogs = chatLogs.filter((msg) => channels.includes(msg.channel?.toLowerCase() ?? ""));
+	} else if (searchValue.startsWith(searchPrefixes.user)) {
+		const users = searchValue.slice(searchPrefixes.user.length).toLowerCase().split(",");
+
+		chatLogs = chatLogs.filter((msg) => users.includes(msg.displayName.toLowerCase()));
 	} else if (searchValue) {
 		const searchOptions = scrollFromBottom === null ? { keys: ["channel", "displayName", "text"], threshold: 0.5 } : { keys: ["text"], threshold: 0.5, limit: 5000 };
 
@@ -52,4 +62,3 @@ export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFr
 
 	return scrollFromBottom === false ? [...chatLogs].reverse() : chatLogs;
 };
-
