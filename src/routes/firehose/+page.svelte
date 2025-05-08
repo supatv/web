@@ -364,7 +364,7 @@
 						</div>
 						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
 						{#if msg.tags["badges"]}
-							<div class="flex gap-x-0.5">
+							<div class="flex gap-x-0.5 empty:hidden">
 								{#key badgeUpdates}
 									{#each getBadges(msg) as badge (badge.id)}
 										<Badge src={badge.src} title={badge.title} alt="" />
