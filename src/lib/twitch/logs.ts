@@ -49,9 +49,7 @@ export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFr
 
 		chatLogs = chatLogs.filter((msg) => msg.channel?.toLowerCase() === channel);
 	} else if (searchValue.startsWith(searchPrefixes.username) || searchValue.startsWith(searchPrefixes.user)) {
-		const user = searchValue.startsWith(searchPrefixes.username)
-			? searchValue.slice(searchPrefixes.username.length).toLowerCase()
-			: searchValue.slice(searchPrefixes.user.length).toLowerCase();
+		const user = searchValue.startsWith(searchPrefixes.username) ? searchValue.slice(searchPrefixes.username.length).toLowerCase() : searchValue.slice(searchPrefixes.user.length).toLowerCase();
 
 		chatLogs = chatLogs.filter((msg) => msg.displayName.toLowerCase() === user);
 	} else if (searchValue) {
@@ -65,4 +63,3 @@ export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFr
 
 	return scrollFromBottom === false ? [...chatLogs].reverse() : chatLogs;
 };
-
