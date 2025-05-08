@@ -44,13 +44,13 @@ export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFr
 			return [];
 		}
 	} else if (searchValue.startsWith(searchPrefixes.channel)) {
-		const channel = searchValue.slice(searchPrefixes.channel.length).toLowerCase();
+		const channels = searchValue.slice(searchPrefixes.channel.length).toLowerCase().split(",");
 
-		chatLogs = chatLogs.filter((msg) => msg.channel?.toLowerCase() === channel);
+		chatLogs = chatLogs.filter((msg) => channels.includes(msg.channel?.toLowerCase() ?? ""));
 	} else if (searchValue.startsWith(searchPrefixes.user)) {
-		const user = searchValue.slice(searchPrefixes.user.length).toLowerCase();
+		const users = searchValue.slice(searchPrefixes.user.length).toLowerCase().split(",");
 
-		chatLogs = chatLogs.filter((msg) => msg.displayName.toLowerCase() === user);
+		chatLogs = chatLogs.filter((msg) => users.includes(msg.displayName.toLowerCase()));
 	} else if (searchValue) {
 		const searchOptions = scrollFromBottom === null ? { keys: ["channel", "displayName", "text"], threshold: 0.5 } : { keys: ["text"], threshold: 0.5, limit: 5000 };
 
