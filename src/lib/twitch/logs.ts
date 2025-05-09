@@ -44,11 +44,19 @@ export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFr
 			return [];
 		}
 	} else if (searchValue.startsWith(searchPrefixes.channel)) {
-		const channels = searchValue.slice(searchPrefixes.channel.length).toLowerCase().split(",");
+		const channels = searchValue
+			.slice(searchPrefixes.channel.length)
+			.toLowerCase()
+			.split(",")
+			.map((c) => c.trim());
 
 		chatLogs = chatLogs.filter((msg) => channels.includes(msg.channel?.toLowerCase() ?? ""));
 	} else if (searchValue.startsWith(searchPrefixes.user)) {
-		const users = searchValue.slice(searchPrefixes.user.length).toLowerCase().split(",");
+		const users = searchValue
+			.slice(searchPrefixes.user.length)
+			.toLowerCase()
+			.split(",")
+			.map((u) => u.trim());
 
 		chatLogs = chatLogs.filter((msg) => users.includes(msg.displayName.toLowerCase()));
 	} else if (searchValue) {
