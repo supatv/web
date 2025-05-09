@@ -120,8 +120,10 @@
 
 	const monthLabel = $derived(monthOptions.find((m) => m.value === defaultMonth?.value)?.label ?? "Month");
 
+	const availableDateSet = $derived(new Set(availableDates.map((d) => `${d.year}-${d.month}${d.day ? `-${d.day}` : ""}`)));
+
 	const isDateAvailable = (date: DateValue) => {
-		return availableDates.some((d) => d.year === String(date.year) && d.month === String(date.month) && (!d.day || d.day === String(date.day)));
+		return availableDateSet.has(`${date.year}-${date.month}${date.day ? `-${date.day}` : ""}`);
 	};
 
 	const loadChannels = async () => {
