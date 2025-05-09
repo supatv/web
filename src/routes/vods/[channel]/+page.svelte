@@ -9,8 +9,7 @@
 
 	import type { PageProps } from "./$types";
 	import type { Stream } from "$lib/twitch/streams";
-	import { dateFormat, dateTimeFormat } from "$lib/common";
-	import type { TitleContext } from "$lib/types";
+	import { dateFormat, dateTimeFormat, type TitleContext } from "$lib/common";
 
 	import dayjs from "dayjs";
 	import relativeTime from "dayjs/plugin/relativeTime";
