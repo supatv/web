@@ -725,7 +725,6 @@
 							class="rounded-md border p-3 tabular-nums"
 							onPlaceholderChange={(date) => adjustDate(date)}
 							onValueChange={(date) => updateDateValue(date)}
-							isDateDisabled={(date) => !isDateAvailable(date)}
 							isDateUnavailable={(date) => !isDateAvailable(date)}
 							bind:value={calendarDate}
 						>
@@ -785,7 +784,7 @@
 													<Calendar.GridRow class="mt-2 w-full">
 														{#each weekDates as date (date)}
 															<Calendar.Cell
-																class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none"
+																class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none [&[data-unavailable]]:pointer-events-none [&[data-unavailable]]:opacity-50"
 																{date}
 																month={month.value}
 															>
