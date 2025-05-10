@@ -94,6 +94,7 @@
 					</div>
 				</div>
 			{/each}
+			<div style="height: 99999px;"></div>
 		{:else}
 			{#each streams as stream (stream.id)}
 				{@const createdAt = new Date(stream.created_at)}

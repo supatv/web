@@ -94,6 +94,7 @@
 				</Card.Root>
 			{/each}
 		</div>
+		<div style="height: 99999px;"></div>
 	{:else}
 		<h1 class="mb-2 text-2xl font-bold">
 			Browse {streams.length.toLocaleString()} livestreams with {streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()} viewers
