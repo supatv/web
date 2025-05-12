@@ -120,8 +120,10 @@
 
 	const monthLabel = $derived(monthOptions.find((m) => m.value === defaultMonth?.value)?.label ?? "Month");
 
+	const availableDateSet = $derived(new Set(availableDates.map((d) => `${d.year}-${d.month}${d.day ? `-${d.day}` : ""}`)));
+
 	const isDateAvailable = (date: DateValue) => {
-		return availableDates.some((d) => d.year === String(date.year) && d.month === String(date.month) && (!d.day || d.day === String(date.day)));
+		return availableDateSet.has(`${date.year}-${date.month}${date.day ? `-${date.day}` : ""}`);
 	};
 
 	const loadChannels = async () => {
@@ -723,7 +725,6 @@
 							class="rounded-md border p-3 tabular-nums"
 							onPlaceholderChange={(date) => adjustDate(date)}
 							onValueChange={(date) => updateDateValue(date)}
-							isDateDisabled={(date) => !isDateAvailable(date)}
 							isDateUnavailable={(date) => !isDateAvailable(date)}
 							bind:value={calendarDate}
 						>
@@ -783,7 +784,7 @@
 													<Calendar.GridRow class="mt-2 w-full">
 														{#each weekDates as date (date)}
 															<Calendar.Cell
-																class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none"
+																class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none [&[data-unavailable]]:pointer-events-none [&[data-unavailable]]:opacity-50"
 																{date}
 																month={month.value}
 															>

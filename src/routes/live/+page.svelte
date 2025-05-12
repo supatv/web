@@ -4,7 +4,7 @@
 
 	import Image from "$lib/components/image.svelte";
 
-	import type { TitleContext } from "$lib/types";
+	import type { TitleContext } from "$lib/common";
 
 	import { BadgeCheckIcon, UserIcon } from "@lucide/svelte";
 
@@ -77,7 +77,7 @@
 		</h1>
 		<div class="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
 			{#each { length: 30 }}
-				<Card.Root class="bg-neutral-200 p-1 dark:bg-neutral-900">
+				<Card.Root class="bg-neutral-50 p-1 dark:bg-neutral-900">
 					<Skeleton class="aspect-video w-full rounded-sm" />
 					<div class="mx-1 mt-0 flex h-12 items-center">
 						<Skeleton class="size-10 min-w-10 rounded-full" />
@@ -94,6 +94,7 @@
 				</Card.Root>
 			{/each}
 		</div>
+		<div style="height: 99999px;"></div>
 	{:else}
 		<h1 class="mb-2 text-2xl font-bold">
 			Browse {streams.length.toLocaleString()} livestreams with {streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()} viewers
@@ -101,7 +102,7 @@
 		<div class="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
 			{#each streams as stream (stream.login)}
 				<a href="https://www.twitch.tv/{stream.login}" target="_blank">
-					<Card.Root class="bg-neutral-200 p-1 text-left transition hover:scale-105 hover:bg-neutral-300 dark:bg-neutral-900 dark:hover:bg-neutral-800">
+					<Card.Root class="bg-neutral-50 p-1 text-left transition hover:scale-105 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800">
 						<div class="max-w-full">
 							<div class="relative overflow-hidden rounded-sm">
 								<span class="absolute right-0 z-10 rounded-bl-sm bg-black/60 px-0.5 text-xs text-white">{formatUptime(stream.started)}</span>
