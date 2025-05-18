@@ -66,7 +66,13 @@
 	<meta name="description" content="Browse every Romanian Twitch livestream and channel." />
 </svelte:head>
 
-<div class="flex w-full max-w-[2500px] flex-col self-center p-5">
+<a href="https://votcorect.ro/prezidentiale-2025/" target="_blank">
+	<div class="fixed bottom-0 right-0 z-50 opacity-60 drop-shadow-sm transition-all duration-300 ease-in-out hover:translate-y-[-8px] hover:opacity-100">
+		<img src="https://kappa.lol/4t6aIk.webp" alt="" class="h-32" />
+	</div>
+</a>
+
+<div class="mb-32 flex w-full max-w-[2500px] flex-col self-center p-5">
 	{#if streams === null}
 		<h1 class="mb-2 text-2xl font-bold">
 			Browse
