@@ -855,13 +855,13 @@
 						{@const msg = filteredChatLogs[index]}
 						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
 						{#if msg.tags["badges"]}
-							<div class="flex gap-x-0.5 empty:hidden">
+							<span class="inline-flex gap-x-0.5 empty:hidden">
 								{#key badgeUpdates}
 									{#each getBadges(msg) as badge (badge.id)}
 										<Badge src={badge.src} title={badge.title} alt="" />
 									{/each}
 								{/key}
-							</div>
+							</span>
 						{/if}
 						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
 							{msg.displayName}:
