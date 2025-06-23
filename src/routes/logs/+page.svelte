@@ -129,7 +129,7 @@
 	const loadChannels = async () => {
 		error = null;
 		// loading = true;
-		const res = await fetch("https://logs.zonian.dev/channels");
+		const res = await fetch("https://bestlogs.supa.codes/channels");
 		if (!res.ok) {
 			// error = `Error from server: ${res.status} ${res.statusText}`;
 			// loading = false;
@@ -310,7 +310,7 @@
 			chatLogs = [];
 			loading = true;
 
-			const res = await fetch(`https://logs.zonian.dev/list?${parseChannelUser(channelName, userName, true)}`);
+			const res = await fetch(`https://bestlogs.supa.codes/list?${parseChannelUser(channelName, userName, true)}`);
 			if (!res.ok) {
 				if (res.status === 404) error = `No logs found for this channel ${userName ? "and user" : ""}`;
 				else error = `Error from server: ${res.status} ${res.statusText}`;
@@ -334,7 +334,7 @@
 			error = null;
 			loading = true;
 
-			const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`);
+			const res = await fetch(`https://bestlogs.supa.codes/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`);
 			if (!res.ok) {
 				if (res.status === 404) error = "No logs found for this date";
 				else error = `Error from server: ${res.status} ${res.statusText}`;
@@ -836,7 +836,7 @@
 						size="icon"
 						class="size-8 border"
 						target="_blank"
-						href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}{dateContent.day ? `/${dateContent.day}` : ''}"
+						href="https://bestlogs.supa.codes/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}{dateContent.day ? `/${dateContent.day}` : ''}"
 					>
 						<FileTextIcon />
 					</Button>
@@ -855,13 +855,13 @@
 						{@const msg = filteredChatLogs[index]}
 						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
 						{#if msg.tags["badges"]}
-							<div class="flex gap-x-0.5 empty:hidden">
+							<span class="inline-flex gap-x-0.5 empty:hidden">
 								{#key badgeUpdates}
 									{#each getBadges(msg) as badge (badge.id)}
 										<Badge src={badge.src} title={badge.title} alt="" />
 									{/each}
 								{/key}
-							</div>
+							</span>
 						{/if}
 						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
 							{msg.displayName}:

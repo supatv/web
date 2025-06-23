@@ -102,7 +102,7 @@
 		<div class="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
 			{#each streams as stream (stream.login)}
 				<a href="https://www.twitch.tv/{stream.login}" target="_blank">
-					<Card.Root class="bg-neutral-50 p-1 text-left transition hover:scale-105 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800">
+					<Card.Root class="bg-neutral-50 p-1 text-left transition duration-200 hover:scale-[1.02] hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800">
 						<div class="max-w-full">
 							<div class="relative overflow-hidden rounded-sm">
 								<span class="absolute right-0 z-10 rounded-bl-sm bg-black/60 px-0.5 text-xs text-white">{formatUptime(stream.started)}</span>
