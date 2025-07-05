@@ -28,37 +28,41 @@ export type EmoteProps = {
 	src: string;
 };
 
-const searchPrefixes = {
-	regex: "regex:",
-	channel: "in:",
-	user: "from:",
-};
-
-export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFromBottom: boolean | null): Message[] => {
-	if (searchValue.startsWith(searchPrefixes.regex)) {
+const searchPrefixes: Record<string, (searchString: string, chatLogs: Message[]) => Message[]> = {
+	regex(searchString, chatLogs) {
 		try {
-			const regex = new RegExp(searchValue.slice(searchPrefixes.regex.length), "i");
+			const regex = new RegExp(searchString, "i");
 
-			chatLogs = chatLogs.filter((msg) => regex.test(msg.text));
+			return chatLogs.filter((msg) => regex.test(msg.text));
 		} catch {
 			return [];
 		}
-	} else if (searchValue.startsWith(searchPrefixes.channel)) {
-		const channels = searchValue
-			.slice(searchPrefixes.channel.length)
+	},
+	in(searchString, chatLogs) {
+		const channels = searchString
 			.toLowerCase()
 			.split(",")
 			.map((c) => c.trim());
 
-		chatLogs = chatLogs.filter((msg) => channels.includes(msg.channel?.toLowerCase() ?? ""));
-	} else if (searchValue.startsWith(searchPrefixes.user)) {
-		const users = searchValue
-			.slice(searchPrefixes.user.length)
+		return chatLogs.filter((msg) => channels.includes(msg.channel?.toLowerCase() ?? ""));
+	},
+	from(searchString, chatLogs) {
+		const users = searchString
 			.toLowerCase()
 			.split(",")
 			.map((u) => u.trim());
 
-		chatLogs = chatLogs.filter((msg) => users.includes(msg.displayName.toLowerCase()));
+		return chatLogs.filter((msg) => users.includes(msg.displayName.toLowerCase()));
+	},
+};
+
+type SearchPrefixKey = keyof typeof searchPrefixes;
+
+export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFromBottom: boolean | null): Message[] => {
+	const searchKey = searchValue.split(":", 1)[0].toLowerCase();
+	if (searchKey in searchPrefixes) {
+		const searchString = searchValue.slice(searchKey.length + 1);
+		chatLogs = searchPrefixes[searchKey as SearchPrefixKey](searchString, chatLogs);
 	} else if (searchValue) {
 		const searchOptions = scrollFromBottom === null ? { keys: ["channel", "displayName", "text"], threshold: 0.5 } : { keys: ["text"], threshold: 0.5, limit: 5000 };
 
