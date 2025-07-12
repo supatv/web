@@ -60,8 +60,8 @@ type SearchPrefixKey = keyof typeof searchPrefixes;
 
 export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFromBottom: boolean | null): Message[] => {
 	const searchKey = searchValue.split(":", 1)[0].toLowerCase();
-	if (searchKey in searchPrefixes) {
-		const searchString = searchValue.slice(searchKey.length + 1);
+	const searchString = searchValue.slice(searchKey.length + 1);
+	if (searchKey in searchPrefixes && searchString) {
 		chatLogs = searchPrefixes[searchKey as SearchPrefixKey](searchString, chatLogs);
 	} else if (searchValue) {
 		const searchOptions = scrollFromBottom === null ? { keys: ["channel", "displayName", "text"], threshold: 0.5 } : { keys: ["text"], threshold: 0.5, limit: 5000 };
