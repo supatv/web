@@ -267,7 +267,7 @@
 					props: {
 						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
 						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
-						url: `https://emotes.awoo.nl/twitch/emote/${nextEmote.id}`,
+						url: `https://chatvau.lt/emote/twitch/${nextEmote.id}`,
 					},
 				});
 				i = nextEmote.pos[1];
