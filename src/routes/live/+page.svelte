@@ -1,6 +1,7 @@
 <script lang="ts">
 	import * as Card from "$lib/components/ui/card/index.js";
 	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
+	import { Checkbox } from "$lib/components/ui/checkbox/index.js";
 
 	import Image from "$lib/components/image.svelte";
 
@@ -22,7 +23,10 @@
 		title: string;
 		avatar: string;
 		type: string;
+		tags: string[];
 	};
+
+	let filterInsula = $state(false);
 
 	const formatUptime = (s: string) => {
 		let string = "";
@@ -40,14 +44,18 @@
 
 	let fetchTimeout: number | NodeJS.Timeout | null = null;
 
-	let streams: Stream[] | null = null;
+	let ogStreams: Stream[] = $state([]);
 	const fetchStreams = async () => {
 		const res = await fetch("https://api-tv.supa.sh/tags/ro");
-		streams = await res.json();
+		ogStreams = await res.json();
 		fetchTimeout = setTimeout(() => {
 			fetchStreams();
 		}, 60_000);
 	};
+
+	let filteredStreams = $derived(ogStreams.filter((stream) => !(/\b(insula|barfa)\b/i.test(stream.title) || /insula/i.test(stream.tags.join(" ")))));
+
+	let streams = $derived(filterInsula ? filteredStreams : ogStreams);
 
 	onMount(() => {
 		fetchStreams();
@@ -67,7 +75,7 @@
 </svelte:head>
 
 <div class="flex w-full max-w-[2500px] flex-col self-center p-5">
-	{#if streams === null}
+	{#if !streams.length}
 		<h1 class="mb-2 text-2xl font-bold">
 			Browse
 			<Skeleton class="inline-block h-7 w-[2ch] align-middle" />
@@ -99,6 +107,12 @@
 		<h1 class="mb-2 text-2xl font-bold">
 			Browse {streams.length.toLocaleString()} livestreams with {streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()} viewers
 		</h1>
+		{#if filteredStreams.length !== ogStreams.length}
+			<div class="mb-3 flex items-center gap-1.5 font-medium">
+				<Checkbox id="filter-insula" bind:checked={filterInsula} />
+				<label for="filter-insula">Filter Insula Iubirii</label>
+			</div>
+		{/if}
 		<div class="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
 			{#each streams as stream (stream.login)}
 				<a href="https://www.twitch.tv/{stream.login}" target="_blank">
