@@ -27,6 +27,7 @@
 	import Emote from "$lib/components/message/emote.svelte";
 	import Link from "$lib/components/message/link.svelte";
 	import Badge from "$lib/components/message/badge.svelte";
+	import Reply from "$lib/components/message/reply.svelte";
 
 	import { getContext, onMount, tick, untrack } from "svelte";
 	import { SvelteMap } from "svelte/reactivity";
@@ -656,6 +657,19 @@
 			if (i === unicode.length - 1 && cum.trim()) {
 				processWord(cum, components);
 			}
+		}
+
+		if (msg.tags["reply-parent-msg-id"]) {
+			const prefix = `@${msg.tags["reply-parent-user-login"]}`;
+			components[0] = {
+				type: Reply,
+				props: {
+					text: prefix,
+					msgId: msg.tags["reply-parent-msg-id"],
+					replyUser: msg.tags["reply-parent-user-login"],
+					replyBody: msg.tags["reply-parent-msg-body"],
+				},
+			};
 		}
 
 		return components;
