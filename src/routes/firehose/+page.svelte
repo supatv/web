@@ -354,16 +354,16 @@
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
 			<Card.Root class="h-full w-full flex-col p-3 leading-none">
 				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} on:afterScroll={logsAfterScroll}>
-					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
+					<div class="flex h-5 !w-auto min-w-full flex-row items-center gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						<span class="inline-block min-w-48 max-w-48 overflow-hidden">
 							<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel} class="font-bold text-neutral-500">
 								#{msg.channel}
 							</a>
 						</span>
-						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
 						{#if msg.tags["badges"]}
-							<span class="inline-flex gap-x-0.5 empty:hidden">
+							<span class="inline-flex select-none gap-x-0.5 empty:hidden">
 								{#key badgeUpdates}
 									{#each getBadges(msg) as badge (badge.id)}
 										<Badge src={badge.src} title={badge.title} alt="" />
@@ -371,15 +371,21 @@
 								{/key}
 							</span>
 						{/if}
-						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-							{msg.displayName}:
-						</span>
-						<span class:text-neutral-500={msg.tags["target-user-id"]}>
-							{#key emoteUpdates}
-								{#each parseMessage(msg) as { type: Component, props }, index (index)}
-									<Component {...props} />
-								{/each}
-							{/key}
+						<span class="h-5">
+							<span
+								class:hidden={msg.tags["target-user-id"]}
+								style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})"
+								class="align-middle font-bold"
+							>
+								{msg.displayName}:
+							</span>
+							<span class={["align-middle", msg.tags["target-user-id"] && "text-neutral-500"]}>
+								{#key emoteUpdates}
+									{#each parseMessage(msg) as { type: Component, props }, index (index)}
+										<Component {...props} />
+									{/each}
+								{/key}
+							</span>
 						</span>
 					</div>
 				</VirtualList>
