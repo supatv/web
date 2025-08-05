@@ -202,23 +202,23 @@
 
 			if (!c) {
 				q.delete("c");
-			} else {
-				if (c !== q.get("c")) replaceState = false;
+			} else if (c !== q.get("c")) {
 				q.set("c", c);
+				replaceState = false;
 			}
 
 			if (!u) {
 				q.delete("u");
-			} else {
-				if (u !== q.get("u")) replaceState = false;
+			} else if (u !== q.get("u")) {
 				q.set("u", u);
+				replaceState = false;
 			}
 
 			if (!d) {
 				q.delete("d", d);
-			} else {
-				if (d !== q.get("d")) replaceState = false;
+			} else if (d !== q.get("d")) {
 				q.set("d", d);
+				replaceState = false;
 			}
 
 			if (s) q.set("s", s);
