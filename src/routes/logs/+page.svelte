@@ -215,7 +215,7 @@
 			}
 
 			if (!d) {
-				q.delete("d", d);
+				q.delete("d");
 			} else if (d !== q.get("d")) {
 				q.set("d", d);
 				replaceState = false;
