@@ -907,7 +907,7 @@
 									{/key}
 								</span>
 							{/if}
-							<span class="h-5">
+							<span class="h-5 w-max">
 								<span
 									class:hidden={msg.tags["target-user-id"]}
 									style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})"
