@@ -7,7 +7,7 @@
 </script>
 
 <a href={url} target="_blank">
-	<Image {src} alt={name} title={name} class="inline-block max-h-5" />
+	<Image {src} alt={name} title={name} class="inline-block max-h-5 align-text-bottom" />
 </a>
 <!-- <Tooltip.Provider>
     <Tooltip.Root delayDuration={200} disableHoverableContent={true}>

@@ -35,7 +35,7 @@
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
-	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon } from "@lucide/svelte";
+	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon } from "@lucide/svelte";
 
 	import { dateTimeFormat, type TitleContext } from "$lib/common";
 
@@ -51,6 +51,8 @@
 	};
 
 	getContext<TitleContext>("title").set("Logs");
+
+	const lineHeight = 20;
 
 	let error: string | null = $state(null);
 	let loading = $state(false);
@@ -158,7 +160,7 @@
 			q.set("u", q.get("username") || "");
 			q.delete("username");
 		}
-		goto(page.url.search, { replaceState: true, keepFocus: true });
+		goto(page.url.search + page.url.hash, { replaceState: true, keepFocus: true });
 
 		inputChannelName = channelName = q.get("c") || "";
 		inputUserName = userName = q.get("u") || "";
@@ -195,18 +197,34 @@
 		untrack(() => {
 			const q = page.url.searchParams;
 
-			if (c) q.set("c", c);
+			let replaceState = true;
 
-			if (u) q.set("u", u);
-			else q.delete("u");
+			if (!c) {
+				q.delete("c");
+			} else if (c !== q.get("c")) {
+				q.set("c", c);
+				replaceState = false;
+			}
 
-			if (d) q.set("d", d);
-			else q.delete("d");
+			if (!u) {
+				q.delete("u");
+			} else if (u !== q.get("u")) {
+				q.set("u", u);
+				replaceState = false;
+			}
+
+			if (!d) {
+				q.delete("d", d);
+			} else if (d !== q.get("d")) {
+				q.set("d", d);
+				replaceState = false;
+			}
 
 			if (s) q.set("s", s);
 			else q.delete("s");
 
-			goto(page.url.search, { replaceState: true, keepFocus: true });
+			// TODO handle history state
+			goto(page.url.search + (replaceState ? page.url.hash : ""), { replaceState: true, keepFocus: true });
 		});
 	});
 
@@ -266,6 +284,29 @@
 			const virtualList = document.querySelector(".virtual-list-wrapper");
 			if (!virtualList) return;
 			virtualList.scrollTop = scrollFromBottom ? virtualList.scrollHeight : 0;
+		});
+	});
+
+	$effect(() => {
+		const id = page.url.hash.slice(1);
+		if (!id) return;
+		const msgIdx = chatLogs.findIndex((m) => m.id === id);
+		if (msgIdx === -1) return;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		scrollFromBottom;
+		untrack(async () => {
+			await tick();
+			const virtualList = document.querySelector(".virtual-list-wrapper");
+			if (!virtualList) return;
+
+			const listHeight = virtualList.clientHeight;
+			const totalHeight = virtualList.scrollHeight;
+
+			if (scrollFromBottom) {
+				virtualList.scrollTop = msgIdx * lineHeight - listHeight * 0.5 + lineHeight;
+			} else {
+				virtualList.scrollTop = totalHeight - msgIdx * lineHeight - listHeight * 0.5 - lineHeight;
+			}
 		});
 	});
 
@@ -851,30 +892,46 @@
 		<p class="text-red-500">{error}</p>
 	{:else if chatLogs.length}
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
-			<Card.Root class="h-full w-full flex-col p-3 leading-none">
-				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20}>
-					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
+			<Card.Root class="h-full w-full flex-col overflow-visible py-1 leading-none">
+				<VirtualList height={logsBoxHeight - 8} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
+					<div class="group text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
-						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
-						{#if msg.tags["badges"]}
-							<span class="inline-flex gap-x-0.5 empty:hidden">
-								{#key badgeUpdates}
-									{#each getBadges(msg) as badge (badge.id)}
-										<Badge src={badge.src} title={badge.title} alt="" />
-									{/each}
-								{/key}
+						<div class={["flex h-5 w-full items-center gap-x-1 px-3", msg.id && msg.id === page.url.hash.slice(1) && "bg-neutral-200 dark:bg-neutral-800"]}>
+							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
+							{#if msg.tags["badges"]}
+								<span class="inline-flex select-none gap-x-0.5 empty:hidden">
+									{#key badgeUpdates}
+										{#each getBadges(msg) as badge (badge.id)}
+											<Badge src={badge.src} title={badge.title} alt="" />
+										{/each}
+									{/key}
+								</span>
+							{/if}
+							<span class="h-5">
+								<span
+									class:hidden={msg.tags["target-user-id"]}
+									style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})"
+									class="align-middle font-bold"
+								>
+									{msg.displayName}:
+								</span>
+								<span class={["align-middle", msg.tags["target-user-id"] && "text-neutral-500"]}>
+									{#key emoteUpdates}
+										{#each parseMessage(msg) as { type: Component, props }, index (index)}
+											<Component {...props} />
+										{/each}
+									{/key}
+								</span>
 							</span>
-						{/if}
-						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-							{msg.displayName}:
-						</span>
-						<span class:text-neutral-500={msg.tags["target-user-id"]}>
-							{#key emoteUpdates}
-								{#each parseMessage(msg) as { type: Component, props }, index (index)}
-									<Component {...props} />
-								{/each}
-							{/key}
-						</span>
+							<Button
+								variant="outline"
+								class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
+								href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msg.id}"
+								target="_blank"
+							>
+								<ExternalLinkIcon class="!size-3" />
+							</Button>
+						</div>
 					</div>
 				</VirtualList>
 			</Card.Root>
@@ -889,6 +946,9 @@
 <style>
 	:global(.virtual-list-wrapper) {
 		overflow: scroll !important;
+
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
 
 		&::-webkit-scrollbar {
 			@apply size-1.5 bg-sidebar-border;
