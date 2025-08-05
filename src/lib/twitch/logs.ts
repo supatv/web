@@ -28,6 +28,11 @@ export type EmoteProps = {
 	src: string;
 };
 
+export type BadgeProps = {
+	url: string;
+	title: string;
+};
+
 const searchPrefixes: Record<string, (searchString: string, chatLogs: Message[]) => Message[]> = {
 	regex(searchString, chatLogs) {
 		try {

@@ -22,6 +22,7 @@
 	import { ChevronsDownIcon } from "@lucide/svelte";
 
 	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
+	import { SvelteMap } from "svelte/reactivity";
 
 	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
@@ -29,7 +30,7 @@
 
 	import { timeFormat, type TitleContext } from "$lib/common";
 
-	import type { EmoteProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
+	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
 	import { messageSearch } from "$lib/twitch/logs";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
@@ -60,11 +61,11 @@
 	let searchInput: HTMLInputElement | null = $state(null);
 
 	// Emotes
-	const globalEmotes = new Map<string, EmoteProps>();
+	const globalEmotes = new SvelteMap<string, EmoteProps>();
 	let emoteUpdates = $state(0);
 
 	// Badges
-	const globalBadges = new Map();
+	const globalBadges = new SvelteMap<string, BadgeProps>();
 	let badgeUpdates = $state(0);
 
 	let instanceValue = $state("");

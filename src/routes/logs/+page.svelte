@@ -29,6 +29,8 @@
 	import Badge from "$lib/components/message/badge.svelte";
 
 	import { getContext, onMount, tick, untrack } from "svelte";
+	import { SvelteMap } from "svelte/reactivity";
+
 	import { browser } from "$app/environment";
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
@@ -37,7 +39,7 @@
 
 	import { dateTimeFormat, type TitleContext } from "$lib/common";
 
-	import type { EmoteProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
+	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
 	import { messageSearch } from "$lib/twitch/logs";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
@@ -176,13 +178,13 @@
 	let channelId = $state("");
 
 	// Emotes
-	const channelEmotes = new Map<string, EmoteProps>();
-	const globalEmotes = new Map<string, EmoteProps>();
+	const channelEmotes = new SvelteMap<string, EmoteProps>();
+	const globalEmotes = new SvelteMap<string, EmoteProps>();
 	let emoteUpdates = $state(0);
 
 	// Badges
-	const channelBadges = new Map();
-	const globalBadges = new Map();
+	const channelBadges = new SvelteMap<string, BadgeProps>();
+	const globalBadges = new SvelteMap<string, BadgeProps>();
 	let badgeUpdates = $state(0);
 
 	$effect(() => {
