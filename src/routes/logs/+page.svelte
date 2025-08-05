@@ -894,7 +894,7 @@
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
 			<Card.Root class="h-full w-full flex-col overflow-visible py-1 leading-none">
 				<VirtualList height={logsBoxHeight - 8} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
-					<div class="group text-nowrap" slot="item" let:index let:style {style}>
+					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						<div class={["flex h-5 w-full items-center gap-x-1 px-3", msg.id && msg.id === page.url.hash.slice(1) && "bg-neutral-200 dark:bg-neutral-800"]}>
 							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
@@ -923,14 +923,16 @@
 									{/key}
 								</span>
 							</span>
-							<Button
-								variant="outline"
-								class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
-								href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msg.id}"
-								target="_blank"
-							>
-								<ExternalLinkIcon class="!size-3" />
-							</Button>
+							{#if msg.id && msg.id !== page.url.hash.slice(1)}
+								<Button
+									variant="outline"
+									class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
+									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msg.id}"
+									target="_blank"
+								>
+									<ExternalLinkIcon class="!size-3" />
+								</Button>
+							{/if}
 						</div>
 					</div>
 				</VirtualList>
