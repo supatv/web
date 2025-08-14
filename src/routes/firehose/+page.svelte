@@ -352,7 +352,7 @@
 		</div>
 
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
-			<Card.Root class="h-full w-full flex-col p-3 leading-none">
+			<Card.Root class="h-full w-full flex-col p-3 leading-5">
 				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} on:afterScroll={logsAfterScroll}>
 					<div class="flex h-5 !w-auto min-w-full flex-row items-center gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
@@ -372,14 +372,10 @@
 							</span>
 						{/if}
 						<span class="h-5">
-							<span
-								class:hidden={msg.tags["target-user-id"]}
-								style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})"
-								class="align-middle font-bold"
-							>
+							<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
 								{msg.displayName}:
 							</span>
-							<span class={["align-middle", msg.tags["target-user-id"] && "text-neutral-500"]}>
+							<span class={[msg.tags["target-user-id"] && "text-neutral-500"]}>
 								{#key emoteUpdates}
 									{#each parseMessage(msg) as { type: Component, props }, index (index)}
 										<Component {...props} />
