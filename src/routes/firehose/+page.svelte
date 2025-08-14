@@ -154,7 +154,7 @@
 	const logsAfterScroll = ({ detail }: { detail: { event: Event; offset: number } }) => {
 		const el = detail.event.target as HTMLDivElement;
 		const remScroll = Math.abs(el.scrollHeight - el.clientHeight - detail.offset);
-		scrollPaused = remScroll >= 4;
+		scrollPaused = remScroll > 24;
 	};
 
 	const resumeScroll = () => {
