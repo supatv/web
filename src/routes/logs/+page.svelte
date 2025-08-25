@@ -720,7 +720,7 @@
 					<Label for="input-channel" class="text-base">
 						Channel<span class="text-red-500">*</span>
 					</Label>
-					<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} autofocus />
+					<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} autocomplete="off" autofocus />
 
 					{#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
 						<div class="absolute left-0 right-0 top-full z-10 mt-1">
