@@ -1,9 +1,11 @@
 <script lang="ts">
 	import { Calendar as CalendarPrimitive } from "bits-ui";
 	import { mode } from "mode-watcher";
-	import fuzzysort from "fuzzysort";
 	import dayjs from "dayjs";
 	import linkParser from "$lib/linkParser";
+
+	import LogsWorker from "$lib/workers/logs?worker";
+	import { op } from "$lib/workers/common/logs";
 
 	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
@@ -60,8 +62,6 @@
 
 	let isPopoverOpen = $state(false);
 
-	let channels: { name: string; userID: string }[] = $state([]);
-	let channelTargets: Fuzzysort.Prepared[] = $state([]);
 	let selectedIndex = $state(0); // Track selected item
 
 	let availableDates: LogsDate[] = $state([]);
@@ -131,24 +131,34 @@
 		return availableDateSet.has(`${date.year}-${date.month}${date.day ? `-${date.day}` : ""}`);
 	};
 
-	const loadChannels = async () => {
-		error = null;
-		// loading = true;
-		const res = await fetch("https://logs.zonian.dev/channels");
-		if (!res.ok) {
-			// error = `Error from server: ${res.status} ${res.statusText}`;
-			// loading = false;
-			throw error;
-		}
+	let channelsCount = $state(0);
+	let foundChannels: Fuzzysort.Result[] = $state([]);
 
-		const data = await res.json();
-		channels = data.channels;
-		channelTargets = channels.map(({ name }) => fuzzysort.prepare(name));
-		// loading = false;
-	};
+	let logsWorker: Worker;
+	if (browser) {
+		logsWorker = new LogsWorker();
+		logsWorker.postMessage({ op: op.READY });
+
+		const handlers = {
+			[op.CLIENT_DATA]: (payload: { channelsCount: number }) => {
+				channelsCount = payload.channelsCount;
+			},
+			[op.CLIENT_SEARCH_RESULTS]: (payload: Fuzzysort.Result[]) => {
+				foundChannels = payload;
+				selectedIndex = 0;
+			},
+		};
+
+		logsWorker.onmessage = (event) => {
+			handlers[event.data.op]?.(event.data.payload);
+		};
+
+		$effect(() => {
+			logsWorker.postMessage({ op: op.SEARCH, payload: inputChannelName });
+		});
+	}
 
 	onMount(() => {
-		loadChannels();
 		fetchGlobalBadges();
 		fetchGlobalEmotes();
 
@@ -227,13 +237,6 @@
 			// TODO handle history state
 			goto(page.url.search + (replaceState ? page.url.hash : ""), { replaceState: true, keepFocus: true });
 		});
-	});
-
-	let foundChannels = $derived(fuzzysort.go(inputChannelName, channelTargets, { threshold: 0.5, limit: 5 }));
-	$effect(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		foundChannels;
-		selectedIndex = 0;
 	});
 
 	const channelKeydown = (event: KeyboardEvent) => {
@@ -706,10 +709,10 @@
 <div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
 	<h1 class="text-2xl font-bold">
 		Search logs in
-		{#if !channels.length}
+		{#if !channelsCount}
 			<Skeleton class="inline-block h-7 w-[4ch] align-middle" />
 		{:else}
-			{channels.length.toLocaleString()}
+			{channelsCount.toLocaleString()}
 		{/if}
 		channels
 	</h1>
