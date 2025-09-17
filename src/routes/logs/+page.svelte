@@ -31,7 +31,7 @@
 	import Badge from "$lib/components/message/badge.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
 
-	import { getContext, onMount, tick, untrack } from "svelte";
+	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
 	import { SvelteMap } from "svelte/reactivity";
 
 	import { browser } from "$app/environment";
@@ -135,7 +135,7 @@
 	let foundChannels: Fuzzysort.Result[] = $state([]);
 
 	let logsWorker: Worker;
-	if (browser) {
+	const initLogsWorker = () => {
 		logsWorker = new LogsWorker();
 		logsWorker.postMessage({ op: op.READY });
 
@@ -156,9 +156,10 @@
 		$effect(() => {
 			logsWorker.postMessage({ op: op.SEARCH, payload: inputChannelName });
 		});
-	}
+	};
 
 	onMount(() => {
+		initLogsWorker();
 		fetchGlobalBadges();
 		fetchGlobalEmotes();
 
@@ -177,6 +178,10 @@
 		inputUserName = userName = q.get("u") || "";
 		dateValue = q.get("d") || "";
 		searchValue = q.get("s") || "";
+	});
+
+	onDestroy(() => {
+		logsWorker?.terminate();
 	});
 
 	let logsBoxHeight = $state(0);
