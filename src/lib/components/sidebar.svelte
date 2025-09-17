@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TvIcon, ScrollIcon, HeartIcon, SparklesIcon, FilmIcon, ExternalLinkIcon, FlameIcon } from "@lucide/svelte";
+	import { TvIcon, ScrollIcon, HeartIcon, SparklesIcon, ExternalLinkIcon, FlameIcon } from "@lucide/svelte";
 
 	import potatLogo from "$lib/assets/logos/potat.png";
 	import bestlogsLogo from "$lib/assets/logos/bestlogs.png";
@@ -36,7 +36,7 @@
 						</Sidebar.MenuButton>
 					</Sidebar.MenuItem>
 
-					<Sidebar.MenuItem>
+					<!-- <Sidebar.MenuItem>
 						<Sidebar.MenuButton isActive={page.url.pathname === "/vods"}>
 							{#snippet child({ props })}
 								<a href="/vods" {...props}>
@@ -45,7 +45,7 @@
 								</a>
 							{/snippet}
 						</Sidebar.MenuButton>
-					</Sidebar.MenuItem>
+					</Sidebar.MenuItem> -->
 
 					<!-- <Sidebar.MenuItem>
                         <Sidebar.MenuButton aria-disabled={true} isActive={page.url.pathname === "/clips"}>
