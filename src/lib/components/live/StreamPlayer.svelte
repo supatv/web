@@ -20,10 +20,14 @@
 
 		hls = new Hls({
 			enableWorker: true,
+			progressive: true,
 			liveSyncDurationCount: 1,
 			liveMaxLatencyDurationCount: 2,
 			liveDurationInfinity: true,
 			capLevelToPlayerSize: true,
+			fetchSetup: (ctx, initParams) => {
+				return new Request(ctx.url.includes("/playlist/") ? `https://y.supa.sh/?u=${encodeURIComponent(ctx.url)}` : ctx.url, initParams);
+			},
 		});
 		hls.loadSource(`https://luminous.alienpls.org/live/${channelName}?allow_source=true&fast_bread=true&warp=true&platform=web`);
 		hls.attachMedia(video);
