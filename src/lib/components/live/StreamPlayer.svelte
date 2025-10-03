@@ -12,9 +12,11 @@
 	let hls: Hls;
 
 	let loading = $state(true);
+	let attemptedErrorRecovery: null | number = null;
 
 	onMount(() => {
 		if (!Hls.isSupported()) {
+			loading = false;
 			throw new Error("HLS.js not supported");
 		}
 
@@ -29,6 +31,22 @@
 				return new Request(ctx.url.includes("/playlist/") ? `https://y.supa.sh/?u=${encodeURIComponent(ctx.url)}` : ctx.url, initParams);
 			},
 		});
+
+		hls.on(Hls.Events.ERROR, (event, data) => {
+			if (data.fatal) {
+				if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
+					const now = Date.now();
+					if (!attemptedErrorRecovery || now - attemptedErrorRecovery > 5000) {
+						console.log("Fatal media error encountered (" + video.error + +"), attempting to recover");
+						attemptedErrorRecovery = now;
+						hls.recoverMediaError();
+						return;
+					}
+				}
+				loading = false;
+			}
+		});
+
 		hls.loadSource(`https://luminous.alienpls.org/live/${channelName}?allow_source=true&fast_bread=true&warp=true&platform=web`);
 		hls.attachMedia(video);
 	});
@@ -48,6 +66,16 @@
 	bind:this={video}
 	onplay={() => {
 		loading = false;
+	}}
+	onerror={(event) => {
+		const mediaError = (event.currentTarget as HTMLVideoElement).error;
+		if (mediaError && mediaError.code === mediaError.MEDIA_ERR_DECODE) {
+			const now = Date.now();
+			if (!attemptedErrorRecovery || now - attemptedErrorRecovery > 5000) {
+				attemptedErrorRecovery = now;
+				hls?.recoverMediaError();
+			}
+		}
 	}}
 	autoplay
 	volume="0.5"
