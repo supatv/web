@@ -16,9 +16,9 @@
 	const fetchStreams = async () => {
 		const res = await fetch("https://api-tv.supa.sh/tags/ro");
 		streams = await res.json();
-		fetchTimeout = setTimeout(() => {
-			fetchStreams();
-		}, 60_000);
+		// fetchTimeout = setTimeout(() => {
+		// 	fetchStreams();
+		// }, 60_000);
 	};
 
 	onMount(() => {
