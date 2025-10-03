@@ -5,14 +5,16 @@
 	let { children } = $props();
 
 	import { randomEmoji, type TitleContext } from "$lib/common";
+	import { muted } from "$lib/stores/muted";
 
 	import { browser } from "$app/environment";
+	import { page } from "$app/state";
 	import { setContext } from "svelte";
 
 	import { ModeWatcher, toggleMode } from "mode-watcher";
 
 	import { Button } from "$lib/components/ui/button/index.js";
-	import { SunIcon, MoonIcon } from "@lucide/svelte";
+	import { SunIcon, MoonIcon, Volume2Icon, VolumeOffIcon } from "@lucide/svelte";
 
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
 	import AppSidebar from "$lib/components/sidebar.svelte";
@@ -51,6 +53,17 @@
 				<MoonIcon class="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
 				<span class="sr-only">Toggle theme</span>
 			</Button>
+			{#if page.url.pathname === "/live"}
+				<Button onclick={() => muted.update((v) => !v)} variant="ghost" size="icon" class="size-7">
+					{#if $muted}
+						<VolumeOffIcon />
+						<span class="sr-only">Unmute streams</span>
+					{:else}
+						<Volume2Icon />
+						<span class="sr-only">Mute streams</span>
+					{/if}
+				</Button>
+			{/if}
 		</div>
 
 		{@render children?.()}
