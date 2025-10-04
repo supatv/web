@@ -25,9 +25,12 @@
 	let focused = $state(false);
 </script>
 
-<Card.Root class="bg-neutral-50 p-1 text-left transition duration-200 hover:scale-[1.05] hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800">
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="max-w-full" onmouseenter={() => (focused = true)} onmouseleave={() => (focused = false)}>
+<Card.Root
+	class="bg-neutral-50 p-1 text-left transition duration-200 hover:scale-[1.05] hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+	onmouseenter={() => (focused = true)}
+	onmouseleave={() => (focused = false)}
+>
+	<div class="max-w-full">
 		<div class="relative aspect-video size-full overflow-hidden rounded-sm">
 			<span class="absolute right-0 z-50 rounded-bl-sm bg-black/60 px-0.5 text-xs text-white">
 				{formatUptime(stream.started)}
