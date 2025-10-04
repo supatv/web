@@ -2,11 +2,14 @@
 	import { onDestroy, onMount } from "svelte";
 	import Hls from "hls.js";
 
+	import { manifestMap } from "./playlistCache";
 	import { muted } from "$lib/stores/muted";
 
 	import { LoaderCircleIcon } from "@lucide/svelte";
 
 	const { channelName }: { channelName: string } = $props();
+
+	const playlistUrl = `https://luminous.alienpls.org/live/${channelName}?allow_source=true&fast_bread=true&warp=true&platform=web`;
 
 	let video: HTMLVideoElement;
 	let hls: Hls;
@@ -21,8 +24,10 @@
 
 			// @ts-expect-error ...
 			callbacks.onSuccess = (response, stats, context, networkDetails) => {
-				if (context.type === "level" || context.type === "manifest") {
+				if (context.type === "level") {
 					response.data = response.data.replace(/#EXT-X-TWITCH-PREFETCH:(.+)/g, "#EXTINF:2.0,\n$1");
+				} else if (context.type === "manifest") {
+					manifestMap.set(channelName, response.data);
 				}
 
 				onSuccess(response, stats, context, networkDetails);
@@ -58,17 +63,31 @@
 				if (data.type === Hls.ErrorTypes.MEDIA_ERROR) {
 					const now = Date.now();
 					if (!attemptedErrorRecovery || now - attemptedErrorRecovery > 5000) {
-						console.log("Fatal media error encountered (" + video.error + +"), attempting to recover");
+						console.log("Fatal media error encountered, attempting to recover", video.error);
 						attemptedErrorRecovery = now;
 						hls.recoverMediaError();
 						return;
 					}
 				}
+
+				if (manifestMap.has(channelName)) {
+					manifestMap.delete(channelName);
+					hls.loadSource(playlistUrl);
+					return;
+				}
+
 				loading = false;
 			}
 		});
 
-		hls.loadSource(`https://luminous.alienpls.org/live/${channelName}?allow_source=true&fast_bread=true&warp=true&platform=web`);
+		const cache = manifestMap.get(channelName);
+		if (cache) {
+			const blob = new Blob([cache], { type: "application/vnd.apple.mpegurl" });
+			hls.loadSource(URL.createObjectURL(blob));
+		} else {
+			hls.loadSource(playlistUrl);
+		}
+
 		hls.attachMedia(video);
 	});
 
