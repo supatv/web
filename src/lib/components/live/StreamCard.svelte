@@ -41,7 +41,7 @@
 				<StreamPlayer channelName={stream.login} />
 			{/if}
 			<Image
-				src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-{$gridCols && $gridCols < 4 ? '1280x720' : '600x338'}.jpg?t={~~(Date.now() / 1000 / 120)}"
+				src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-{$gridCols && $gridCols < 4 ? '900x507' : '600x338'}.jpg?t={~~(Date.now() / 1000 / 120)}"
 				loading="lazy"
 				alt="Thumbnail"
 				class="aspect-video w-full"
