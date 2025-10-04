@@ -14,6 +14,28 @@
 	let loading = $state(true);
 	let attemptedErrorRecovery: null | number = null;
 
+	class CustomPlaylistLoader extends Hls.DefaultConfig.loader {
+		// @ts-expect-error ...
+		load(context, config, callbacks) {
+			const onSuccess = callbacks.onSuccess;
+
+			// @ts-expect-error ...
+			callbacks.onSuccess = (response, stats, context, networkDetails) => {
+				if (context.type === "level" || context.type === "manifest") {
+					response.data = response.data.replace(/#EXT-X-TWITCH-PREFETCH:(.+)/g, "#EXTINF:2.0,\n$1");
+				}
+
+				onSuccess(response, stats, context, networkDetails);
+			};
+
+			if (context.url.includes("/playlist/")) {
+				context.url = `https://y.supa.sh/?u=${encodeURIComponent(context.url)}`;
+			}
+
+			super.load(context, config, callbacks);
+		}
+	}
+
 	onMount(() => {
 		if (!Hls.isSupported()) {
 			loading = false;
@@ -27,9 +49,8 @@
 			liveMaxLatencyDurationCount: 2,
 			liveDurationInfinity: true,
 			capLevelToPlayerSize: true,
-			fetchSetup: (ctx, initParams) => {
-				return new Request(ctx.url.includes("/playlist/") ? `https://y.supa.sh/?u=${encodeURIComponent(ctx.url)}` : ctx.url, initParams);
-			},
+			// @ts-expect-error ...
+			pLoader: CustomPlaylistLoader,
 		});
 
 		hls.on(Hls.Events.ERROR, (event, data) => {
