@@ -8,7 +8,7 @@
 	import { onDestroy, onMount, getContext } from "svelte";
 	import StreamCard from "$lib/components/live/StreamCard.svelte";
 
-	import { muted } from "$lib/stores/muted";
+	import { muted } from "$lib/stores/live";
 
 	getContext<TitleContext>("title").set("Livestreams");
 

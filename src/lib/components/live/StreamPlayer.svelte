@@ -3,7 +3,7 @@
 	import Hls from "hls.js";
 
 	import { manifestMap } from "./playlistCache";
-	import { muted } from "$lib/stores/muted";
+	import { muted } from "$lib/stores/live";
 
 	import { LoaderCircleIcon } from "@lucide/svelte";
 

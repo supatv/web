@@ -5,7 +5,7 @@
 	let { children } = $props();
 
 	import { randomEmoji, type TitleContext } from "$lib/common";
-	import { muted } from "$lib/stores/muted";
+	import { muted } from "$lib/stores/live";
 
 	import { browser } from "$app/environment";
 	import { page } from "$app/state";
