@@ -8,6 +8,8 @@
 	import { onDestroy, onMount, getContext } from "svelte";
 	import StreamCard from "$lib/components/live/StreamCard.svelte";
 
+	import { muted } from "$lib/stores/muted";
+
 	getContext<TitleContext>("title").set("Livestreams");
 
 	let fetchTimeout: number | NodeJS.Timeout | null = null;
@@ -19,6 +21,12 @@
 		// fetchTimeout = setTimeout(() => {
 		// 	fetchStreams();
 		// }, 60_000);
+	};
+
+	const windowKeydown = (event: KeyboardEvent) => {
+		if (event.key === "m") {
+			muted.update((v) => !v);
+		}
 	};
 
 	onMount(() => {
@@ -37,6 +45,8 @@
 	<title>Twitch Romanian Livestreams</title>
 	<meta name="description" content="Browse every Romanian Twitch livestream and channel." />
 </svelte:head>
+
+<svelte:window on:keydown={windowKeydown} />
 
 <div class="flex w-full max-w-[2500px] flex-col self-center p-5">
 	{#if streams === null}
