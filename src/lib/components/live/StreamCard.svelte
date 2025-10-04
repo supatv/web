@@ -1,6 +1,8 @@
 <script lang="ts">
 	import type { Stream } from "$lib/twitch/livestreams";
 
+	import { gridCols } from "$lib/stores/live";
+
 	import * as Card from "$lib/components/ui/card/index.js";
 	import { BadgeCheckIcon, UserIcon } from "@lucide/svelte";
 	import StreamPlayer from "./StreamPlayer.svelte";
@@ -26,7 +28,7 @@
 </script>
 
 <Card.Root
-	class="bg-neutral-50 p-1 text-left transition duration-200 hover:scale-[1.05] hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800"
+	class={["bg-neutral-50 p-1 text-left transition duration-200 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800", (!$gridCols || $gridCols > 2) && "hover:scale-[1.05]"]}
 	onmouseenter={() => (focused = true)}
 	onmouseleave={() => (focused = false)}
 >
@@ -38,7 +40,12 @@
 			{#if focused}
 				<StreamPlayer channelName={stream.login} />
 			{/if}
-			<Image src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-600x338.jpg?t={~~(Date.now() / 1000 / 120)}" loading="lazy" alt="Thumbnail" class="aspect-video w-full" />
+			<Image
+				src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-{$gridCols && $gridCols < 4 ? '1280x720' : '600x338'}.jpg?t={~~(Date.now() / 1000 / 120)}"
+				loading="lazy"
+				alt="Thumbnail"
+				class="aspect-video w-full"
+			/>
 		</div>
 
 		<div class="mx-1 mt-0 flex h-12 items-center">

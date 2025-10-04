@@ -8,7 +8,7 @@
 	import { onDestroy, onMount, getContext } from "svelte";
 	import StreamCard from "$lib/components/live/StreamCard.svelte";
 
-	import { muted } from "$lib/stores/live";
+	import { muted, gridCols } from "$lib/stores/live";
 
 	getContext<TitleContext>("title").set("Livestreams");
 
@@ -82,7 +82,10 @@
 			Browse {streams.length.toLocaleString()} livestreams with {streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()} viewers
 		</h1>
 
-		<div class="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
+		<div
+			class="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4"
+			style={$gridCols ? `grid-template-columns: repeat(${$gridCols}, minmax(0, 1fr));` : ""}
+		>
 			{#each streams as stream (stream.login)}
 				<a href="https://www.twitch.tv/{stream.login}" target="_blank">
 					<StreamCard {stream} />

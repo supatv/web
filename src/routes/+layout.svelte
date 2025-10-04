@@ -5,7 +5,7 @@
 	let { children } = $props();
 
 	import { randomEmoji, type TitleContext } from "$lib/common";
-	import { muted } from "$lib/stores/live";
+	import { muted, gridCols } from "$lib/stores/live";
 
 	import { browser } from "$app/environment";
 	import { page } from "$app/state";
@@ -34,6 +34,25 @@
 			emoji = randomEmoji();
 		},
 	});
+
+	const colsQueue = [6, 5, 4, 3, 2];
+	const cycleGridCols = () => {
+		gridCols.update((current) => {
+			if (current === null) return colsQueue[0];
+			const idx = colsQueue.indexOf(current);
+			if (idx === -1 || idx === colsQueue.length - 1) return null;
+			return colsQueue[idx + 1];
+		});
+	};
+
+	if (browser) {
+		gridCols.set(parseInt(window.localStorage.getItem("live-grid-cols")!) || null);
+
+		gridCols.subscribe((v) => {
+			if (v) window.localStorage.setItem("live-grid-cols", v.toString());
+			else window.localStorage.removeItem("live-grid-cols");
+		});
+	}
 </script>
 
 <svelte:head>
@@ -54,6 +73,14 @@
 				<span class="sr-only">Toggle theme</span>
 			</Button>
 			{#if page.url.pathname === "/live"}
+				<Button onclick={cycleGridCols} variant="ghost" size="icon" class="size-7 text-base font-[450] tabular-nums">
+					{#if $gridCols === null}
+						<span>A</span>
+					{:else}
+						<span>{$gridCols}</span>
+					{/if}
+					<span class="sr-only">Change number of grid columns</span>
+				</Button>
 				<Button onclick={() => muted.update((v) => !v)} variant="ghost" size="icon" class="size-7">
 					{#if $muted}
 						<VolumeOffIcon />
