@@ -4,7 +4,7 @@
 
 	let { children } = $props();
 
-	import { randomEmoji, type TitleContext } from "$lib/common";
+	import { type TitleContext } from "$lib/common";
 	import { playerVol, playerMuted, gridCols } from "$lib/stores/live";
 
 	import { browser } from "$app/environment";
@@ -25,14 +25,11 @@
 		window.localStorage.setItem("sidebar-provider-state", open.toString());
 	};
 
-	let emoji = $state(randomEmoji());
-
 	let title = $state("");
 	setContext<TitleContext>("title", {
 		value: () => title,
 		set: (newTitle: string) => {
 			title = newTitle;
-			emoji = randomEmoji();
 		},
 	});
 
@@ -92,7 +89,7 @@
 
 <svelte:head>
 	{#if title}
-		<title>{title} {emoji} tv.supa.sh</title>
+		<title>{title} — tv.supa.sh</title>
 	{/if}
 </svelte:head>
 
