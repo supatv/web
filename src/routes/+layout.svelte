@@ -89,7 +89,7 @@
 
 <svelte:head>
 	{#if title}
-		<title>{title} — tv.supa.sh</title>
+		<title>{title} — Twitch Utilities</title>
 	{/if}
 </svelte:head>
 
