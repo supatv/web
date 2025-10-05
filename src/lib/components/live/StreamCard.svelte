@@ -34,7 +34,7 @@
 >
 	<div class="max-w-full">
 		<div class="relative aspect-video size-full overflow-hidden rounded-sm">
-			<span class="absolute right-0 z-50 rounded-bl-sm bg-black/60 px-0.5 text-xs text-white">
+			<span class="absolute right-0 z-30 rounded-bl-sm bg-black/60 px-0.5 text-xs text-white">
 				{formatUptime(stream.started)}
 			</span>
 			{#if focused}

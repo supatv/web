@@ -10,9 +10,12 @@
 
 	import { playerMuted, gridCols } from "$lib/stores/live";
 
+	import { ChevronsDownIcon } from "@lucide/svelte";
+
 	getContext<TitleContext>("title").set("Livestreams");
 
 	let fetchTimeout: number | NodeJS.Timeout | null = null;
+	let windowScrollY: number = $state(0);
 
 	let streams: Stream[] | null = $state(null);
 	const fetchStreams = async () => {
@@ -47,7 +50,16 @@
 	<meta name="description" content="Browse every Romanian Twitch livestream and channel." />
 </svelte:head>
 
-<svelte:window on:keydown={windowKeydown} />
+<svelte:window on:keydown={windowKeydown} bind:scrollY={windowScrollY} />
+
+<button
+	class="fixed bottom-5 right-5 z-50 rounded-full bg-neutral-200 p-3 opacity-80 transition-opacity hover:opacity-100 dark:bg-neutral-900"
+	onclick={() => {
+		window.scrollTo({ top: windowScrollY > 100 ? 0 : document.body.scrollHeight, behavior: "smooth" });
+	}}
+>
+	<ChevronsDownIcon size={32} class={["transition-all", windowScrollY > 100 && "rotate-180"]} />
+</button>
 
 <div class="flex w-full max-w-[2500px] flex-col self-center p-5">
 	{#if streams === null}
@@ -95,3 +107,5 @@
 		</div>
 	{/if}
 </div>
+
+<div class="mt-24"></div>
