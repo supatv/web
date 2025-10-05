@@ -8,7 +8,7 @@
 	import { onDestroy, onMount, getContext } from "svelte";
 	import StreamCard from "$lib/components/live/StreamCard.svelte";
 
-	import { muted, gridCols } from "$lib/stores/live";
+	import { playerMuted, gridCols } from "$lib/stores/live";
 
 	getContext<TitleContext>("title").set("Livestreams");
 
@@ -24,8 +24,9 @@
 	};
 
 	const windowKeydown = (event: KeyboardEvent) => {
+		if (event.altKey || event.ctrlKey) return;
 		if (event.key === "m") {
-			muted.update((v) => !v);
+			playerMuted.update((v) => !v);
 		}
 	};
 

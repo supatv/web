@@ -3,7 +3,7 @@
 	import Hls from "hls.js";
 
 	import { manifestMap } from "./playlistCache";
-	import { muted } from "$lib/stores/live";
+	import { playerVol, playerMuted } from "$lib/stores/live";
 
 	import { LoaderCircleIcon } from "@lucide/svelte";
 
@@ -119,7 +119,8 @@
 		}
 	}}
 	autoplay
-	volume="0.5"
-	muted={$muted}
+	volume={$playerVol}
+	muted={$playerMuted}
+	playsinline={true}
 	class="absolute z-10 aspect-video size-full"
 ></video>
