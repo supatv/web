@@ -25,7 +25,8 @@
 			// @ts-expect-error ...
 			callbacks.onSuccess = (response, stats, context, networkDetails) => {
 				if (context.type === "level") {
-					response.data = response.data.replace(/#EXT-X-TWITCH-PREFETCH:(.+)/g, "#EXTINF:2.0,\n$1");
+					if (response.data.includes("#EXT-X-MAP")) hls.config.progressive = false;
+					else response.data = response.data.replace(/#EXT-X-TWITCH-PREFETCH:(.+)/g, "#EXTINF:2.0,\n$1");
 				} else if (context.type === "manifest") {
 					manifestMap.set(channelName, response.data);
 				}
