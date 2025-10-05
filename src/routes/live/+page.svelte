@@ -5,25 +5,27 @@
 	import type { TitleContext } from "$lib/common";
 	import type { Stream } from "$lib/twitch/livestreams";
 
-	import { onDestroy, onMount, getContext } from "svelte";
+	import { onMount, getContext } from "svelte";
 	import StreamCard from "$lib/components/live/StreamCard.svelte";
 
 	import { playerMuted, gridCols } from "$lib/stores/live";
 
-	import { ChevronsDownIcon } from "@lucide/svelte";
+	import { ChevronsDownIcon, RefreshCwIcon } from "@lucide/svelte";
 
 	getContext<TitleContext>("title").set("Livestreams");
 
-	let fetchTimeout: number | NodeJS.Timeout | null = null;
 	let windowScrollY: number = $state(0);
+
+	let loading = $state(false);
 
 	let streams: Stream[] | null = $state(null);
 	const fetchStreams = async () => {
+		loading = true;
+		const t1 = Date.now();
 		const res = await fetch("https://api-tv.supa.sh/tags/ro");
 		streams = await res.json();
-		// fetchTimeout = setTimeout(() => {
-		// 	fetchStreams();
-		// }, 60_000);
+		const t2 = Date.now();
+		setTimeout(() => (loading = false), t1 - t2 < 500 ? 500 - (t2 - t1) : 0);
 	};
 
 	const windowKeydown = (event: KeyboardEvent) => {
@@ -36,13 +38,6 @@
 	onMount(() => {
 		fetchStreams();
 	});
-
-	onDestroy(() => {
-		if (fetchTimeout) {
-			clearTimeout(fetchTimeout);
-			fetchTimeout = null;
-		}
-	});
 </script>
 
 <svelte:head>
@@ -54,11 +49,21 @@
 
 <button
 	class="fixed bottom-5 right-5 z-50 rounded-full bg-neutral-200 p-3 opacity-80 transition-opacity hover:opacity-100 dark:bg-neutral-900"
-	onclick={() => {
+	aria-disabled={loading}
+	oncontextmenu={(e) => e.preventDefault()}
+	onmouseup={(e) => {
+		if (loading) return;
+		if (e.button === 2) return fetchStreams();
+		if (e.button !== 0) return;
+
 		window.scrollTo({ top: windowScrollY > 100 ? 0 : document.body.scrollHeight, behavior: "smooth" });
 	}}
 >
-	<ChevronsDownIcon size={32} class={["transition-all", windowScrollY > 100 && "rotate-180"]} />
+	{#if loading}
+		<RefreshCwIcon size={32} class="animate-spin" />
+	{:else}
+		<ChevronsDownIcon size={32} class={["transition-all", windowScrollY > 100 && "rotate-180"]} />
+	{/if}
 </button>
 
 <div class="flex w-full max-w-[2500px] flex-col self-center p-5">
