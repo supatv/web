@@ -15,6 +15,7 @@
 
 	import { Button } from "$lib/components/ui/button/index.js";
 	import { Slider } from "$lib/components/ui/slider/index.js";
+	import { Toaster } from "$lib/components/ui/sonner/index.js";
 	import { SunIcon, MoonIcon, Grid2X2Icon, Volume1Icon, Volume2Icon, VolumeOffIcon } from "@lucide/svelte";
 
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
@@ -95,6 +96,8 @@
 </svelte:head>
 
 <ModeWatcher />
+<Toaster position="top-right" />
+
 <Sidebar.Provider onOpenChange={sidebarOpenChange} open={sidebarOpened}>
 	<AppSidebar />
 	<main class="flex flex-1 flex-col">

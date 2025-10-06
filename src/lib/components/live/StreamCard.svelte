@@ -1,12 +1,14 @@
 <script lang="ts">
 	import type { Stream } from "$lib/twitch/livestreams";
 
-	import { gridCols } from "$lib/stores/live";
+	import { gridCols, streamPlayToasted } from "$lib/stores/live";
 
 	import * as Card from "$lib/components/ui/card/index.js";
 	import { BadgeCheckIcon, UserIcon } from "@lucide/svelte";
 	import StreamPlayer from "./StreamPlayer.svelte";
 	import Image from "../image.svelte";
+
+	import { toast } from "svelte-sonner";
 
 	const formatUptime = (s: string) => {
 		let string = "";
@@ -25,19 +27,37 @@
 	let { stream, lastRefresh }: { stream: Stream; lastRefresh: number } = $props();
 
 	let focused = $state(false);
+	let active = $state(false);
 </script>
 
 <Card.Root
-	class={["bg-neutral-50 p-1 text-left transition duration-200 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800", (!$gridCols || $gridCols > 2) && "hover:scale-[1.05]"]}
+	class={[
+		"bg-neutral-50 p-1 text-left transition duration-200 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800",
+		(!$gridCols || $gridCols > 2) && "hover:scale-[1.05]",
+		active && "!scale-100 bg-neutral-100 outline outline-2 outline-purple-300 dark:bg-neutral-800",
+	]}
 	onmouseenter={() => (focused = true)}
 	onmouseleave={() => (focused = false)}
 >
 	<div class="max-w-full">
-		<div class="relative aspect-video size-full overflow-hidden rounded-sm">
+		<!-- svelte-ignore a11y_no_static_element_interactions -->
+		<div
+			class="relative aspect-video size-full overflow-hidden rounded-sm"
+			onmouseup={(e) => {
+				if (e.button === 2) {
+					active = !active;
+					if (!$streamPlayToasted) {
+						streamPlayToasted.set(true);
+						toast.info("Right-clicking streams will let them play in the background", { duration: 8000 });
+					}
+				}
+			}}
+			oncontextmenu={(e) => e.preventDefault()}
+		>
 			<span class="absolute right-0 z-30 rounded-bl-sm bg-black/60 px-0.5 text-xs text-white">
 				{formatUptime(stream.started)}
 			</span>
-			{#if focused}
+			{#if focused || active}
 				<StreamPlayer channelName={stream.login} />
 			{/if}
 			<Image
