@@ -17,10 +17,12 @@
 	let windowScrollY: number = $state(0);
 
 	let loading = $state(false);
+	let lastRefresh = $state(0);
 
 	let streams: Stream[] | null = $state(null);
 	const fetchStreams = async () => {
 		loading = true;
+		lastRefresh = Date.now();
 		const t1 = Date.now();
 		const res = await fetch("https://api-tv.supa.sh/tags/ro");
 		streams = await res.json();
@@ -106,7 +108,7 @@
 		>
 			{#each streams as stream (stream.login)}
 				<a href="https://www.twitch.tv/{stream.login}" target="_blank">
-					<StreamCard {stream} />
+					<StreamCard {stream} {lastRefresh} />
 				</a>
 			{/each}
 		</div>
