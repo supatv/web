@@ -126,7 +126,7 @@
 					<Sidebar.MenuItem>
 						<Sidebar.MenuButton>
 							{#snippet child({ props })}
-								<a href="https://logs.zonian.dev/status" target="_blank" data-umami-event="link-BestLogs" {...props}>
+								<a href="https://bestlogs.supa.codes/status" target="_blank" data-umami-event="link-BestLogs" {...props}>
 									<img alt="" src={bestlogsLogo} class="size-4" />
 									<span>Best Logs</span>
 									<ExternalLinkIcon class="ml-auto" />

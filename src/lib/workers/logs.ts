@@ -13,7 +13,7 @@ let channelTargets: Fuzzysort.Prepared[] = [];
 
 const handlers = {
 	[op.READY]: async () => {
-		const res = await fetch("https://logs.zonian.dev/channels");
+		const res = await fetch("https://bestlogs.supa.codes/channels");
 		if (!res.ok) {
 			throw res;
 		}
@@ -38,4 +38,3 @@ const handlers = {
 self.onmessage = (event) => {
 	handlers[event.data.op]?.(event.data.payload);
 };
-
