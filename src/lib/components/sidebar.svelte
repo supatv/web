@@ -126,7 +126,7 @@
 					<Sidebar.MenuItem>
 						<Sidebar.MenuButton>
 							{#snippet child({ props })}
-								<a href="https://logs.zonian.dev/status" target="_blank" {...props}>
+								<a href="https://logs.zonian.dev/status" target="_blank" data-umami-event="link-BestLogs" {...props}>
 									<img alt="" src={bestlogsLogo} class="size-4" />
 									<span>Best Logs</span>
 									<ExternalLinkIcon class="ml-auto" />
@@ -138,7 +138,7 @@
 					<Sidebar.MenuItem>
 						<Sidebar.MenuButton>
 							{#snippet child({ props })}
-								<a href="https://potat.app" target="_blank" {...props}>
+								<a href="https://potat.app" target="_blank" data-umami-event="link-PotatBotat" {...props}>
 									<img alt="" src={potatLogo} class="size-4" />
 									<span>PotatBotat</span>
 									<ExternalLinkIcon class="ml-auto" />
@@ -153,14 +153,14 @@
 	<hr />
 	<Sidebar.Footer class="text-xs opacity-60">
 		<p class="text-[0.7rem]">
-			<a href="https://github.com/supatv/web/commit/{__COMMIT_HASH}" target="_blank">
+			<a href="https://github.com/supatv/web/commit/{__COMMIT_HASH}" target="_blank" data-umami-event="link-GitHub-commit">
 				{dayjs(__BUILD_DATE).format("D MMM")}, commit <span class="font-mono">{__COMMIT_HASH.slice(0, 7)}</span>
 			</a>
 		</p>
 		<p>
 			not affiliated with Twitch or its creators
 			<br />
-			<a href="https://supa.sh" target="_blank">
+			<a href="https://supa.sh" target="_blank" data-umami-event="link-supa.sh">
 				&copy; supa.codes {new Date().getFullYear()}
 				<HeartIcon fill="#cba6f7" color="#cba6f7" class="inline size-4" />
 			</a>
