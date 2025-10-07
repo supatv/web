@@ -6,7 +6,7 @@
 	import type { Stream } from "$lib/twitch/livestreams";
 
 	import { onMount, getContext } from "svelte";
-	import StreamCard from "$lib/components/live/StreamCard.svelte";
+	import StreamCard from "$lib/components/live/stream-card.svelte";
 
 	import { playerMuted, gridCols } from "$lib/stores/live";
 

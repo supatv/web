@@ -5,7 +5,7 @@
 
 	import * as Card from "$lib/components/ui/card/index.js";
 	import { BadgeCheckIcon, UserIcon } from "@lucide/svelte";
-	import StreamPlayer from "./StreamPlayer.svelte";
+	import StreamPlayer from "./stream-player.svelte";
 	import Image from "../image.svelte";
 
 	import { toast } from "svelte-sonner";

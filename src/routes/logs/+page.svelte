@@ -2,7 +2,7 @@
 	import { Calendar as CalendarPrimitive } from "bits-ui";
 	import { mode } from "mode-watcher";
 	import dayjs from "dayjs";
-	import linkParser from "$lib/linkParser";
+	import linkParser from "$lib/link-parser";
 
 	import LogsWorker from "$lib/workers/logs?worker";
 	import { op } from "$lib/workers/common/logs";

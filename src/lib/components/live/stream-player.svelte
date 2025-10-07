@@ -2,7 +2,7 @@
 	import { onDestroy, onMount } from "svelte";
 	import Hls from "hls.js";
 
-	import { manifestMap } from "./playlistCache";
+	import { manifestMap } from "./playlist-cache";
 	import { playerVol, playerMuted } from "$lib/stores/live";
 
 	import { LoaderCircleIcon } from "@lucide/svelte";

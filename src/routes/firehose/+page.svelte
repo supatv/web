@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { mode } from "mode-watcher";
 	import dayjs from "dayjs";
-	import linkParser from "$lib/linkParser";
+	import linkParser from "$lib/link-parser";
 
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
