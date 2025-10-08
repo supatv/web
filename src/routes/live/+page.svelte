@@ -1,5 +1,4 @@
 <script lang="ts">
-	import * as Card from "$lib/components/ui/card/index.js";
 	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 
 	import type { TitleContext } from "$lib/common";
@@ -77,23 +76,19 @@
 			<Skeleton class="inline-block h-7 w-[4ch] align-middle" />
 			viewers
 		</h1>
-		<div class="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
+		<div class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
 			{#each { length: 30 }}
-				<Card.Root class="bg-zinc-50 p-1 dark:bg-zinc-900">
-					<Skeleton class="aspect-video w-full rounded-sm" />
-					<div class="mx-1 mt-0 flex h-12 items-center">
-						<Skeleton class="size-10 min-w-10 rounded-full" />
-						<div class="ml-1 flex-1">
-							<Skeleton class="mb-1 h-5 max-w-32" />
-							<Skeleton class="h-4 max-w-20" />
-						</div>
-						<div class="ml-2 flex flex-col">
-							<Skeleton class="mb-1 h-5 w-16 self-end" />
-							<Skeleton class="h-4 w-24" />
+				<div>
+					<Skeleton class="aspect-video w-full rounded" />
+					<div class="mt-0.5 flex flex-row">
+						<Skeleton class="my-0.5 mr-1 size-12 rounded-full" />
+						<div class="flex h-full flex-1 flex-col gap-0.5">
+							<Skeleton class="h-5 max-w-32" />
+							<Skeleton class="h-4 max-w-64" />
+							<Skeleton class="h-4 max-w-24" />
 						</div>
 					</div>
-					<Skeleton class="mt-1 h-5 w-full" />
-				</Card.Root>
+				</div>
 			{/each}
 		</div>
 		<div style="height: 99999px;"></div>
@@ -103,7 +98,7 @@
 		</h1>
 
 		<div
-			class="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4"
+			class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4"
 			style={$gridCols ? `grid-template-columns: repeat(${$gridCols}, minmax(0, 1fr));` : ""}
 		>
 			{#each streams as stream (stream.login)}

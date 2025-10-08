@@ -98,8 +98,8 @@
 </script>
 
 {#if loading}
-	<div class="absolute z-20 justify-center">
-		<LoaderCircleIcon class="size-8 animate-spin text-white drop-shadow-sm" />
+	<div class="absolute z-20 m-1 justify-center rounded-full bg-black/60">
+		<LoaderCircleIcon class="m-0.5 size-5 animate-spin text-white drop-shadow-sm" />
 	</div>
 {/if}
 
