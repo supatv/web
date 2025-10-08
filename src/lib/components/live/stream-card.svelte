@@ -64,8 +64,8 @@
 		/>
 	</div>
 
-	<div class="mt-0.5 flex flex-row">
-		<Image src={stream.avatar} loading="lazy" alt="Avatar" class="my-0.5 mr-1 size-12 rounded-full text-[0]" />
+	<div class="mt-1 flex flex-row">
+		<Image src={stream.avatar} loading="lazy" alt="Avatar" class="mr-1 size-12 rounded-full text-[0]" />
 
 		<div class="flex h-full flex-1 flex-col overflow-hidden leading-tight">
 			<p class="flex items-center gap-0.5 font-semibold" title={stream.name}>

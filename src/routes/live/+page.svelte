@@ -80,8 +80,8 @@
 			{#each { length: 30 }}
 				<div>
 					<Skeleton class="aspect-video w-full rounded" />
-					<div class="mt-0.5 flex flex-row">
-						<Skeleton class="my-0.5 mr-1 size-12 rounded-full" />
+					<div class="mt-1 flex flex-row">
+						<Skeleton class="mr-1 size-12 rounded-full" />
 						<div class="flex h-full flex-1 flex-col gap-0.5">
 							<Skeleton class="h-5 max-w-32" />
 							<Skeleton class="h-4 max-w-64" />
