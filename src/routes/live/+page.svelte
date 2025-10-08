@@ -50,7 +50,7 @@
 <svelte:window on:keydown={windowKeydown} bind:scrollY={windowScrollY} />
 
 <button
-	class="fixed bottom-5 right-5 z-50 rounded-full bg-zinc-200 p-3 opacity-80 transition-opacity hover:opacity-100 dark:bg-zinc-800"
+	class="fixed bottom-5 right-5 z-50 rounded-full bg-neutral-200 p-3 opacity-80 transition-opacity hover:opacity-100 dark:bg-neutral-900"
 	aria-disabled={loading}
 	oncontextmenu={(e) => e.preventDefault()}
 	onmouseup={(e) => {
