@@ -739,7 +739,7 @@
 									<!-- svelte-ignore a11y_click_events_have_key_events -->
 									<div
 										class="flex h-8 items-center text-sm hover:cursor-pointer
-                                        {index === selectedIndex ? 'bg-neutral-200 dark:bg-neutral-800' : 'bg-neutral-100 dark:bg-neutral-900'}"
+                                        {index === selectedIndex ? 'bg-zinc-200 dark:bg-zinc-800' : 'bg-zinc-100 dark:bg-zinc-900'}"
 										onmouseenter={() => (selectedIndex = index)}
 										onclick={() => selectResult(index)}
 									>
@@ -918,7 +918,7 @@
 				<VirtualList height={logsBoxHeight - 8} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
 					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
-						<div class={["flex h-5 w-full items-center gap-x-1 px-3", msg.id && msg.id === page.url.hash.slice(1) && "bg-neutral-200 dark:bg-neutral-800"]}>
+						<div class={["flex h-5 w-full items-center gap-x-1 px-3", msg.id && msg.id === page.url.hash.slice(1) && "bg-zinc-200 dark:bg-zinc-800"]}>
 							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
 							{#if msg.tags["badges"]}
 								<span class="inline-flex select-none gap-x-0.5 empty:hidden">

@@ -50,7 +50,7 @@
 <svelte:window on:keydown={windowKeydown} bind:scrollY={windowScrollY} />
 
 <button
-	class="fixed bottom-5 right-5 z-50 rounded-full bg-neutral-200 p-3 opacity-80 transition-opacity hover:opacity-100 dark:bg-neutral-900"
+	class="fixed bottom-5 right-5 z-50 rounded-full bg-zinc-200 p-3 opacity-80 transition-opacity hover:opacity-100 dark:bg-zinc-800"
 	aria-disabled={loading}
 	oncontextmenu={(e) => e.preventDefault()}
 	onmouseup={(e) => {
@@ -79,7 +79,7 @@
 		</h1>
 		<div class="grid grid-cols-1 gap-5 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
 			{#each { length: 30 }}
-				<Card.Root class="bg-neutral-50 p-1 dark:bg-neutral-900">
+				<Card.Root class="bg-zinc-50 p-1 dark:bg-zinc-900">
 					<Skeleton class="aspect-video w-full rounded-sm" />
 					<div class="mx-1 mt-0 flex h-12 items-center">
 						<Skeleton class="size-10 min-w-10 rounded-full" />

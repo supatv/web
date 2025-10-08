@@ -32,9 +32,9 @@
 
 <Card.Root
 	class={[
-		"bg-neutral-50 p-1 text-left transition duration-200 hover:bg-neutral-100 dark:bg-neutral-900 dark:hover:bg-neutral-800",
+		"bg-zinc-50 p-1 text-left transition duration-200 hover:bg-zinc-100 dark:bg-zinc-900 dark:hover:bg-zinc-800",
 		(!$gridCols || $gridCols > 2) && "hover:scale-[1.05]",
-		active && "!scale-100 bg-neutral-100 outline outline-2 outline-purple-300 dark:bg-neutral-800",
+		active && "!scale-100 bg-zinc-100 outline outline-2 outline-purple-300 dark:bg-zinc-800",
 	]}
 	onmouseenter={() => (focused = true)}
 	onmouseleave={() => (focused = false)}

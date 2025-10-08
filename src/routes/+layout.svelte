@@ -90,7 +90,7 @@
 <Sidebar.Provider onOpenChange={sidebarOpenChange} open={sidebarOpened}>
 	<AppSidebar />
 	<main class="flex flex-1 flex-col">
-		<div class="group sticky top-1 z-50 mx-1 flex w-fit gap-1 rounded-md transition-all hover:bg-neutral-300/50 hover:backdrop-blur dark:hover:bg-neutral-600/50">
+		<div class="group sticky top-1 z-50 mx-1 flex w-fit gap-1 rounded-md transition-all hover:bg-zinc-300/50 hover:backdrop-blur dark:hover:bg-zinc-600/50">
 			<Sidebar.Trigger class="size-7" />
 			<Button onclick={toggleMode} variant="ghost" size="icon" class="size-7">
 				<SunIcon class="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
