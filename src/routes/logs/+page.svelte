@@ -191,7 +191,7 @@
 	let userName = $state("");
 	let searchInput: HTMLInputElement | null = $state(null);
 
-	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true" ? true : false);
+	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true");
 
 	let channelId = $state("");
 
