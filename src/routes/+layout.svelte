@@ -66,21 +66,10 @@
 		});
 	}
 
-	const updateVolume = (val: number) => {
-		if (val === 0) {
-			playerMuted.set(true);
-			playerVol.set(0);
-		} else {
-			playerMuted.set(false);
-			playerVol.set(val);
-			prevVolume = val;
-		}
-	};
-
 	const toggleMute = () => {
-		if ($playerMuted || $playerVol === 0) {
+		if ($playerMuted) {
 			playerMuted.set(false);
-			playerVol.set(prevVolume > 0 ? prevVolume : 0.5);
+			playerVol.set(prevVolume);
 		} else {
 			playerMuted.set(true);
 			playerVol.set(0);
@@ -119,7 +108,7 @@
 				</Button>
 				<div class="flex gap-0.5">
 					<Button onclick={toggleMute} variant="ghost" size="icon" class="size-7 min-w-7">
-						{#if $playerMuted || $playerVol === 0}
+						{#if $playerMuted}
 							<VolumeOffIcon />
 							<span class="sr-only">Unmute streams</span>
 						{:else}
@@ -136,8 +125,12 @@
 						max={1}
 						step={0.01}
 						class="mr-1 min-w-20 opacity-0 transition-opacity group-hover:opacity-100 [&:has([data-active])]:opacity-100 [&>*]:!ring-0 [&>*]:!ring-offset-0"
-						onValueCommit={updateVolume}
-						onValueChange={playerVol.set}
+						onValueCommit={(v) => {
+							if (v !== 0) prevVolume = v;
+						}}
+						onValueChange={(v) => {
+							playerMuted.set(v === 0);
+						}}
 						bind:value={$playerVol}
 					/>
 				</div>
