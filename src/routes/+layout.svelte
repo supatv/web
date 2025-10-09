@@ -81,7 +81,7 @@
 	{#if title}
 		<title>{title} — Twitch Utilities</title>
 	{/if}
-	<script defer src="https://intel.supa.sh/script.js" data-website-id="a2ca0a43-de0c-42ab-a5e2-43971edbd243" data-exclude-search="true"></script>
+	<script defer src="https://intel.supa.sh/script.js" data-website-id="a2ca0a43-de0c-42ab-a5e2-43971edbd243" data-exclude-search="true" data-exclude-hash="true"></script>
 </svelte:head>
 
 <ModeWatcher />
