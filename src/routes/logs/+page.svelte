@@ -38,7 +38,7 @@
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
-	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon } from "@lucide/svelte";
+	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon } from "@lucide/svelte";
 
 	import { dateTimeFormat, type TitleContext } from "$lib/common";
 
@@ -158,6 +158,7 @@
 		});
 	};
 
+	let isJumpMode = $state(false);
 	onMount(() => {
 		initLogsWorker();
 		fetchGlobalBadges();
@@ -178,6 +179,7 @@
 		inputUserName = userName = q.get("u") || "";
 		dateValue = q.get("d") || "";
 		searchValue = q.get("s") || "";
+		isJumpMode = (q.get("sm") || window.localStorage.getItem("logs-search-mode")) === "jump";
 	});
 
 	onDestroy(() => {
@@ -210,6 +212,8 @@
 		const u = userName;
 		const d = dateValue;
 		const s = searchValue;
+		const j = isJumpMode;
+		const noJumpResults = chatLogs.length && !isJumpSearching;
 		untrack(() => {
 			const q = page.url.searchParams;
 
@@ -236,8 +240,20 @@
 				replaceState = false;
 			}
 
-			if (s) q.set("s", s);
-			else q.delete("s");
+			if (s) {
+				q.set("s", s);
+				if (j) {
+					q.set("sm", "jump");
+					if (noJumpResults) replaceState = false;
+				} else if (q.has("sm")) {
+					q.delete("sm");
+					replaceState = false;
+				}
+			} else if (q.has("s")) {
+				q.delete("s");
+				q.delete("sm");
+				replaceState = false;
+			}
 
 			// TODO handle history state
 			goto(page.url.search + (replaceState ? page.url.hash : ""), { replaceState: true, keepFocus: true });
@@ -272,8 +288,23 @@
 	// };
 
 	const windowKeydown = (event: KeyboardEvent) => {
-		if (event.ctrlKey && event.key === "f") {
+		const isMod = event.ctrlKey || event.metaKey;
+		if (isMod && event.key === "f") {
+			if (document.activeElement === searchInput) {
+				searchModeToggle();
+			}
+
 			searchInput?.focus();
+			event.preventDefault();
+		}
+
+		if ((event.key === "F3" || (isMod && event.key === "g")) && isJumpSearching) {
+			if (event.shiftKey) {
+				searchJumpPrevious();
+			} else {
+				searchJumpNext();
+			}
+
 			event.preventDefault();
 		}
 	};
@@ -283,16 +314,47 @@
 	let contentRef = $state<HTMLElement | null>(null);
 
 	let searchValue = $state("");
-
-	let filteredChatLogs = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
+	let searchResults = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
+	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", chatLogs, scrollFromBottom) : searchResults);
+	let isJumpSearching = $derived(isJumpMode && searchResults.length && !!searchValue);
+	let jumpHighlights = $derived(isJumpSearching ? new Set(searchResults.map((m) => m.id)) : void 0);
+	let jumpIndex = $derived(isJumpSearching ? searchResults.findIndex((m) => m.id === page.url.hash.slice(1)) : -1);
+	let jumpInputValue = $state(1);
 
 	$effect(() => {
-		if (!filteredChatLogs) return;
+		if (!filteredChatLogs || isJumpMode) return;
 		untrack(async () => {
 			await tick();
 			const virtualList = document.querySelector(".virtual-list-wrapper");
 			if (!virtualList) return;
 			virtualList.scrollTop = scrollFromBottom ? virtualList.scrollHeight : 0;
+		});
+	});
+
+	$effect(() => {
+		if (!isJumpSearching || jumpIndex === -1) {
+			jumpInputValue = 1;
+			return;
+		}
+		jumpInputValue = jumpIndex + 1;
+	});
+
+	$effect(() => {
+		if (!isJumpSearching || jumpIndex >= 0) return;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		searchInput;
+		untrack(() => {
+			jumpToMessage(0);
+		});
+	});
+
+	$effect(() => {
+		if (!isJumpSearching) return;
+		const val = jumpInputValue - 1;
+		untrack(() => {
+			if (val !== jumpIndex) {
+				jumpToMessage(val);
+			}
 		});
 	});
 
@@ -570,6 +632,33 @@
 	const scrollFromBottomToggle = () => {
 		scrollFromBottom = !scrollFromBottom;
 		window.localStorage.setItem("logs-bottom-scroll-state", scrollFromBottom.toString());
+	};
+
+	const searchModeToggle = () => {
+		isJumpMode = !isJumpMode;
+		window.localStorage.setItem("logs-search-mode", isJumpMode ? "jump" : "filter");
+	};
+
+	const jumpToMessage = (index: number) => {
+		const id = searchResults[index]?.id;
+		if (!id) return;
+		jumpInputValue = index + 1;
+		goto(page.url.search + `#${id}`, { replaceState: true, keepFocus: true });
+	};
+
+	const searchJumpNext = () => {
+		if (!searchResults.length) return;
+		jumpToMessage((jumpIndex + 1) % searchResults.length);
+	};
+
+	const searchJumpPrevious = () => {
+		if (!searchResults.length) return;
+		jumpToMessage((jumpIndex - 1 + searchResults.length) % searchResults.length);
+	};
+
+	const searchSubmit = (event: SubmitEvent) => {
+		event.preventDefault();
+		if (isJumpMode) searchJumpNext();
 	};
 
 	const fetchGlobalBadges = async () => {
@@ -888,7 +977,24 @@
 			{/if}
 			{#if chatLogs.length}
 				<div class="flex flex-1 gap-1">
-					<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
+					<form class="flex-1" onsubmit={searchSubmit}>
+						<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
+					</form>
+					{#if isJumpSearching}
+						{@const width = searchResults.length.toString().length + 5}
+						<div class="flex items-center gap-1">
+							<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+							<span class="text-xs tabular-nums">/</span>
+							<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
+						</div>
+					{/if}
+					<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="toggle search mode" aria-label="toggle search mode" aria-pressed={isJumpMode}>
+						{#if !isJumpMode}
+							<FilterIcon />
+						{:else}
+							<SearchIcon />
+						{/if}
+					</Button>
 					<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
 						{#if scrollFromBottom}
 							<ArrowUpNarrowWideIcon />
@@ -918,7 +1024,9 @@
 				<VirtualList height={logsBoxHeight - 8} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
 					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
-						<div class={["flex h-5 w-full items-center gap-x-1 px-3", msg.id && msg.id === page.url.hash.slice(1) && "bg-zinc-200 dark:bg-zinc-800"]}>
+						{@const isHashMatch = msg.id && msg.id === page.url.hash.slice(1)}
+						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msg.id)}
+						<div class={["flex h-5 w-full items-center gap-x-1 px-3", isHashMatch && "bg-zinc-200 dark:bg-zinc-800", isJumpMatch && "bg-zinc-100 dark:bg-zinc-900"]}>
 							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
 							{#if msg.tags["badges"]}
 								<span class="inline-flex select-none gap-x-0.5 empty:hidden">
