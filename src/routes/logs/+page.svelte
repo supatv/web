@@ -317,7 +317,7 @@
 	let searchValue = $state("");
 	let searchResults = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
 	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", chatLogs, scrollFromBottom) : searchResults);
-	let isJumpSearching = $derived(isJumpMode && searchResults.length && !!searchValue);
+	let isJumpSearching = $derived(isJumpMode && searchResults.length && searchValue);
 	let jumpHighlights = $derived(isJumpSearching ? new Set(searchResults.map((m) => m.id)) : void 0);
 	let jumpIndex = $derived(isJumpSearching ? searchResults.findIndex((m) => m.id === page.url.hash.slice(1)) : -1);
 	let jumpInputValue = $state(1);
