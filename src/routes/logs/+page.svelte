@@ -323,7 +323,7 @@
 	let jumpInputValue = $state(1);
 
 	$effect(() => {
-		if (!filteredChatLogs || isJumpMode) return;
+		if (!filteredChatLogs) return;
 		untrack(async () => {
 			await tick();
 			const virtualList = document.querySelector(".virtual-list-wrapper");
