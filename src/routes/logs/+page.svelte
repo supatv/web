@@ -289,8 +289,9 @@
 
 	const windowKeydown = (event: KeyboardEvent) => {
 		const isMod = event.ctrlKey || event.metaKey;
+		const isSearchFocused = searchInput === document.activeElement;
 		if (isMod && event.key === "f") {
-			if (document.activeElement === searchInput) {
+			if (isSearchFocused) {
 				searchModeToggle();
 			}
 
@@ -298,7 +299,7 @@
 			event.preventDefault();
 		}
 
-		if ((event.key === "F3" || (isMod && event.key === "g")) && isJumpSearching) {
+		if (isSearchFocused && isJumpSearching && (event.key === "Enter" || event.key === "F3" || (isMod && event.key === "g"))) {
 			if (event.shiftKey) {
 				searchJumpPrevious();
 			} else {
@@ -656,11 +657,6 @@
 		jumpToMessage((jumpIndex - 1 + searchResults.length) % searchResults.length);
 	};
 
-	const searchSubmit = (event: SubmitEvent) => {
-		event.preventDefault();
-		if (isJumpMode) searchJumpNext();
-	};
-
 	const fetchGlobalBadges = async () => {
 		const globalBadgesList = await TwitchServices.IVR.getGlobalBadges();
 
@@ -977,7 +973,7 @@
 			{/if}
 			{#if chatLogs.length}
 				<div class="flex flex-1 gap-1">
-					<form class="flex-1" onsubmit={searchSubmit}>
+					<form class="flex-1">
 						<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
 					</form>
 					{#if isJumpSearching}
