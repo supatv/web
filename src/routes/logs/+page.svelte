@@ -318,8 +318,8 @@
 	let searchResults = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
 	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", chatLogs, scrollFromBottom) : searchResults);
 	let isJumpSearching = $derived(isJumpMode && searchResults.length && searchValue);
-	let jumpHighlights = $derived(isJumpSearching ? new Set(searchResults.map((m) => m.id)) : void 0);
-	let jumpIndex = $derived(isJumpSearching ? searchResults.findIndex((m) => m.id === page.url.hash.slice(1)) : -1);
+	let jumpHighlights = $derived(isJumpSearching ? new Set(searchResults.map((m) => getMessageId(m))) : void 0);
+	let jumpIndex = $derived(isJumpSearching ? searchResults.findIndex((m) => getMessageId(m) === page.url.hash.slice(1)) : -1);
 	let jumpInputValue = $state(1);
 
 	$effect(() => {
@@ -362,7 +362,7 @@
 	$effect(() => {
 		const id = page.url.hash.slice(1);
 		if (!id) return;
-		const msgIdx = chatLogs.findIndex((m) => m.id === id);
+		const msgIdx = chatLogs.findIndex((m) => getMessageId(m) === id);
 		if (msgIdx === -1) return;
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		scrollFromBottom;
@@ -641,7 +641,8 @@
 	};
 
 	const jumpToMessage = (index: number) => {
-		const id = searchResults[index]?.id;
+		const msg = searchResults[index];
+		const id = msg && getMessageId(searchResults[index]);
 		if (!id) return;
 		jumpInputValue = index + 1;
 		goto(page.url.search + `#${id}`, { replaceState: true, keepFocus: true });
@@ -785,6 +786,8 @@
 			components.push({ type: TextFragment, props: { text: word } });
 		}
 	};
+
+	const getMessageId = (msg: Message) => msg.id || msg.timestamp;
 </script>
 
 <svelte:head>
@@ -1020,8 +1023,9 @@
 				<VirtualList height={logsBoxHeight - 8} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
 					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
-						{@const isHashMatch = msg.id && msg.id === page.url.hash.slice(1)}
-						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msg.id)}
+						{@const msgid = getMessageId(msg)}
+						{@const isHashMatch = msgid === page.url.hash.slice(1)}
+						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgid)}
 						<div class={["flex h-5 w-full items-center gap-x-1 px-3", isHashMatch && "bg-zinc-200 dark:bg-zinc-800", isJumpMatch && "bg-zinc-100 dark:bg-zinc-900"]}>
 							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
 							{#if msg.tags["badges"]}
@@ -1045,11 +1049,11 @@
 									{/key}
 								</span>
 							</span>
-							{#if msg.id && msg.id !== page.url.hash.slice(1)}
+							{#if msgid !== page.url.hash.slice(1)}
 								<Button
 									variant="outline"
 									class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
-									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msg.id}"
+									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgid}"
 									target="_blank"
 								>
 									<ExternalLinkIcon class="!size-3" />
