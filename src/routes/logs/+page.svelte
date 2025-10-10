@@ -984,7 +984,7 @@
 							<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
 						</div>
 					{/if}
-					<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="toggle search mode" aria-label="toggle search mode" aria-pressed={isJumpMode}>
+					<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
 						{#if !isJumpMode}
 							<FilterIcon />
 						{:else}
