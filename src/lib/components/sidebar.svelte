@@ -161,7 +161,7 @@
 			not affiliated with Twitch or its creators
 			<br />
 			<a href="https://supa.sh" target="_blank" data-umami-event="link-supa.sh">
-				&copy; supa.codes {new Date().getFullYear()}
+				&copy; {new Date().getFullYear()} supa.codes
 				<HeartIcon fill="#cba6f7" color="#cba6f7" class="inline size-4" />
 			</a>
 		</p>
