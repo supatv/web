@@ -974,7 +974,7 @@
 			{#if chatLogs.length}
 				<div class="flex flex-1 gap-1">
 					<form class="flex-1">
-						<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
+						<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
 					</form>
 					{#if isJumpSearching}
 						{@const width = searchResults.length.toString().length + 5}
