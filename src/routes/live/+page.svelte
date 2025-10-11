@@ -82,19 +82,17 @@
 		{/if}
 	</div>
 
-	{#if streams !== null}
-		<div
-			class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4"
-			style={$gridCols ? `grid-template-columns: repeat(${$gridCols}, minmax(0, 1fr));` : ""}
-		>
+	<div
+		class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4"
+		style={$gridCols ? `grid-template-columns: repeat(${$gridCols}, minmax(0, 1fr));` : ""}
+	>
+		{#if streams !== null}
 			{#each streams as stream (stream.login)}
 				<a href="https://www.twitch.tv/{stream.login}" target="_blank">
 					<StreamCard {stream} {lastRefresh} />
 				</a>
 			{/each}
-		</div>
-	{:else}
-		<div class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
+		{:else}
 			{#each { length: 30 }}
 				<div>
 					<Skeleton class="aspect-video w-full rounded" />
@@ -108,9 +106,8 @@
 					</div>
 				</div>
 			{/each}
-		</div>
-		<div style="height: 99999px;"></div>
-	{/if}
+		{/if}
+	</div>
 </div>
 
 <div class="mt-24"></div>
