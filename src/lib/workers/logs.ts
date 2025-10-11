@@ -20,12 +20,13 @@ const handlers = {
 
 		const data = await res.json();
 		const channels: { name: string; userID: string }[] = data.channels;
-		channelTargets = channels.map(({ name }) => fuzzysort.prepare(name));
 
 		self.postMessage({
 			op: op.CLIENT_DATA,
 			payload: { channelsCount: channels.length },
 		});
+
+		channelTargets = channels.map(({ name }) => fuzzysort.prepare(name));
 	},
 	[op.SEARCH]: (query: string) => {
 		self.postMessage({
