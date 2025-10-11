@@ -800,16 +800,14 @@
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
-	<h1 class="text-2xl font-bold">
-		Search logs in
-		{#if !channelsCount}
-			<Skeleton class="inline-block h-7 w-[4ch] align-middle" />
-		{:else}
-			{channelsCount.toLocaleString()}
+	<div class="flex items-end">
+		<h1 class="text-4xl font-bold">Twitch Logs&nbsp;</h1>
+		{#if channelsCount}
+			<span class="text-xl font-light">for <span class="font-normal">{channelsCount.toLocaleString()}</span> channels</span>
 		{/if}
-		channels
-	</h1>
-	<div class="my-4 flex min-h-0 flex-row justify-between">
+	</div>
+
+	<div class="my-2 flex min-h-0 flex-row justify-between">
 		<form class="relative flex gap-2 align-middle" onsubmit={formSubmit}>
 			<div class="flex gap-2">
 				<div class="relative flex w-1/2 flex-col">

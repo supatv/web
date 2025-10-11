@@ -68,14 +68,32 @@
 </button>
 
 <div class="flex w-full max-w-[2500px] flex-col self-center p-5">
-	{#if streams === null}
-		<h1 class="mb-2 text-2xl font-bold">
-			Browse
-			<Skeleton class="inline-block h-7 w-[2ch] align-middle" />
-			livestreams with
-			<Skeleton class="inline-block h-7 w-[4ch] align-middle" />
-			viewers
+	<div class="flex items-end">
+		<h1 class="text-4xl font-black">
+			<span class="bg-gradient-to-r from-blue-700 via-yellow-300 to-red-600 bg-clip-text text-transparent">Romanian</span> Livestreams
 		</h1>
+		{#if streams !== null}
+			<span class="ml-auto text-2xl font-light">
+				<span class="font-normal">{streams.length.toLocaleString()}</span>
+				channels with
+				<span class="font-normal">{streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()}</span>
+				viewers
+			</span>
+		{/if}
+	</div>
+
+	{#if streams !== null}
+		<div
+			class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4"
+			style={$gridCols ? `grid-template-columns: repeat(${$gridCols}, minmax(0, 1fr));` : ""}
+		>
+			{#each streams as stream (stream.login)}
+				<a href="https://www.twitch.tv/{stream.login}" target="_blank">
+					<StreamCard {stream} {lastRefresh} />
+				</a>
+			{/each}
+		</div>
+	{:else}
 		<div class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4">
 			{#each { length: 30 }}
 				<div>
@@ -92,21 +110,6 @@
 			{/each}
 		</div>
 		<div style="height: 99999px;"></div>
-	{:else}
-		<h1 class="mb-2 text-2xl font-bold">
-			Browse {streams.length.toLocaleString()} livestreams with {streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()} viewers
-		</h1>
-
-		<div
-			class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4"
-			style={$gridCols ? `grid-template-columns: repeat(${$gridCols}, minmax(0, 1fr));` : ""}
-		>
-			{#each streams as stream (stream.login)}
-				<a href="https://www.twitch.tv/{stream.login}" target="_blank">
-					<StreamCard {stream} {lastRefresh} />
-				</a>
-			{/each}
-		</div>
 	{/if}
 </div>
 

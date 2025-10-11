@@ -313,7 +313,7 @@
 </script>
 
 <svelte:head>
-	<title>Twitch Chat Firehose</title>
+	<title>Twitch Firehose</title>
 	<meta name="description" content="View every Twitch chat message in real-time." />
 </svelte:head>
 
@@ -322,10 +322,11 @@
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
-	<div class="mb-4">
-		<h1 class="text-2xl font-bold">Twitch Chat Firehose</h1>
-		<p class="text-xs tabular-nums text-gray-500">Real-time stream of logged Twitch chats. {messagesPerSecond} messages per second...</p>
-	</div>
+	<h1 class="text-4xl font-bold">Twitch Firehose</h1>
+	<p class="mb-2 text-xs font-light">
+		Real-time stream of logged Twitch chats.
+		<span class="font-normal tabular-nums">{messagesPerSecond}</span> messages per second...
+	</p>
 
 	{#if error}
 		<p class="text-red-500">{error}</p>
