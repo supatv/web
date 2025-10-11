@@ -9,7 +9,6 @@
 
 	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
-	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
 
