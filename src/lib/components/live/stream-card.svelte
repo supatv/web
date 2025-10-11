@@ -45,13 +45,9 @@
 		}}
 		oncontextmenu={(e) => e.preventDefault()}
 	>
-		<span class="absolute right-0 top-0 z-30 m-1 rounded-sm bg-black/60 p-0.5 text-xs tabular-nums text-neutral-100">
+		<span class="absolute right-0 top-0 z-30 m-1 rounded-sm bg-black/60 p-0.5 text-xs text-neutral-100">
 			{formatUptime(stream.started)}
 		</span>
-		<div class="absolute bottom-0 right-0 z-30 m-1 flex items-center rounded-sm bg-black/60 p-0.5 text-xs tabular-nums text-red-400">
-			<UserIcon class="size-4" />
-			<span>{stream.viewers.toLocaleString()}</span>
-		</div>
 
 		{#if focused || active}
 			<StreamPlayer channelName={stream.login} />
@@ -68,12 +64,18 @@
 		<Image src={stream.avatar} loading="lazy" alt="Avatar" class="mr-1 size-12 rounded-full text-[0]" />
 
 		<div class="flex h-full flex-1 flex-col overflow-hidden leading-tight">
-			<p class="flex items-center gap-0.5 font-semibold" title={stream.name}>
-				{stream.name}
-				{#if stream.type == "partner"}
-					<BadgeCheckIcon class="inline size-4 text-purple-500 dark:text-purple-300" />
-				{/if}
-			</p>
+			<div class="flex gap-2">
+				<div class="flex items-center gap-0.5 overflow-hidden font-semibold" title={stream.name}>
+					<span class="overflow-hidden">{stream.name}</span>
+					{#if stream.type == "partner"}
+						<BadgeCheckIcon class="size-4 min-w-4 text-purple-500 dark:text-purple-300" />
+					{/if}
+				</div>
+				<div class="ml-auto flex items-center text-red-500 dark:text-red-400">
+					<UserIcon class="size-4" />
+					<span>{stream.viewers.toLocaleString()}</span>
+				</div>
+			</div>
 
 			<!-- <p class="text-sm capitalize text-purple-500 dark:text-purple-300">{stream.type}</p> -->
 
