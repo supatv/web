@@ -29,7 +29,7 @@
 	let active = $state(false);
 </script>
 
-<div onmouseenter={() => (focused = true)} onmouseleave={() => (focused = false)} role="link" tabindex="-1" class=" transition-transform hover:translate-y-[-0.25rem]">
+<div onmouseenter={() => (focused = true)} onmouseleave={() => (focused = false)} role="link" tabindex="-1" class="transition-transform hover:-translate-y-1">
 	<div
 		class={["relative aspect-video size-full overflow-hidden rounded transition", active && "ring-2 ring-ring"]}
 		role="button"
