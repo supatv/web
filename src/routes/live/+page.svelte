@@ -68,7 +68,7 @@
 </button>
 
 <div class="flex w-full max-w-[2500px] flex-col self-center p-5">
-	<div class="flex items-end">
+	<div class="flex flex-wrap items-end">
 		<h1 class="text-4xl font-black">
 			<span class="bg-gradient-to-r from-blue-700 via-yellow-300 to-red-600 bg-clip-text text-transparent">Romanian</span> Livestreams
 		</h1>

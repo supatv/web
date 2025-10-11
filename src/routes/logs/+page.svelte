@@ -799,7 +799,7 @@
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
-	<div class="flex items-end">
+	<div class="flex flex-wrap items-end">
 		<h1 class="text-4xl font-bold">Twitch Logs&nbsp;</h1>
 		{#if channelsCount}
 			<span class="text-xl font-light">for <span class="font-normal">{channelsCount.toLocaleString()}</span> channels</span>
