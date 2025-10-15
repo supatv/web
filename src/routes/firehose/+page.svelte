@@ -353,9 +353,9 @@
 		</div>
 
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
-			<Card.Root class="h-full w-full flex-col p-3 leading-5">
-				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} on:afterScroll={logsAfterScroll}>
-					<div class="flex h-5 !w-auto min-w-full flex-row items-center gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
+			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
+				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={20} on:afterScroll={logsAfterScroll}>
+					<div class="flex h-5 !w-auto min-w-full flex-row items-center gap-x-1 text-nowrap px-3" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						<span class="inline-block min-w-48 max-w-48 overflow-hidden">
 							<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel} class="font-bold text-neutral-500">
@@ -407,11 +407,7 @@
 	:global(.virtual-list-wrapper) {
 		overflow: scroll !important;
 
-		&::-webkit-scrollbar {
-			@apply size-1.5 bg-sidebar-border;
-		}
-		&::-webkit-scrollbar-thumb {
-			@apply rounded bg-foreground/50;
-		}
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
 	}
 </style>
