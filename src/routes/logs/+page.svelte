@@ -1016,7 +1016,7 @@
 		<p class="text-red-500">{error}</p>
 	{:else if chatLogs.length}
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
-			<Card.Root class="h-full w-full flex-col leading-5">
+			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
 				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
 					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
@@ -1097,12 +1097,5 @@
 
 		padding-top: 0.5rem;
 		padding-bottom: 0.5rem;
-
-		&::-webkit-scrollbar {
-			@apply size-1.5 bg-sidebar-border;
-		}
-		&::-webkit-scrollbar-thumb {
-			@apply rounded bg-foreground/50;
-		}
 	}
 </style>
