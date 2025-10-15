@@ -1035,16 +1035,33 @@
 								</span>
 							{/if}
 							<span class="h-5 w-max">
-								<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-									{msg.displayName}:
-								</span>
-								<span class={[msg.tags["target-user-id"] && "text-neutral-500"]}>
-									{#key emoteUpdates}
-										{#each parseMessage(msg) as { type: Component, props }, index (index)}
-											<Component {...props} />
-										{/each}
-									{/key}
-								</span>
+								{#if msg.tags["target-msg-id"]}
+									{@const msgDeleted = chatLogs.find((m) => m.id === msg.tags["target-msg-id"])}
+									<span class="text-neutral-500">
+										{#if msgDeleted}
+											<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
+												A message from {msgDeleted.displayName} was deleted
+											</span>
+										{:else}
+											A message was deleted
+										{/if}
+									</span>
+								{:else if msg.tags["target-user-id"] || !msg.displayName}
+									<span class="text-neutral-500">
+										{msg.text}
+									</span>
+								{:else}
+									<span style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+										{msg.displayName}:
+									</span>
+									<span>
+										{#key emoteUpdates}
+											{#each parseMessage(msg) as { type: Component, props }, index (index)}
+												<Component {...props} />
+											{/each}
+										{/key}
+									</span>
+								{/if}
 							</span>
 							{#if msgid !== page.url.hash.slice(1)}
 								<Button
