@@ -1023,7 +1023,13 @@
 						{@const msgid = getMessageId(msg)}
 						{@const isHashMatch = msgid === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgid)}
-						<div class={["flex h-5 w-full items-center gap-x-1 px-3", isHashMatch && "bg-zinc-200 dark:bg-zinc-800", isJumpMatch && "bg-zinc-100 dark:bg-zinc-900"]}>
+						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
+						<div
+							class={[
+								"flex h-5 w-full items-center gap-x-1 px-2",
+								(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
+							]}
+						>
 							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
 							{#if msg.tags["badges"]}
 								<span class="inline-flex select-none gap-x-0.5 empty:hidden">
@@ -1088,9 +1094,6 @@
 <style>
 	:global(.virtual-list-wrapper) {
 		overflow: scroll !important;
-
-		padding-top: 0.5rem;
-		padding-bottom: 0.5rem;
 
 		&::-webkit-scrollbar {
 			@apply size-1.5 bg-sidebar-border;
