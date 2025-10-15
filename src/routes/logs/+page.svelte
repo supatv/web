@@ -1016,8 +1016,8 @@
 		<p class="text-red-500">{error}</p>
 	{:else if chatLogs.length}
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
-			<Card.Root class="h-full w-full flex-col overflow-visible py-1 leading-5">
-				<VirtualList height={logsBoxHeight - 8} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
+			<Card.Root class="h-full w-full flex-col leading-5">
+				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
 					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						{@const msgid = getMessageId(msg)}
@@ -1026,7 +1026,7 @@
 						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
 						<div
 							class={[
-								"flex h-5 w-full items-center gap-x-1 px-2",
+								"flex h-5 w-full items-center gap-x-1 px-3",
 								(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
 							]}
 						>
@@ -1094,6 +1094,9 @@
 <style>
 	:global(.virtual-list-wrapper) {
 		overflow: scroll !important;
+
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
 
 		&::-webkit-scrollbar {
 			@apply size-1.5 bg-sidebar-border;
