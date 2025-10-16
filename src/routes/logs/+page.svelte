@@ -281,11 +281,6 @@
 		}
 	};
 
-	// const formKeydown = (event: KeyboardEvent) => {
-	//     if (event.key !== "Enter") return;
-	//     event.preventDefault();
-	// };
-
 	const windowKeydown = (event: KeyboardEvent) => {
 		const isMod = event.ctrlKey || event.metaKey;
 		const isSearchFocused = searchInput === document.activeElement;
@@ -298,11 +293,13 @@
 			event.preventDefault();
 		}
 
-		if (isSearchFocused && isJumpSearching && (event.key === "Enter" || event.key === "F3" || (isMod && event.key === "g"))) {
-			if (event.shiftKey) {
-				searchJumpPrevious();
-			} else {
-				searchJumpNext();
+		if (isSearchFocused && (event.key === "Enter" || event.key === "F3" || (isMod && event.key === "g"))) {
+			if (isJumpSearching) {
+				if (event.shiftKey) {
+					searchJumpPrevious();
+				} else {
+					searchJumpNext();
+				}
 			}
 
 			event.preventDefault();
