@@ -436,6 +436,7 @@
 		});
 	});
 
+	let logsController: AbortController | null = null;
 	$effect(() => {
 		// fetch logs
 		const date = dateContent;
@@ -445,7 +446,11 @@
 			error = null;
 			loading = true;
 
-			const res = await fetch(`https://bestlogs.supa.codes/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`);
+			logsController?.abort();
+			logsController = new AbortController();
+			const res = await fetch(`https://bestlogs.supa.codes/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`, {
+				signal: logsController.signal,
+			});
 			if (!res.ok) {
 				if (res.status === 404) error = "No logs found for this date";
 				else error = `Error from server: ${res.status} ${res.statusText}`;
