@@ -15,7 +15,7 @@
 			<SparklesIcon class="absolute left-4" fill="#cba6f7" color="#cba6f7" />
 			<div class="my-2 flex flex-col leading-none">
 				<span class="text-xs font-bold">tv.supa.sh</span>
-				<h1 class="text-l">Twitch Utilities</h1>
+				<p class="text-l">Twitch Utilities</p>
 			</div>
 		</div>
 	</Sidebar.Header>
