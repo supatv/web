@@ -88,7 +88,7 @@
 	>
 		{#if streams !== null}
 			{#each streams as stream (stream.login)}
-				<a href="https://www.twitch.tv/{stream.login}" target="_blank">
+				<a href="https://www.twitch.tv/{stream.login}" target="_blank" rel="nofollow">
 					<StreamCard {stream} {lastRefresh} />
 				</a>
 			{/each}
