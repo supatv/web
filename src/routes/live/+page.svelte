@@ -43,6 +43,7 @@
 
 <svelte:head>
 	<title>Twitch Romanian Livestreams</title>
+	<meta name="keywords" content="twitch, twitch tools, twitch romania, livestreams, live channels directory, twitch chat, viewers, followers" />
 	<meta name="description" content="Browse every Romanian Twitch livestream and channel." />
 </svelte:head>
 
