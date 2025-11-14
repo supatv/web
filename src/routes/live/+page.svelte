@@ -11,6 +11,8 @@
 
 	import { ChevronsDownIcon, RefreshCwIcon } from "@lucide/svelte";
 
+	import catPeek from "$lib/assets/images/cat-peek.png";
+
 	getContext<TitleContext>("title").set("Livestreams");
 
 	let windowScrollY: number = $state(0);
@@ -112,4 +114,4 @@
 	</div>
 </div>
 
-<div class="mt-24"></div>
+<img alt="cat peek" src={catPeek} class="size-24 rotate-90" />
