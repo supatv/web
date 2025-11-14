@@ -3,7 +3,7 @@
 
 	import { gridCols, streamPlayToasted } from "$lib/stores/live";
 
-	import { BadgeCheckIcon, UserIcon } from "@lucide/svelte";
+	import { BadgeCheckIcon, DiamondIcon, UserIcon } from "@lucide/svelte";
 	import StreamPlayer from "./stream-player.svelte";
 	import Image from "../image.svelte";
 
@@ -65,10 +65,16 @@
 
 		<div class="flex h-full flex-1 flex-col overflow-hidden leading-tight">
 			<div class="flex gap-2">
-				<div class="flex items-center gap-0.5 overflow-hidden font-semibold" title={stream.name}>
-					<span class="overflow-hidden">{stream.name}</span>
-					{#if stream.type == "partner"}
-						<BadgeCheckIcon class="size-4 min-w-4 text-purple-500 dark:text-purple-300" />
+				<div class="flex items-center overflow-hidden font-semibold">
+					<span class="overflow-hidden" title={stream.name}>{stream.name}</span>
+					{#if stream.type === "partner"}
+						<span title="Partner">
+							<BadgeCheckIcon class="size-5 min-w-5 fill-purple-400 text-background dark:fill-purple-300" />
+						</span>
+					{:else if stream.type === "affiliate"}
+						<span title="Affiliate">
+							<DiamondIcon class="ml-0.5 size-3 min-w-3 fill-purple-400 text-transparent dark:fill-purple-300" />
+						</span>
 					{/if}
 				</div>
 				<div class="ml-auto flex items-center text-red-500 dark:text-red-400">
