@@ -207,55 +207,28 @@
 	let badgeUpdates = $state(0);
 
 	$effect(() => {
-		const c = channelName;
-		const u = userName;
-		const d = dateValue;
-		const s = searchValue;
-		const j = isJumpMode;
-		const noJumpResults = chatLogs.length && !isJumpSearching;
+		const search = {
+			c: channelName,
+			u: userName,
+			d: dateValue,
+			s: searchValue,
+			sm: searchValue && isJumpMode ? "jump" : null,
+		};
+
 		untrack(() => {
-			const q = page.url.searchParams;
+			const query = page.url.searchParams;
 
-			let replaceState = true;
-
-			if (!c) {
-				q.delete("c");
-			} else if (c !== q.get("c")) {
-				q.set("c", c);
-				replaceState = false;
-			}
-
-			if (!u) {
-				q.delete("u");
-			} else if (u !== q.get("u")) {
-				q.set("u", u);
-				replaceState = false;
-			}
-
-			if (!d) {
-				q.delete("d");
-			} else if (d !== q.get("d")) {
-				q.set("d", d);
-				replaceState = false;
-			}
-
-			if (s) {
-				q.set("s", s);
-				if (j) {
-					q.set("sm", "jump");
-					if (noJumpResults) replaceState = false;
-				} else if (q.has("sm")) {
-					q.delete("sm");
-					replaceState = false;
+			for (const [key, value] of Object.entries(search)) {
+				if (!value) {
+					query.delete(key);
+				} else if (value !== query.get(key)) {
+					query.set(key, value);
 				}
-			} else if (q.has("s")) {
-				q.delete("s");
-				q.delete("sm");
-				replaceState = false;
 			}
 
-			// TODO handle history state
-			goto(page.url.search + (replaceState ? page.url.hash : ""), { replaceState: true, keepFocus: true });
+			if (!isJumpSearching && chatLogs.length) page.url.hash = "";
+
+			goto(page.url.search + page.url.hash, { replaceState: true, keepFocus: true });
 		});
 	});
 
