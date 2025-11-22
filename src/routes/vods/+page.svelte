@@ -6,7 +6,7 @@
 	import { HardDriveIcon } from "@lucide/svelte";
 
 	import { humanFileSize, type TitleContext } from "$lib/common";
-	import type { BucketUsage } from "$lib/twitch/streams";
+	import type { BucketUsage } from "$lib/twitch/vods";
 	import type { PageProps } from "./$types";
 
 	getContext<TitleContext>("title").set("VODs");

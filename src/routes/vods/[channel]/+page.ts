@@ -1,6 +1,6 @@
 import { error } from "@sveltejs/kit";
 import type { PageLoad } from "./$types";
-import type { User } from "$lib/twitch/streams";
+import type { User } from "$lib/twitch/vods";
 
 export const load: PageLoad = async ({ fetch, params }) => {
 	const res = await fetch(`https://api-tv.supa.sh/user?login=${encodeURIComponent(params.channel)}`);

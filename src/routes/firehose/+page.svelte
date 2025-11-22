@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { mode } from "mode-watcher";
 	import dayjs from "dayjs";
-	import linkParser from "$lib/linkParser";
+	import linkParser from "$lib/link-parser";
 
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
@@ -22,6 +22,7 @@
 	import { ChevronsDownIcon } from "@lucide/svelte";
 
 	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
+	import { SvelteMap } from "svelte/reactivity";
 
 	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
@@ -29,7 +30,7 @@
 
 	import { timeFormat, type TitleContext } from "$lib/common";
 
-	import type { EmoteProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
+	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
 	import { messageSearch } from "$lib/twitch/logs";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
@@ -60,11 +61,11 @@
 	let searchInput: HTMLInputElement | null = $state(null);
 
 	// Emotes
-	const globalEmotes = new Map<string, EmoteProps>();
+	const globalEmotes = new SvelteMap<string, EmoteProps>();
 	let emoteUpdates = $state(0);
 
 	// Badges
-	const globalBadges = new Map();
+	const globalBadges = new SvelteMap<string, BadgeProps>();
 	let badgeUpdates = $state(0);
 
 	let instanceValue = $state("");
@@ -153,7 +154,7 @@
 	const logsAfterScroll = ({ detail }: { detail: { event: Event; offset: number } }) => {
 		const el = detail.event.target as HTMLDivElement;
 		const remScroll = Math.abs(el.scrollHeight - el.clientHeight - detail.offset);
-		scrollPaused = remScroll >= 4;
+		scrollPaused = remScroll > 24;
 	};
 
 	const resumeScroll = () => {
@@ -267,7 +268,7 @@
 					props: {
 						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
 						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
-						url: `https://emotes.awoo.nl/twitch/emote/${nextEmote.id}`,
+						url: `https://emotes.susgee.dev/emote/${nextEmote.id}`,
 					},
 				});
 				i = nextEmote.pos[1];
@@ -312,7 +313,8 @@
 </script>
 
 <svelte:head>
-	<title>Twitch Chat Firehose</title>
+	<title>Twitch Firehose</title>
+	<meta name="keywords" content="twitch, twitch firehose, twitch chat, twitch bots, twitch dev, live messages, chat logs, developers, api" />
 	<meta name="description" content="View every Twitch chat message in real-time." />
 </svelte:head>
 
@@ -321,10 +323,11 @@
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
-	<div class="mb-4">
-		<h1 class="text-2xl font-bold">Twitch Chat Firehose</h1>
-		<p class="text-xs tabular-nums text-gray-500">Real-time stream of logged Twitch chats. {messagesPerSecond} messages per second...</p>
-	</div>
+	<h1 class="text-4xl font-bold">Twitch Firehose</h1>
+	<p class="mb-2 text-xs font-light">
+		Real-time stream of logged Twitch chats.
+		<span class="font-normal tabular-nums">{messagesPerSecond}</span> messages per second...
+	</p>
 
 	{#if error}
 		<p class="text-red-500">{error}</p>
@@ -351,18 +354,18 @@
 		</div>
 
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
-			<Card.Root class="h-full w-full flex-col p-3 leading-none">
-				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20} on:afterScroll={logsAfterScroll}>
-					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
+			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
+				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={20} on:afterScroll={logsAfterScroll}>
+					<div class="flex h-5 !w-auto min-w-full flex-row items-center gap-x-1 text-nowrap px-3" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						<span class="inline-block min-w-48 max-w-48 overflow-hidden">
 							<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel} class="font-bold text-neutral-500">
 								#{msg.channel}
 							</a>
 						</span>
-						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
 						{#if msg.tags["badges"]}
-							<span class="inline-flex gap-x-0.5 empty:hidden">
+							<span class="inline-flex select-none gap-x-0.5 empty:hidden">
 								{#key badgeUpdates}
 									{#each getBadges(msg) as badge (badge.id)}
 										<Badge src={badge.src} title={badge.title} alt="" />
@@ -370,15 +373,17 @@
 								{/key}
 							</span>
 						{/if}
-						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-							{msg.displayName}:
-						</span>
-						<span class:text-neutral-500={msg.tags["target-user-id"]}>
-							{#key emoteUpdates}
-								{#each parseMessage(msg) as { type: Component, props }, index (index)}
-									<Component {...props} />
-								{/each}
-							{/key}
+						<span class="h-5">
+							<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+								{msg.displayName}:
+							</span>
+							<span class={[msg.tags["target-user-id"] && "text-neutral-500"]}>
+								{#key emoteUpdates}
+									{#each parseMessage(msg) as { type: Component, props }, index (index)}
+										<Component {...props} />
+									{/each}
+								{/key}
+							</span>
 						</span>
 					</div>
 				</VirtualList>
@@ -403,11 +408,7 @@
 	:global(.virtual-list-wrapper) {
 		overflow: scroll !important;
 
-		&::-webkit-scrollbar {
-			@apply size-1.5 bg-sidebar-border;
-		}
-		&::-webkit-scrollbar-thumb {
-			@apply rounded bg-foreground/50;
-		}
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
 	}
 </style>

@@ -3,5 +3,5 @@
 </script>
 
 <span class="size-4">
-	<img {src} {title} {alt} class="h-max" />
+	<img {src} {title} {alt} />
 </span>

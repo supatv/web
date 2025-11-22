@@ -16,7 +16,7 @@ enum StreamState {
 	deleted = "DELETED",
 }
 
-type User = {
+export type User = {
 	id: number;
 	twitch_id: string;
 	login: string;
@@ -34,7 +34,7 @@ type User = {
 	socials?: Social[];
 };
 
-type Stream = {
+export type Stream = {
 	id: number;
 	twitch_video_id: string | null;
 	created_at: string;
@@ -46,10 +46,8 @@ type Stream = {
 	state: StreamState;
 };
 
-type BucketUsage = {
+export type BucketUsage = {
 	payload_bytes: number;
 	metadata_bytes: number;
 	object_count: number;
 };
-
-export type { User, Stream, BucketUsage };

@@ -1,13 +1,14 @@
 <script lang="ts">
 	import { Calendar as CalendarPrimitive } from "bits-ui";
 	import { mode } from "mode-watcher";
-	import fuzzysort from "fuzzysort";
 	import dayjs from "dayjs";
-	import linkParser from "$lib/linkParser";
+	import linkParser from "$lib/link-parser";
+
+	import LogsWorker from "$lib/workers/logs?worker";
+	import { op } from "$lib/workers/common/logs";
 
 	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
-	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
 
@@ -27,17 +28,20 @@
 	import Emote from "$lib/components/message/emote.svelte";
 	import Link from "$lib/components/message/link.svelte";
 	import Badge from "$lib/components/message/badge.svelte";
+	import Reply from "$lib/components/message/reply.svelte";
 
-	import { getContext, onMount, tick, untrack } from "svelte";
+	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
+	import { SvelteMap } from "svelte/reactivity";
+
 	import { browser } from "$app/environment";
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
-	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon } from "@lucide/svelte";
+	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon } from "@lucide/svelte";
 
 	import { dateTimeFormat, type TitleContext } from "$lib/common";
 
-	import type { EmoteProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
+	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
 	import { messageSearch } from "$lib/twitch/logs";
 
 	import * as TwitchServices from "$lib/twitch/services/index.js";
@@ -50,13 +54,13 @@
 
 	getContext<TitleContext>("title").set("Logs");
 
+	const lineHeight = 20;
+
 	let error: string | null = $state(null);
 	let loading = $state(false);
 
 	let isPopoverOpen = $state(false);
 
-	let channels: { name: string; userID: string }[] = $state([]);
-	let channelTargets: Fuzzysort.Prepared[] = $state([]);
 	let selectedIndex = $state(0); // Track selected item
 
 	let availableDates: LogsDate[] = $state([]);
@@ -126,24 +130,36 @@
 		return availableDateSet.has(`${date.year}-${date.month}${date.day ? `-${date.day}` : ""}`);
 	};
 
-	const loadChannels = async () => {
-		error = null;
-		// loading = true;
-		const res = await fetch("https://logs.zonian.dev/channels");
-		if (!res.ok) {
-			// error = `Error from server: ${res.status} ${res.statusText}`;
-			// loading = false;
-			throw error;
-		}
+	let channelsCount = $state(0);
+	let foundChannels: Fuzzysort.Result[] = $state([]);
 
-		const data = await res.json();
-		channels = data.channels;
-		channelTargets = channels.map(({ name }) => fuzzysort.prepare(name));
-		// loading = false;
+	let logsWorker: Worker;
+	const initLogsWorker = () => {
+		logsWorker = new LogsWorker();
+		logsWorker.postMessage({ op: op.READY });
+
+		const handlers = {
+			[op.CLIENT_DATA]: (payload: { channelsCount: number }) => {
+				channelsCount = payload.channelsCount;
+			},
+			[op.CLIENT_SEARCH_RESULTS]: (payload: Fuzzysort.Result[]) => {
+				foundChannels = payload;
+				selectedIndex = 0;
+			},
+		};
+
+		logsWorker.onmessage = (event) => {
+			handlers[event.data.op]?.(event.data.payload);
+		};
+
+		$effect(() => {
+			logsWorker.postMessage({ op: op.SEARCH, payload: inputChannelName });
+		});
 	};
 
+	let isJumpMode = $state(false);
 	onMount(() => {
-		loadChannels();
+		initLogsWorker();
 		fetchGlobalBadges();
 		fetchGlobalEmotes();
 
@@ -156,12 +172,17 @@
 			q.set("u", q.get("username") || "");
 			q.delete("username");
 		}
-		goto(page.url.search, { replaceState: true, keepFocus: true });
+		goto(page.url.search + page.url.hash, { replaceState: true, keepFocus: true });
 
 		inputChannelName = channelName = q.get("c") || "";
 		inputUserName = userName = q.get("u") || "";
 		dateValue = q.get("d") || "";
 		searchValue = q.get("s") || "";
+		isJumpMode = (q.get("sm") || window.localStorage.getItem("logs-search-mode")) === "jump";
+	});
+
+	onDestroy(() => {
+		logsWorker?.terminate();
 	});
 
 	let logsBoxHeight = $state(0);
@@ -171,48 +192,44 @@
 	let userName = $state("");
 	let searchInput: HTMLInputElement | null = $state(null);
 
-	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true" ? true : false);
+	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true");
 
 	let channelId = $state("");
 
 	// Emotes
-	const channelEmotes = new Map<string, EmoteProps>();
-	const globalEmotes = new Map<string, EmoteProps>();
+	const channelEmotes = new SvelteMap<string, EmoteProps>();
+	const globalEmotes = new SvelteMap<string, EmoteProps>();
 	let emoteUpdates = $state(0);
 
 	// Badges
-	const channelBadges = new Map();
-	const globalBadges = new Map();
+	const channelBadges = new SvelteMap<string, BadgeProps>();
+	const globalBadges = new SvelteMap<string, BadgeProps>();
 	let badgeUpdates = $state(0);
 
 	$effect(() => {
-		const c = channelName;
-		const u = userName;
-		const d = dateValue;
-		const s = searchValue;
+		const search = {
+			c: channelName,
+			u: userName,
+			d: dateValue,
+			s: searchValue,
+			sm: searchValue && isJumpMode ? "jump" : null,
+		};
+
 		untrack(() => {
-			const q = page.url.searchParams;
+			const query = page.url.searchParams;
 
-			if (c) q.set("c", c);
+			for (const [key, value] of Object.entries(search)) {
+				if (!value) {
+					query.delete(key);
+				} else if (value !== query.get(key)) {
+					query.set(key, value);
+				}
+			}
 
-			if (u) q.set("u", u);
-			else q.delete("u");
+			if (!isJumpSearching && chatLogs.length) page.url.hash = "";
 
-			if (d) q.set("d", d);
-			else q.delete("d");
-
-			if (s) q.set("s", s);
-			else q.delete("s");
-
-			goto(page.url.search, { replaceState: true, keepFocus: true });
+			goto(page.url.search + page.url.hash, { replaceState: true, keepFocus: true });
 		});
-	});
-
-	let foundChannels = $derived(fuzzysort.go(inputChannelName, channelTargets, { threshold: 0.5, limit: 5 }));
-	$effect(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		foundChannels;
-		selectedIndex = 0;
 	});
 
 	const channelKeydown = (event: KeyboardEvent) => {
@@ -237,14 +254,27 @@
 		}
 	};
 
-	// const formKeydown = (event: KeyboardEvent) => {
-	//     if (event.key !== "Enter") return;
-	//     event.preventDefault();
-	// };
-
 	const windowKeydown = (event: KeyboardEvent) => {
-		if (event.ctrlKey && event.key === "f") {
+		const isMod = event.ctrlKey || event.metaKey;
+		const isSearchFocused = searchInput === document.activeElement;
+		if (isMod && event.key === "f") {
+			if (isSearchFocused) {
+				searchModeToggle();
+			}
+
 			searchInput?.focus();
+			event.preventDefault();
+		}
+
+		if (isSearchFocused && (event.key === "Enter" || event.key === "F3" || (isMod && event.key === "g"))) {
+			if (isJumpSearching) {
+				if (event.shiftKey) {
+					searchJumpPrevious();
+				} else {
+					searchJumpNext();
+				}
+			}
+
 			event.preventDefault();
 		}
 	};
@@ -254,8 +284,12 @@
 	let contentRef = $state<HTMLElement | null>(null);
 
 	let searchValue = $state("");
-
-	let filteredChatLogs = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
+	let searchResults = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
+	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", chatLogs, scrollFromBottom) : searchResults);
+	let isJumpSearching = $derived(isJumpMode && searchResults.length && searchValue);
+	let jumpHighlights = $derived(isJumpSearching ? new Set(searchResults.map((m) => getMessageId(m))) : void 0);
+	let jumpIndex = $derived(isJumpSearching ? searchResults.findIndex((m) => getMessageId(m) === page.url.hash.slice(1)) : -1);
+	let jumpInputValue = $state(1);
 
 	$effect(() => {
 		if (!filteredChatLogs) return;
@@ -264,6 +298,56 @@
 			const virtualList = document.querySelector(".virtual-list-wrapper");
 			if (!virtualList) return;
 			virtualList.scrollTop = scrollFromBottom ? virtualList.scrollHeight : 0;
+		});
+	});
+
+	$effect(() => {
+		if (!isJumpSearching || jumpIndex === -1) {
+			jumpInputValue = 1;
+			return;
+		}
+		jumpInputValue = jumpIndex + 1;
+	});
+
+	$effect(() => {
+		if (!isJumpSearching || jumpIndex >= 0) return;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		searchInput;
+		untrack(() => {
+			jumpToMessage(0);
+		});
+	});
+
+	$effect(() => {
+		if (!isJumpSearching) return;
+		const val = jumpInputValue - 1;
+		untrack(() => {
+			if (val !== jumpIndex) {
+				jumpToMessage(val);
+			}
+		});
+	});
+
+	$effect(() => {
+		const id = page.url.hash.slice(1);
+		if (!id) return;
+		const msgIdx = chatLogs.findIndex((m) => getMessageId(m) === id);
+		if (msgIdx === -1) return;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		scrollFromBottom;
+		untrack(async () => {
+			await tick();
+			const virtualList = document.querySelector(".virtual-list-wrapper");
+			if (!virtualList) return;
+
+			const listHeight = virtualList.clientHeight;
+			const totalHeight = virtualList.scrollHeight;
+
+			if (scrollFromBottom) {
+				virtualList.scrollTop = msgIdx * lineHeight - listHeight * 0.5 + lineHeight;
+			} else {
+				virtualList.scrollTop = totalHeight - msgIdx * lineHeight - listHeight * 0.5 - lineHeight;
+			}
 		});
 	});
 
@@ -325,6 +409,7 @@
 		});
 	});
 
+	let logsController: AbortController | null = null;
 	$effect(() => {
 		// fetch logs
 		const date = dateContent;
@@ -334,7 +419,11 @@
 			error = null;
 			loading = true;
 
-			const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`);
+			logsController?.abort();
+			logsController = new AbortController();
+			const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`, {
+				signal: logsController.signal,
+			});
 			if (!res.ok) {
 				if (res.status === 404) error = "No logs found for this date";
 				else error = `Error from server: ${res.status} ${res.statusText}`;
@@ -520,6 +609,29 @@
 		window.localStorage.setItem("logs-bottom-scroll-state", scrollFromBottom.toString());
 	};
 
+	const searchModeToggle = () => {
+		isJumpMode = !isJumpMode;
+		window.localStorage.setItem("logs-search-mode", isJumpMode ? "jump" : "filter");
+	};
+
+	const jumpToMessage = (index: number) => {
+		const msg = searchResults[index];
+		const id = msg && getMessageId(searchResults[index]);
+		if (!id) return;
+		jumpInputValue = index + 1;
+		goto(page.url.search + `#${id}`, { replaceState: true, keepFocus: true });
+	};
+
+	const searchJumpNext = () => {
+		if (!searchResults.length) return;
+		jumpToMessage((jumpIndex + 1) % searchResults.length);
+	};
+
+	const searchJumpPrevious = () => {
+		if (!searchResults.length) return;
+		jumpToMessage((jumpIndex - 1 + searchResults.length) % searchResults.length);
+	};
+
 	const fetchGlobalBadges = async () => {
 		const globalBadgesList = await TwitchServices.IVR.getGlobalBadges();
 
@@ -593,7 +705,7 @@
 					props: {
 						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
 						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
-						url: `https://emotes.awoo.nl/twitch/emote/${nextEmote.id}`,
+						url: `https://emotes.susgee.dev/emote/${nextEmote.id}`,
 					},
 				});
 				i = nextEmote.pos[1];
@@ -613,6 +725,19 @@
 			if (i === unicode.length - 1 && cum.trim()) {
 				processWord(cum, components);
 			}
+		}
+
+		if (msg.tags["reply-parent-msg-id"]) {
+			const prefix = `@${msg.tags["reply-parent-user-login"]}`;
+			components[0] = {
+				type: Reply,
+				props: {
+					text: prefix,
+					msgId: msg.tags["reply-parent-msg-id"],
+					replyUser: msg.tags["reply-parent-user-login"],
+					replyBody: msg.tags["reply-parent-msg-body"],
+				},
+			};
 		}
 
 		return components;
@@ -635,10 +760,13 @@
 			components.push({ type: TextFragment, props: { text: word } });
 		}
 	};
+
+	const getMessageId = (msg: Message) => msg.id || msg.timestamp;
 </script>
 
 <svelte:head>
 	<title>Twitch Logs</title>
+	<meta name="keywords" content="twitch, twitch logs, search twitch chat logs, find chat history, twitch tools, chat messages, twitch channels" />
 	<meta name="description" content="View chat logs in any Twitch channel." />
 </svelte:head>
 
@@ -647,23 +775,21 @@
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
-	<h1 class="text-2xl font-bold">
-		Search logs in
-		{#if !channels.length}
-			<Skeleton class="inline-block h-7 w-[4ch] align-middle" />
-		{:else}
-			{channels.length.toLocaleString()}
+	<div class="flex flex-wrap items-end">
+		<h1 class="text-4xl font-bold">Twitch Logs&nbsp;</h1>
+		{#if channelsCount}
+			<span class="text-xl font-light">for <span class="font-normal">{channelsCount.toLocaleString()}</span> channels</span>
 		{/if}
-		channels
-	</h1>
-	<div class="my-4 flex min-h-0 flex-row justify-between">
+	</div>
+
+	<div class="my-2 flex min-h-0 flex-row justify-between">
 		<form class="relative flex gap-2 align-middle" onsubmit={formSubmit}>
 			<div class="flex gap-2">
 				<div class="relative flex w-1/2 flex-col">
 					<Label for="input-channel" class="text-base">
 						Channel<span class="text-red-500">*</span>
 					</Label>
-					<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} autofocus />
+					<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} autocomplete="off" autofocus />
 
 					{#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
 						<div class="absolute left-0 right-0 top-full z-10 mt-1">
@@ -674,7 +800,7 @@
 									<!-- svelte-ignore a11y_click_events_have_key_events -->
 									<div
 										class="flex h-8 items-center text-sm hover:cursor-pointer
-                                        {index === selectedIndex ? 'bg-neutral-200 dark:bg-neutral-800' : 'bg-neutral-100 dark:bg-neutral-900'}"
+                                        {index === selectedIndex ? 'bg-zinc-200 dark:bg-zinc-800' : 'bg-zinc-100 dark:bg-zinc-900'}"
 										onmouseenter={() => (selectedIndex = index)}
 										onclick={() => selectResult(index)}
 									>
@@ -823,7 +949,24 @@
 			{/if}
 			{#if chatLogs.length}
 				<div class="flex flex-1 gap-1">
-					<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
+					<form class="flex-1">
+						<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+					</form>
+					{#if isJumpSearching}
+						{@const width = searchResults.length.toString().length + 5}
+						<div class="flex items-center gap-1">
+							<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+							<span class="text-xs tabular-nums">/</span>
+							<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
+						</div>
+					{/if}
+					<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
+						{#if !isJumpMode}
+							<FilterIcon />
+						{:else}
+							<SearchIcon />
+						{/if}
+					</Button>
 					<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
 						{#if scrollFromBottom}
 							<ArrowUpNarrowWideIcon />
@@ -849,30 +992,70 @@
 		<p class="text-red-500">{error}</p>
 	{:else if chatLogs.length}
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
-			<Card.Root class="h-full w-full flex-col p-3 leading-none">
-				<VirtualList height={logsBoxHeight - 24} itemCount={filteredChatLogs.length} itemSize={20}>
-					<div class="flex h-5 flex-row gap-x-1 text-nowrap" slot="item" let:index let:style {style}>
+			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
+				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
+					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
-						<span class="text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
-						{#if msg.tags["badges"]}
-							<span class="inline-flex gap-x-0.5 empty:hidden">
-								{#key badgeUpdates}
-									{#each getBadges(msg) as badge (badge.id)}
-										<Badge src={badge.src} title={badge.title} alt="" />
-									{/each}
-								{/key}
+						{@const msgid = getMessageId(msg)}
+						{@const isHashMatch = msgid === page.url.hash.slice(1)}
+						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgid)}
+						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
+						<div
+							class={[
+								"flex h-5 w-full items-center gap-x-1 px-3",
+								(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
+							]}
+						>
+							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
+							{#if msg.tags["badges"]}
+								<span class="inline-flex select-none gap-x-0.5 empty:hidden">
+									{#key badgeUpdates}
+										{#each getBadges(msg) as badge (badge.id)}
+											<Badge src={badge.src} title={badge.title} alt="" />
+										{/each}
+									{/key}
+								</span>
+							{/if}
+							<span class="h-5 w-max">
+								{#if msg.tags["target-msg-id"]}
+									{@const msgDeleted = chatLogs.find((m) => m.id === msg.tags["target-msg-id"])}
+									<span class="text-neutral-500">
+										{#if msgDeleted}
+											<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
+												A message from {msgDeleted.displayName} was deleted
+											</span>
+										{:else}
+											A message was deleted
+										{/if}
+									</span>
+								{:else if msg.tags["target-user-id"] || !msg.displayName}
+									<span class="text-neutral-500">
+										{msg.text}
+									</span>
+								{:else}
+									<span style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+										{msg.displayName}:
+									</span>
+									<span>
+										{#key emoteUpdates}
+											{#each parseMessage(msg) as { type: Component, props }, index (index)}
+												<Component {...props} />
+											{/each}
+										{/key}
+									</span>
+								{/if}
 							</span>
-						{/if}
-						<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-							{msg.displayName}:
-						</span>
-						<span class:text-neutral-500={msg.tags["target-user-id"]}>
-							{#key emoteUpdates}
-								{#each parseMessage(msg) as { type: Component, props }, index (index)}
-									<Component {...props} />
-								{/each}
-							{/key}
-						</span>
+							{#if msgid !== page.url.hash.slice(1)}
+								<Button
+									variant="outline"
+									class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
+									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgid}"
+									target="_blank"
+								>
+									<ExternalLinkIcon class="!size-3" />
+								</Button>
+							{/if}
+						</div>
 					</div>
 				</VirtualList>
 			</Card.Root>
@@ -888,11 +1071,7 @@
 	:global(.virtual-list-wrapper) {
 		overflow: scroll !important;
 
-		&::-webkit-scrollbar {
-			@apply size-1.5 bg-sidebar-border;
-		}
-		&::-webkit-scrollbar-thumb {
-			@apply rounded bg-foreground/50;
-		}
+		padding-top: 0.5rem;
+		padding-bottom: 0.5rem;
 	}
 </style>

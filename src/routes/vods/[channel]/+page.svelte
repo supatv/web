@@ -8,7 +8,7 @@
 	import { EyeOffIcon } from "@lucide/svelte";
 
 	import type { PageProps } from "./$types";
-	import type { Stream } from "$lib/twitch/streams";
+	import type { Stream } from "$lib/twitch/vods";
 	import { dateFormat, dateTimeFormat, type TitleContext } from "$lib/common";
 
 	import dayjs from "dayjs";
