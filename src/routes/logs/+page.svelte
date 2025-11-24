@@ -421,6 +421,7 @@
 
 			logsController?.abort();
 			logsController = new AbortController();
+
 			const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`, {
 				signal: logsController.signal,
 			});
@@ -756,9 +757,10 @@
 				type: Link,
 				props: { href: `${url.protocol || "//"}${url.host}${url.rest}`, text: word },
 			});
-		} else {
-			components.push({ type: TextFragment, props: { text: word } });
+			return;
 		}
+
+		components.push({ type: TextFragment, props: { text: word } });
 	};
 
 	const getMessageId = (msg: Message) => msg.id || msg.timestamp;
@@ -996,9 +998,9 @@
 				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
 					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
-						{@const msgid = getMessageId(msg)}
-						{@const isHashMatch = msgid === page.url.hash.slice(1)}
-						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgid)}
+						{@const msgId = getMessageId(msg)}
+						{@const isHashMatch = msgId === page.url.hash.slice(1)}
+						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
 						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
 						<div
 							class={[
@@ -1045,11 +1047,11 @@
 									</span>
 								{/if}
 							</span>
-							{#if msgid !== page.url.hash.slice(1)}
+							{#if msgId !== page.url.hash.slice(1)}
 								<Button
 									variant="outline"
 									class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
-									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgid}"
+									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
 									target="_blank"
 								>
 									<ExternalLinkIcon class="!size-3" />
