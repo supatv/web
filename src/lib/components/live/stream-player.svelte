@@ -15,6 +15,8 @@
 	let hls: Hls;
 
 	let loading = $state(true);
+	let needToInteract = $state(false);
+
 	let attemptedErrorRecovery: null | number = null;
 
 	class CustomPlaylistLoader extends Hls.DefaultConfig.loader {
@@ -81,6 +83,17 @@
 			}
 		});
 
+		hls.once(Hls.Events.BUFFER_CREATED, async () => {
+			try {
+				await video.play();
+			} catch (e) {
+				if (e instanceof Error && e.name === "NotAllowedError") {
+					needToInteract = true;
+					video.play();
+				}
+			}
+		});
+
 		const cache = manifestMap.get(channelName);
 		if (cache) {
 			const blob = new Blob([cache], { type: "application/vnd.apple.mpegurl" });
@@ -96,6 +109,22 @@
 		if (hls) hls.destroy();
 	});
 </script>
+
+{#if needToInteract}
+	<!-- svelte-ignore a11y_click_events_have_key_events -->
+	<div
+		class="absolute z-40 flex size-full items-center justify-center bg-black/60"
+		role="button"
+		tabindex="-1"
+		onclick={(e) => {
+			e.preventDefault();
+			needToInteract = false;
+			video.play();
+		}}
+	>
+		<p class="font-semibold text-white">Click to unmute</p>
+	</div>
+{/if}
 
 {#if loading}
 	<div class="absolute z-20 m-1 justify-center rounded-full bg-black/60">
@@ -120,7 +149,7 @@
 	}}
 	autoplay
 	volume={$playerVol}
-	muted={$playerMuted}
+	muted={$playerMuted || needToInteract}
 	playsinline={true}
 	class="absolute z-10 aspect-video size-full"
 ></video>
