@@ -73,8 +73,7 @@
 					}
 				}
 
-				if (manifestMap.has(channelName)) {
-					manifestMap.delete(channelName);
+				if (manifestMap.delete(channelName)) {
 					hls.loadSource(playlistUrl);
 					return;
 				}
