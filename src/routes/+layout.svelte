@@ -13,9 +13,11 @@
 
 	import { ModeWatcher, toggleMode } from "mode-watcher";
 
-	import { Button } from "$lib/components/ui/button/index.js";
+	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
 	import { Slider } from "$lib/components/ui/slider/index.js";
 	import { Toaster } from "$lib/components/ui/sonner/index.js";
+	import * as Dialog from "$lib/components/ui/dialog/index.js";
+
 	import { SunIcon, MoonIcon, Grid2X2Icon, Volume1Icon, Volume2Icon, VolumeOffIcon } from "@lucide/svelte";
 
 	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
@@ -134,6 +136,22 @@
 						bind:value={$playerVol}
 					/>
 				</div>
+			{:else if page.url.pathname === "/logs"}
+				<Dialog.Root>
+					<Dialog.Trigger class={[buttonVariants({ variant: "ghost" }), "!h-7 !px-1.5"]}>Removals</Dialog.Trigger>
+					<Dialog.Content>
+						<Dialog.Header>
+							<Dialog.Title>Removals</Dialog.Title>
+						</Dialog.Header>
+						<p><span class="font-bold">tv.supa.sh</span> is not able to process deletion requests.</p>
+						<p>
+							This service does not store any data itself; it only fetches publicly available logs from
+							<a href="https://logs.zonian.dev/status" target="_blank" rel="nofollow" class="text-blue-600 hover:underline dark:text-primary">third-party sources</a>.
+						</p>
+						<p>Opting out may be possible for each specific instance, depending on that site's own policy.</p>
+						<p>We are not affiliated with Twitch or its creators.</p>
+					</Dialog.Content>
+				</Dialog.Root>
 			{/if}
 		</div>
 
