@@ -901,7 +901,7 @@
 											<div>
 												<h3 class="text-lg font-semibold mb-2">Top Chatters</h3>
 												<div class="space-y-2">
-													{#each channelStats.topChatters as chatter, index}
+													{#each channelStats.topChatters as chatter, index (chatter.userId)}
 														<div class="flex items-center justify-between pb-2 {index !== channelStats.topChatters.length - 1 ? 'border-b' : ''}">
 															<div class="flex items-center gap-3">
 																<span class="text-muted-foreground w-8 text-right tabular-nums">{index + 1}.</span>
