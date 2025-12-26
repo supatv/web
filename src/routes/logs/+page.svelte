@@ -11,6 +11,7 @@
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
+	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 
 	import { cn } from "$lib/utils.js";
 	import { CalendarDate, DateFormatter, getLocalTimeZone, today, type DateValue } from "@internationalized/date";
@@ -37,7 +38,7 @@
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
-	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon, InfoIcon } from "@lucide/svelte";
+	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon, ChartColumnIcon } from "@lucide/svelte";
 
 	import { dateTimeFormat, type TitleContext } from "$lib/common";
 
@@ -52,6 +53,11 @@
 		day?: string;
 	};
 
+	type StatsResponse = {
+		messageCount: number;
+		topChatters?: Array<{ userId: string; userLogin: string; messageCount: number }>;
+	};
+
 	getContext<TitleContext>("title").set("Logs");
 
 	const lineHeight = 20;
@@ -59,7 +65,7 @@
 	let error: string | null = $state(null);
 	let loading = $state(false);
 
-	let isPopoverOpen = $state(false);
+	let datePopoverOpen = $state(false);
 
 	let selectedIndex = $state(0); // Track selected item
 
@@ -198,8 +204,7 @@
 
 	// Channel Stats
 	let statsPopoverOpen = $state(false);
-	let channelStats = $state<{ messageCount: number; topChatters: Array<{ userId: string; userLogin: string; messageCount: number }> } | null>(null);
-	let statsLoading = $state(false);
+	let channelStats = $state<StatsResponse | null>(null);
 	let statsError = $state<string | null>(null);
 
 	// Emotes
@@ -392,42 +397,27 @@
 		else return `${channelType}/${encodeURIComponent(channel)}${user ? `/${userType}/${encodeURIComponent(user)}` : ""}`;
 	};
 
-	const buildStatsUrl = (channelName: string) => {
-		const channel = channelName.trim();
-		if (channel.startsWith("id:")) {
-			const channelId = channel.slice(3).trim();
-			return `https://logs.zonian.dev/channelid/${encodeURIComponent(channelId)}/stats`;
-		}
-		return `https://logs.zonian.dev/channel/${channel.toLowerCase()}/stats`;
-	};
-
 	const fetchChannelStats = async () => {
 		if (!channelName) return;
 
-		statsLoading = true;
 		statsError = null;
 
 		try {
-			const url = buildStatsUrl(channelName);
-			const res = await fetch(url);
+			const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/stats`);
 			if (!res.ok) {
 				if (res.status === 404) statsError = "No stats found for this channel";
 				else statsError = `Error from server: ${res.status} ${res.statusText}`;
-				statsLoading = false;
 				return;
 			}
 
-			const data: { messageCount: number; topChatters: Array<{ userId: string; userLogin: string; messageCount: number }> } = await res.json();
-			channelStats = data;
-			statsLoading = false;
+			channelStats = await res.json();
 		} catch (err) {
 			statsError = err instanceof Error ? err.message : "Failed to fetch channel stats";
-			statsLoading = false;
 		}
 	};
 
 	$effect(() => {
-		if (statsPopoverOpen && channelName) {
+		if (statsPopoverOpen && !channelStats) {
 			fetchChannelStats();
 		}
 	});
@@ -438,6 +428,7 @@
 		untrack(async () => {
 			availableDates = [];
 			chatLogs = [];
+			channelStats = null;
 			loading = true;
 
 			const res = await fetch(`https://logs.zonian.dev/list?${parseChannelUser(channelName, userName, true)}`);
@@ -830,106 +821,116 @@
 		{/if}
 	</div>
 
-	<div class="my-2 flex min-h-0 flex-row justify-between">
-		<form class="relative flex gap-2 align-middle" onsubmit={formSubmit}>
-			<div class="flex gap-2">
-				<div class="relative flex w-1/2 flex-col">
-					<Label for="input-channel" class="text-base">
-						Channel<span class="text-red-500">*</span>
-					</Label>
-					<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} autocomplete="off" autofocus />
+	<div class="my-2 flex min-h-0 flex-row justify-between gap-2">
+		<form class="relative flex w-full gap-2 align-middle" onsubmit={formSubmit}>
+			<div class="flex flex-1">
+				<div class="flex max-w-xl gap-2">
+					<div class="relative flex flex-col">
+						<Label for="input-channel" class="text-base">
+							Channel<span class="text-red-500">*</span>
+						</Label>
+						<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} autocomplete="off" autofocus />
 
-					{#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
-						<div class="absolute left-0 right-0 top-full z-10 mt-1">
-							<ScrollArea class="flex-1 rounded-md">
-								<!-- svelte-ignore a11y_click_events_have_key_events -->
-								<!-- svelte-ignore a11y_no_static_element_interactions -->
-								{#each foundChannels as c, index (c.target)}
+						{#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
+							<div class="absolute left-0 right-0 top-full z-10 mt-1">
+								<ScrollArea class="flex-1 rounded-md">
 									<!-- svelte-ignore a11y_click_events_have_key_events -->
-									<div
-										class="flex h-8 items-center text-sm hover:cursor-pointer
+									<!-- svelte-ignore a11y_no_static_element_interactions -->
+									{#each foundChannels as c, index (c.target)}
+										<!-- svelte-ignore a11y_click_events_have_key_events -->
+										<div
+											class="flex h-8 items-center text-sm hover:cursor-pointer
                                         {index === selectedIndex ? 'bg-zinc-200 dark:bg-zinc-800' : 'bg-zinc-100 dark:bg-zinc-900'}"
-										onmouseenter={() => (selectedIndex = index)}
-										onclick={() => selectResult(index)}
-									>
-										<span class="mx-3">{c.target}</span>
-									</div>
-								{/each}
-							</ScrollArea>
-						</div>
-					{/if}
-				</div>
-
-				<div class="flex w-1/2 flex-col">
-					<Label for="input-user" class="text-base">User</Label>
-					<Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="username or id:123" />
-				</div>
-
-				<div class="flex flex-row items-center gap-1 self-end">
-					<Button type="submit" id="load-btn" class="sticky" disabled={loading}>Load</Button>
-					<Popover.Root bind:open={statsPopoverOpen}>
-						<Popover.Trigger
-							disabled={loading || !channelName}
-							class={cn(buttonVariants({ variant: "ghost" }), "border")}
-							title="Channel Stats"
-							aria-label="Channel Stats"
-						>
-							<InfoIcon />
-						</Popover.Trigger>
-						<Popover.Content class="w-80 max-w-[90vw] p-0" align="end" sideOffset={8}>
-							<Card.Root>
-								<Card.Header>
-									<Card.Title>Channel Stats</Card.Title>
-									<Card.Description>Statistics for channel: {channelName}</Card.Description>
-								</Card.Header>
-								<Card.Content>
-									{#if statsLoading}
-										<div class="flex items-center justify-center py-8">
-											<LoaderCircleIcon class="size-8 animate-spin" />
+											onmouseenter={() => (selectedIndex = index)}
+											onclick={() => selectResult(index)}
+										>
+											<span class="mx-3">{c.target}</span>
 										</div>
-									{:else if statsError}
-										<div class="py-4">
-											<p class="text-red-500">{statsError}</p>
-										</div>
-									{:else if channelStats}
-										<div class="space-y-4">
-											<div>
-												<h3 class="text-lg font-semibold">Total Messages</h3>
-												<p class="text-2xl font-bold">{channelStats.messageCount.toLocaleString()}</p>
-											</div>
+									{/each}
+								</ScrollArea>
+							</div>
+						{/if}
+					</div>
 
-											<div>
-												<h3 class="text-lg font-semibold mb-2">Top Chatters</h3>
-												<div class="space-y-2">
-													{#each channelStats.topChatters as chatter, index (chatter.userId)}
-														<div class="flex items-center justify-between pb-2 {index !== channelStats.topChatters.length - 1 ? 'border-b' : ''}">
-															<div class="flex items-center gap-3">
-																<span class="text-muted-foreground w-8 text-right tabular-nums">{index + 1}.</span>
-																<span class="font-medium">{chatter.userLogin}</span>
-															</div>
-															<span class="text-muted-foreground tabular-nums">{chatter.messageCount.toLocaleString()}</span>
-														</div>
-													{/each}
-												</div>
-											</div>
-										</div>
-									{/if}
-								</Card.Content>
-							</Card.Root>
-						</Popover.Content>
-					</Popover.Root>
-					{#if loading}
-						<LoaderCircleIcon class="size-8 animate-spin" />
-					{/if}
+					<div class="flex flex-col">
+						<Label for="input-user" class="text-base">User</Label>
+						<Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="username or id:123" />
+					</div>
+
+					<div class="flex flex-row items-center gap-1 self-end">
+						<Button type="submit" id="load-btn" class="sticky" disabled={loading}>Load</Button>
+						{#if loading}
+							<LoaderCircleIcon class="size-8 animate-spin" />
+						{/if}
+					</div>
 				</div>
 			</div>
 		</form>
+
+		<div class="flex self-end">
+			<Popover.Root bind:open={statsPopoverOpen}>
+				<Popover.Trigger class={cn(buttonVariants({ variant: "secondary" }), [!chatLogs.length && "hidden"])} title="Channel Stats" aria-label="Channel Stats">
+					<ChartColumnIcon />
+					<span class="hidden md:block">Stats</span>
+				</Popover.Trigger>
+				<Popover.Content class="w-80 max-w-[90vw] rounded-md border-0 p-0" align="end" sideOffset={8}>
+					<Card.Root class="rounded-md">
+						<Card.Content>
+							{#if statsError}
+								<p class="text-red-500">{statsError}</p>
+							{:else}
+								<div class="space-y-4">
+									<div>
+										<h3 class="text-lg font-semibold">
+											Total Messages
+											{#if userName}
+												<span class="font-light text-muted-foreground">by <span class="font-semibold">{userName}</span></span>
+											{/if}
+										</h3>
+										{#if channelStats}
+											<p class="text-2xl font-bold">{channelStats.messageCount.toLocaleString()}</p>
+										{:else}
+											<Skeleton class="h-8 w-28" />
+										{/if}
+									</div>
+
+									{#if !userName}
+										<div>
+											<h3 class="mb-2 text-lg font-semibold">Top Chatters</h3>
+											<div class="space-y-2">
+												{#if channelStats?.topChatters}
+													{#each channelStats.topChatters as chatter, index (chatter.userId)}
+														<div class="flex items-center justify-between border-b pb-2 last:border-0">
+															<div class="flex items-center gap-3">
+																<span class="w-8 text-right tabular-nums text-muted-foreground">{index + 1}.</span>
+																<span class="font-medium">{chatter.userLogin}</span>
+															</div>
+															<span class="tabular-nums text-muted-foreground">{chatter.messageCount.toLocaleString()}</span>
+														</div>
+													{/each}
+												{:else}
+													<Skeleton class="h-8 w-full" />
+													<Skeleton class="h-8 w-full" />
+													<Skeleton class="h-8 w-full" />
+													<Skeleton class="h-8 w-full" />
+													<Skeleton class="h-8 w-full" />
+												{/if}
+											</div>
+										</div>
+									{/if}
+								</div>
+							{/if}
+						</Card.Content>
+					</Card.Root>
+				</Popover.Content>
+			</Popover.Root>
+		</div>
 	</div>
 
 	<div class="mb-1 flex flex-row flex-wrap-reverse justify-between gap-1">
 		{#if dateContent}
 			{#if dateContent.day}
-				<Popover.Root bind:open={isPopoverOpen}>
+				<Popover.Root bind:open={datePopoverOpen}>
 					<Popover.Trigger
 						disabled={loading}
 						class={cn(
@@ -943,7 +944,7 @@
 						<CalendarIcon class="opacity-50" />
 					</Popover.Trigger>
 
-					<Popover.Content bind:ref={contentRef} class="w-auto p-0" align="start">
+					<Popover.Content bind:ref={contentRef} class="w-auto border-0 p-0" align="start">
 						<CalendarPrimitive.Root
 							type="single"
 							weekdayFormat="short"
@@ -1028,7 +1029,7 @@
 				</Popover.Root>
 			{:else}
 				<div class="flex flex-row">
-					<Select.Root type="single" name="input-date" bind:open={isPopoverOpen} bind:value={dateValue} disabled={loading}>
+					<Select.Root type="single" name="input-date" bind:open={datePopoverOpen} bind:value={dateValue} disabled={loading}>
 						<Select.Trigger class="h-8 w-32 tabular-nums">
 							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
 						</Select.Trigger>
@@ -1162,7 +1163,7 @@
 	{/if}
 </div>
 
-{#if isPopoverOpen}
+{#if datePopoverOpen || statsPopoverOpen}
 	<FocusTrap />
 {/if}
 
