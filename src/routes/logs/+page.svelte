@@ -54,8 +54,10 @@
 	};
 
 	type StatsResponse = {
+		userLogin?: string;
+		userId: string;
 		messageCount: number;
-		topChatters?: Array<{ userId: string; userLogin: string; messageCount: number }>;
+		topChatters?: Array<{ userId: string; userLogin?: string; messageCount: number }>;
 	};
 
 	getContext<TitleContext>("title").set("Logs");
@@ -884,7 +886,9 @@
 										<h3 class="text-lg font-semibold">
 											Total Messages
 											{#if userName}
-												<span class="font-light text-muted-foreground">by <span class="font-semibold">{userName}</span></span>
+												<span class="font-light text-muted-foreground">
+													by <span class="font-semibold">{channelStats?.userLogin || userName}</span>
+												</span>
 											{/if}
 										</h3>
 										{#if channelStats}
@@ -903,7 +907,9 @@
 														<div class="flex items-center justify-between gap-2 text-nowrap border-b pb-2 last:border-0">
 															<div class="flex items-center gap-2 overflow-hidden">
 																<span class="ml-4 text-right tabular-nums text-muted-foreground">{index + 1}.</span>
-																<span class="overflow-hidden text-ellipsis font-medium" title={chatter.userLogin}>{chatter.userLogin}</span>
+																<span class="overflow-hidden text-ellipsis font-medium" title={chatter.userLogin}>
+																	{chatter.userLogin || `id:${chatter.userId}`}
+																</span>
 															</div>
 															<span class="tabular-nums text-muted-foreground">{chatter.messageCount.toLocaleString()}</span>
 														</div>
