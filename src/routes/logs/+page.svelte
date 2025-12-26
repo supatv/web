@@ -900,10 +900,10 @@
 											<div class="space-y-2">
 												{#if channelStats?.topChatters}
 													{#each channelStats.topChatters as chatter, index (chatter.userId)}
-														<div class="flex items-center justify-between border-b pb-2 last:border-0">
-															<div class="flex items-center gap-3">
-																<span class="w-8 text-right tabular-nums text-muted-foreground">{index + 1}.</span>
-																<span class="font-medium">{chatter.userLogin}</span>
+														<div class="flex items-center justify-between gap-2 text-nowrap border-b pb-2 last:border-0">
+															<div class="flex items-center gap-2 overflow-hidden">
+																<span class="ml-4 text-right tabular-nums text-muted-foreground">{index + 1}.</span>
+																<span class="overflow-hidden text-ellipsis font-medium" title={chatter.userLogin}>{chatter.userLogin}</span>
 															</div>
 															<span class="tabular-nums text-muted-foreground">{chatter.messageCount.toLocaleString()}</span>
 														</div>
