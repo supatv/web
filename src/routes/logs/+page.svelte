@@ -37,7 +37,7 @@
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
-	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon } from "@lucide/svelte";
+	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon, InfoIcon } from "@lucide/svelte";
 
 	import { dateTimeFormat, type TitleContext } from "$lib/common";
 
@@ -195,6 +195,12 @@
 	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true");
 
 	let channelId = $state("");
+
+	// Channel Stats
+	let statsPopoverOpen = $state(false);
+	let channelStats = $state<{ messageCount: number; topChatters: Array<{ userId: string; userLogin: string; messageCount: number }> } | null>(null);
+	let statsLoading = $state(false);
+	let statsError = $state<string | null>(null);
 
 	// Emotes
 	const channelEmotes = new SvelteMap<string, EmoteProps>();
@@ -385,6 +391,46 @@
 		if (params) return `${channelType}=${encodeURIComponent(channel)}${user ? `&${userType}=${encodeURIComponent(user)}` : ""}`;
 		else return `${channelType}/${encodeURIComponent(channel)}${user ? `/${userType}/${encodeURIComponent(user)}` : ""}`;
 	};
+
+	const buildStatsUrl = (channelName: string) => {
+		const channel = channelName.trim();
+		if (channel.startsWith("id:")) {
+			const channelId = channel.slice(3).trim();
+			return `https://logs.zonian.dev/channelid/${encodeURIComponent(channelId)}/stats`;
+		}
+		return `https://logs.zonian.dev/channel/${channel.toLowerCase()}/stats`;
+	};
+
+	const fetchChannelStats = async () => {
+		if (!channelName) return;
+
+		statsLoading = true;
+		statsError = null;
+
+		try {
+			const url = buildStatsUrl(channelName);
+			const res = await fetch(url);
+			if (!res.ok) {
+				if (res.status === 404) statsError = "No stats found for this channel";
+				else statsError = `Error from server: ${res.status} ${res.statusText}`;
+				statsLoading = false;
+				return;
+			}
+
+			const data: { messageCount: number; topChatters: Array<{ userId: string; userLogin: string; messageCount: number }> } = await res.json();
+			channelStats = data;
+			statsLoading = false;
+		} catch (err) {
+			statsError = err instanceof Error ? err.message : "Failed to fetch channel stats";
+			statsLoading = false;
+		}
+	};
+
+	$effect(() => {
+		if (statsPopoverOpen && channelName) {
+			fetchChannelStats();
+		}
+	});
 
 	$effect(() => {
 		// fetch available dates
@@ -821,6 +867,57 @@
 
 				<div class="flex flex-row items-center gap-1 self-end">
 					<Button type="submit" id="load-btn" class="sticky" disabled={loading}>Load</Button>
+					<Popover.Root bind:open={statsPopoverOpen}>
+						<Popover.Trigger
+							disabled={loading || !channelName}
+							class={cn(buttonVariants({ variant: "ghost" }), "border")}
+							title="Channel Stats"
+							aria-label="Channel Stats"
+						>
+							<InfoIcon />
+						</Popover.Trigger>
+						<Popover.Content class="w-80 max-w-[90vw] p-0" align="end" sideOffset={8}>
+							<Card.Root>
+								<Card.Header>
+									<Card.Title>Channel Stats</Card.Title>
+									<Card.Description>Statistics for channel: {channelName}</Card.Description>
+								</Card.Header>
+								<Card.Content>
+									{#if statsLoading}
+										<div class="flex items-center justify-center py-8">
+											<LoaderCircleIcon class="size-8 animate-spin" />
+										</div>
+									{:else if statsError}
+										<div class="py-4">
+											<p class="text-red-500">{statsError}</p>
+										</div>
+									{:else if channelStats}
+										<div class="space-y-4">
+											<div>
+												<h3 class="text-lg font-semibold">Total Messages</h3>
+												<p class="text-2xl font-bold">{channelStats.messageCount.toLocaleString()}</p>
+											</div>
+
+											<div>
+												<h3 class="text-lg font-semibold mb-2">Top Chatters</h3>
+												<div class="space-y-2">
+													{#each channelStats.topChatters as chatter, index}
+														<div class="flex items-center justify-between pb-2 {index !== channelStats.topChatters.length - 1 ? 'border-b' : ''}">
+															<div class="flex items-center gap-3">
+																<span class="text-muted-foreground w-8 text-right tabular-nums">{index + 1}.</span>
+																<span class="font-medium">{chatter.userLogin}</span>
+															</div>
+															<span class="text-muted-foreground tabular-nums">{chatter.messageCount.toLocaleString()}</span>
+														</div>
+													{/each}
+												</div>
+											</div>
+										</div>
+									{/if}
+								</Card.Content>
+							</Card.Root>
+						</Popover.Content>
+					</Popover.Root>
 					{#if loading}
 						<LoaderCircleIcon class="size-8 animate-spin" />
 					{/if}
