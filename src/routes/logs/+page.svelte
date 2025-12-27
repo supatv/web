@@ -826,7 +826,7 @@
 	<div class="my-2 flex min-h-0 flex-row justify-between gap-2">
 		<form class="relative flex w-full gap-2 align-middle" onsubmit={formSubmit}>
 			<div class="flex flex-1">
-				<div class="flex max-w-xl gap-2">
+				<div class="flex gap-2">
 					<div class="relative flex flex-col">
 						<Label for="input-channel" class="text-base">
 							Channel<span class="text-red-500">*</span>
