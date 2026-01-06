@@ -303,7 +303,7 @@
 	let jumpHighlights = $derived(isJumpSearching ? new Set(searchResults.map((m) => getMessageId(m))) : void 0);
 	let jumpIndex = $derived(isJumpSearching ? searchResults.findIndex((m) => getMessageId(m) === page.url.hash.slice(1)) : -1);
 	let jumpInputValue = $state(1);
-	
+
 	let displayMessageCount = $derived.by(() => {
 		if (searchValue && !isJumpMode) {
 			return `${searchResults.length.toLocaleString()} / ${chatLogs.length.toLocaleString()}`;
@@ -1065,7 +1065,7 @@
 					<form class="flex-1">
 						<div class="relative flex items-center">
 							<Input id="input-search" maxlength={500} placeholder="Search" class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
-							<span class="absolute right-2 select-none text-xs text-muted-foreground tabular-nums">
+							<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
 								{displayMessageCount}
 							</span>
 						</div>
