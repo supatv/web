@@ -1115,12 +1115,17 @@
 					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
 						{@const msg = filteredChatLogs[index]}
 						{@const msgId = getMessageId(msg)}
+						{@const dayKey = dayjs(msg.timestamp).format("YYYY-MM-DD")}
+						{@const prevDayKey = index > 0 ? dayjs(filteredChatLogs[index - 1].timestamp).format("YYYY-MM-DD") : null}
+						{@const isNewDay = index > 0 && prevDayKey !== dayKey}
 						{@const isHashMatch = msgId === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
 						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
 						<div
 							class={[
 								"flex h-5 w-full items-center gap-x-1 px-3",
+								isNewDay &&
+									"relative before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-0 before:border-t before:border-dashed before:content-[''] before:border-black/10 dark:before:border-white/10",
 								(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
 							]}
 						>
