@@ -87,7 +87,7 @@
 
 			<p class="w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm" title={stream.title}>{stream.title}</p>
 
-			<p class="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-neutral-500" title={stream.game}>{stream.game}</p>
+			<p class="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted-foreground" title={stream.game}>{stream.game}</p>
 		</div>
 	</div>
 </div>
