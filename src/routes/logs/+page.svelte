@@ -830,7 +830,7 @@
 		{/if}
 	</div>
 
-	<div class="my-2 flex min-h-0 flex-row justify-between gap-2">
+	<div class="my-2 flex min-h-0 min-w-64 flex-row justify-between gap-2">
 		<form class="relative flex w-full gap-2 align-middle" onsubmit={formSubmit}>
 			<div class="flex flex-1">
 				<div class="flex gap-2">
@@ -941,169 +941,173 @@
 	</div>
 
 	<div class="mb-1 flex flex-row flex-wrap-reverse justify-between gap-1">
-		{#if dateContent}
-			{#if dateContent.day}
-				<Popover.Root bind:open={datePopoverOpen}>
-					<Popover.Trigger
-						disabled={loading}
-						class={cn(
-							buttonVariants({
-								variant: "outline",
-								class: "flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm tabular-nums hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-							})
-						)}
-					>
-						{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
-						<CalendarIcon class="opacity-50" />
-					</Popover.Trigger>
-
-					<Popover.Content bind:ref={contentRef} class="w-auto border-0 p-0" align="start">
-						<CalendarPrimitive.Root
-							type="single"
-							weekdayFormat="short"
-							class="rounded-md border p-3 tabular-nums"
-							onPlaceholderChange={(date) => adjustDate(date)}
-							onValueChange={(date) => updateDateValue(date)}
-							isDateUnavailable={(date) => !isDateAvailable(date)}
-							bind:value={calendarDate}
+		<div class="flex flex-1 flex-wrap gap-1 md:flex-nowrap">
+			{#if dateContent}
+				{#if dateContent.day}
+					<Popover.Root bind:open={datePopoverOpen}>
+						<Popover.Trigger
+							disabled={loading}
+							class={cn(
+								buttonVariants({
+									variant: "outline",
+									class: "flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm tabular-nums hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+								})
+							)}
 						>
-							{#snippet children({ months, weekdays })}
-								<Calendar.Header class="flex w-full items-center justify-between gap-2">
-									<Select.Root
-										type="single"
-										value={`${defaultYear?.value}`}
-										onValueChange={(v) => {
-											if (!v || !calendarDate) return;
-											if (v === `${calendarDate?.year}`) return;
-											calendarDate = calendarDate.set({ year: Number.parseInt(v) });
-										}}
-									>
-										<Select.Trigger aria-label="Select year" class="h-8 max-w-24 tabular-nums">
-											{defaultYear?.label ?? "Year"}
-										</Select.Trigger>
-										<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
-											{#each yearOptions as { value, label } (value)}
-												<Select.Item value={`${value}`} {label} />
-											{/each}
-										</Select.Content>
-									</Select.Root>
-									<Select.Root
-										type="single"
-										value={`${defaultMonth?.value}`}
-										onValueChange={(v) => {
-											if (!calendarDate) return;
-											if (v === `${calendarDate.month}`) return;
-											calendarDate = calendarDate.set({ month: Number.parseInt(v) });
-										}}
-									>
-										<Select.Trigger aria-label="Select month" class="h-8 w-full break-keep tabular-nums">
-											{monthLabel}
-										</Select.Trigger>
-										<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
-											{#each monthOptions as { value, label } (value)}
-												<Select.Item value={`${value}`} {label} />
-											{/each}
-										</Select.Content>
-									</Select.Root>
-								</Calendar.Header>
-								<Calendar.Months>
-									{#each months as month (month)}
-										<Calendar.Grid>
-											<Calendar.GridHead>
-												<Calendar.GridRow class="flex">
-													{#each weekdays as weekday (weekday)}
-														<Calendar.HeadCell>
-															{weekday.slice(0, 2)}
-														</Calendar.HeadCell>
-													{/each}
-												</Calendar.GridRow>
-											</Calendar.GridHead>
-											<Calendar.GridBody>
-												{#each month.weeks as weekDates (weekDates)}
-													<Calendar.GridRow class="mt-2 w-full">
-														{#each weekDates as date (date)}
-															<Calendar.Cell
-																class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none [&[data-unavailable]]:pointer-events-none [&[data-unavailable]]:opacity-50"
-																{date}
-																month={month.value}
-															>
-																<Calendar.Day />
-															</Calendar.Cell>
+							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
+							<CalendarIcon class="opacity-50" />
+						</Popover.Trigger>
+
+						<Popover.Content bind:ref={contentRef} class="w-auto border-0 p-0" align="start">
+							<CalendarPrimitive.Root
+								type="single"
+								weekdayFormat="short"
+								class="rounded-md border p-3 tabular-nums"
+								onPlaceholderChange={(date) => adjustDate(date)}
+								onValueChange={(date) => updateDateValue(date)}
+								isDateUnavailable={(date) => !isDateAvailable(date)}
+								bind:value={calendarDate}
+							>
+								{#snippet children({ months, weekdays })}
+									<Calendar.Header class="flex w-full items-center justify-between gap-2">
+										<Select.Root
+											type="single"
+											value={`${defaultYear?.value}`}
+											onValueChange={(v) => {
+												if (!v || !calendarDate) return;
+												if (v === `${calendarDate?.year}`) return;
+												calendarDate = calendarDate.set({ year: Number.parseInt(v) });
+											}}
+										>
+											<Select.Trigger aria-label="Select year" class="h-8 max-w-24 tabular-nums">
+												{defaultYear?.label ?? "Year"}
+											</Select.Trigger>
+											<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
+												{#each yearOptions as { value, label } (value)}
+													<Select.Item value={`${value}`} {label} />
+												{/each}
+											</Select.Content>
+										</Select.Root>
+										<Select.Root
+											type="single"
+											value={`${defaultMonth?.value}`}
+											onValueChange={(v) => {
+												if (!calendarDate) return;
+												if (v === `${calendarDate.month}`) return;
+												calendarDate = calendarDate.set({ month: Number.parseInt(v) });
+											}}
+										>
+											<Select.Trigger aria-label="Select month" class="h-8 w-full break-keep tabular-nums">
+												{monthLabel}
+											</Select.Trigger>
+											<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
+												{#each monthOptions as { value, label } (value)}
+													<Select.Item value={`${value}`} {label} />
+												{/each}
+											</Select.Content>
+										</Select.Root>
+									</Calendar.Header>
+									<Calendar.Months>
+										{#each months as month (month)}
+											<Calendar.Grid>
+												<Calendar.GridHead>
+													<Calendar.GridRow class="flex">
+														{#each weekdays as weekday (weekday)}
+															<Calendar.HeadCell>
+																{weekday.slice(0, 2)}
+															</Calendar.HeadCell>
 														{/each}
 													</Calendar.GridRow>
-												{/each}
-											</Calendar.GridBody>
-										</Calendar.Grid>
+												</Calendar.GridHead>
+												<Calendar.GridBody>
+													{#each month.weeks as weekDates (weekDates)}
+														<Calendar.GridRow class="mt-2 w-full">
+															{#each weekDates as date (date)}
+																<Calendar.Cell
+																	class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none [&[data-unavailable]]:pointer-events-none [&[data-unavailable]]:opacity-50"
+																	{date}
+																	month={month.value}
+																>
+																	<Calendar.Day />
+																</Calendar.Cell>
+															{/each}
+														</Calendar.GridRow>
+													{/each}
+												</Calendar.GridBody>
+											</Calendar.Grid>
+										{/each}
+									</Calendar.Months>
+								{/snippet}
+							</CalendarPrimitive.Root>
+						</Popover.Content>
+					</Popover.Root>
+				{:else}
+					<div class="flex flex-row">
+						<Select.Root type="single" name="input-date" bind:open={datePopoverOpen} bind:value={dateValue} disabled={loading}>
+							<Select.Trigger class="h-8 w-32 tabular-nums">
+								{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
+							</Select.Trigger>
+							<Select.Content>
+								<Select.Group>
+									{#each availableDates as date, index (index)}
+										{#if index > 0 && date.year !== availableDates[index - 1].year}
+											<Select.Separator class="mx-0" />
+										{/if}
+										{@const str = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`}
+										<Select.Item class="m-0 justify-center p-1 tabular-nums" value={str} label={str} />
 									{/each}
-								</Calendar.Months>
-							{/snippet}
-						</CalendarPrimitive.Root>
-					</Popover.Content>
-				</Popover.Root>
-			{:else}
-				<div class="flex flex-row">
-					<Select.Root type="single" name="input-date" bind:open={datePopoverOpen} bind:value={dateValue} disabled={loading}>
-						<Select.Trigger class="h-8 w-32 tabular-nums">
-							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
-						</Select.Trigger>
-						<Select.Content>
-							<Select.Group>
-								{#each availableDates as date, index (index)}
-									{#if index > 0 && date.year !== availableDates[index - 1].year}
-										<Select.Separator class="mx-0" />
-									{/if}
-									{@const str = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`}
-									<Select.Item class="m-0 justify-center p-1 tabular-nums" value={str} label={str} />
-								{/each}
-							</Select.Group>
-						</Select.Content>
-					</Select.Root>
-				</div>
-			{/if}
-			{#if chatLogs.length}
-				<div class="flex flex-1 gap-1">
-					<form class="flex-1">
-						<div class="relative flex items-center">
-							<Input id="input-search" maxlength={500} placeholder="Search" class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
-							<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
-								{displayMessageCount}
-							</span>
-						</div>
-					</form>
-					{#if isJumpSearching}
-						{@const width = searchResults.length.toString().length + 5}
-						<div class="flex items-center gap-1">
-							<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
-							<span class="text-xs tabular-nums">/</span>
-							<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
-						</div>
-					{/if}
-					<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
-						{#if !isJumpMode}
-							<FilterIcon />
-						{:else}
-							<SearchIcon />
+								</Select.Group>
+							</Select.Content>
+						</Select.Root>
+					</div>
+				{/if}
+				{#if chatLogs.length}
+					<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
+						<form class="flex-1">
+							<div class="relative flex items-center">
+								<Input id="input-search" maxlength={500} placeholder="Search" class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+								<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
+									{displayMessageCount}
+								</span>
+							</div>
+						</form>
+						{#if isJumpSearching}
+							{@const width = searchResults.length.toString().length + 5}
+							<div class="flex items-center gap-1">
+								<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+								<span class="text-xs tabular-nums">/</span>
+								<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
+							</div>
 						{/if}
-					</Button>
-					<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
-						{#if scrollFromBottom}
-							<ArrowUpNarrowWideIcon />
-						{:else}
-							<ArrowDownWideNarrowIcon />
-						{/if}
-					</Button>
-					<Button
-						variant="ghost"
-						size="icon"
-						class="size-8 border"
-						target="_blank"
-						href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}{dateContent.day ? `/${dateContent.day}` : ''}"
-					>
-						<FileTextIcon />
-					</Button>
-				</div>
+					</div>
+					<div class="ml-auto flex gap-1">
+						<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
+							{#if !isJumpMode}
+								<FilterIcon />
+							{:else}
+								<SearchIcon />
+							{/if}
+						</Button>
+						<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
+							{#if scrollFromBottom}
+								<ArrowUpNarrowWideIcon />
+							{:else}
+								<ArrowDownWideNarrowIcon />
+							{/if}
+						</Button>
+						<Button
+							variant="ghost"
+							size="icon"
+							class="size-8 border"
+							target="_blank"
+							href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}{dateContent.day ? `/${dateContent.day}` : ''}"
+						>
+							<FileTextIcon />
+						</Button>
+					</div>
+				{/if}
 			{/if}
-		{/if}
+		</div>
 	</div>
 
 	{#if error}
