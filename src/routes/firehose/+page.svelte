@@ -81,7 +81,7 @@
 		if (instanceParam && instanceParam in instances) {
 			instanceValue = instanceParam;
 		} else {
-			instanceValue = "logs.spanix.team";
+			instanceValue = "firehose.catquery.com";
 		}
 
 		searchValue = q.get("s") || "";
