@@ -160,10 +160,8 @@
 		<p>
 			not affiliated with Twitch or its creators
 			<br />
-			<a href="https://supa.sh" target="_blank" rel="nofollow" data-umami-event="link-supa.sh">
-				&copy; {new Date().getFullYear()} supa.codes
-				<HeartIcon fill="#cba6f7" color="#cba6f7" class="inline size-4" />
-			</a>
+			&copy; {new Date().getFullYear()} supa.sh
+			<HeartIcon fill="#cba6f7" color="#cba6f7" class="inline size-4" />
 		</p>
 	</Sidebar.Footer>
 </Sidebar.Root>
