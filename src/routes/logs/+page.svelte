@@ -311,6 +311,27 @@
 		return chatLogs.length.toLocaleString();
 	});
 
+	const hourlyActivity = $derived.by(() => {
+		const counts = Array.from({ length: 24 }, () => 0);
+		for (const msg of chatLogs) {
+			counts[new Date(msg.timestamp).getHours()]++;
+		}
+		const maxCount = Math.max(1, ...counts);
+		return { counts, maxCount };
+	});
+
+	// the busier the hour, the stronger the purple gets
+	const hourlyBarFill = (count: number, maxCount: number, resolvedMode: string | undefined) => {
+		if (count <= 0) return "transparent";
+		const strength = Math.min(1, count / maxCount);
+		if (resolvedMode === "dark") {
+			const alpha = 0.2 + 0.72 * strength;
+			return `hsl(270 88% 68% / ${alpha})`;
+		}
+		const alpha = 0.14 + 0.8 * strength;
+		return `hsl(271 78% 46% / ${alpha})`;
+	};
+
 	$effect(() => {
 		if (!filteredChatLogs) return;
 		untrack(async () => {
@@ -882,9 +903,34 @@
 					<ChartColumnIcon />
 					<span class="hidden md:block">Stats</span>
 				</Popover.Trigger>
-				<Popover.Content class="w-80 max-w-[90vw] rounded-md border-0 p-0" align="end" sideOffset={8}>
-					<Card.Root class="rounded-md">
-						<Card.Content>
+				<Popover.Content class="w-[min(90vw,28rem)] max-w-[90vw] rounded-md border-0 p-0" align="end" sideOffset={8}>
+					<Card.Root class="w-full min-w-0 rounded-md">
+						<Card.Content class="min-w-0">
+							<div class="mb-4 w-full min-w-0">
+								<h3 class="mb-2 text-lg font-semibold">Messages by hour for the selected day</h3>
+								<div class="grid w-full min-w-0 gap-px [grid-template-columns:repeat(24,minmax(0,1fr))]" role="img" aria-label="Message count by hour for the selected day">
+									{#each hourlyActivity.counts as count, hour (hour)}
+										{@const pct = (count / hourlyActivity.maxCount) * 100}
+										{@const countLabel = `${count.toLocaleString()} message${count === 1 ? "" : "s"}`}
+										{@const hourTick = hour === 0 ? "0h" : hour === 23 ? "23h" : String(hour).padStart(2, "0")}
+										<div class="group relative flex min-h-0 min-w-0 flex-col gap-px" aria-label={countLabel}>
+											<div
+												class="pointer-events-none absolute bottom-full left-1/2 z-50 mb-1 hidden -translate-x-1/2 whitespace-nowrap rounded-md border bg-popover px-2 py-1 text-xs tabular-nums text-popover-foreground shadow-md group-hover:block"
+											>
+												{countLabel}
+											</div>
+											<div class="flex h-8 w-full flex-col justify-end">
+												<div
+													class={cn("w-full rounded-sm", count > 0 && "min-h-[2px]")}
+													style={`height: ${count ? pct : 0}%; background-color: ${hourlyBarFill(count, hourlyActivity.maxCount, $mode)};`}
+												></div>
+											</div>
+											<div class="select-none text-center text-[10px] tabular-nums leading-none text-muted-foreground">{hourTick}</div>
+										</div>
+									{/each}
+								</div>
+							</div>
+
 							{#if statsError}
 								<p class="text-red-500">{statsError}</p>
 							{:else}
