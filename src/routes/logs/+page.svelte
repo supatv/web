@@ -907,7 +907,7 @@
 					<Card.Root class="w-full min-w-0 rounded-md">
 						<Card.Content class="min-w-0">
 							<div class="mb-4 w-full min-w-0">
-								<h3 class="mb-2 text-lg font-semibold">Messages by hour for the selected day</h3>
+								<h3 class="mb-2 text-lg font-semibold">Messages by hour for the selected timeframe</h3>
 								<div class="grid w-full min-w-0 gap-px [grid-template-columns:repeat(24,minmax(0,1fr))]" role="img" aria-label="Message count by hour for the selected day">
 									{#each hourlyActivity.counts as count, hour (hour)}
 										{@const pct = (count / hourlyActivity.maxCount) * 100}
