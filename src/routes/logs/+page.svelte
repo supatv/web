@@ -1034,8 +1034,9 @@
 
 	<div class="mb-1 flex flex-row flex-wrap-reverse justify-between gap-1">
 		<div class="flex flex-1 flex-wrap gap-1 md:flex-nowrap">
-			{#if !isQueryMode && dateContent}
-				{#if dateContent.day}
+			{#if dateContent || isQueryMode}
+				{#if !isQueryMode && dateContent}
+					{#if dateContent.day}
 					<Popover.Root bind:open={datePopoverOpen}>
 						<Popover.Trigger
 							disabled={loading}
@@ -1153,60 +1154,61 @@
 						</Select.Root>
 					</div>
 				{/if}
-			{/if}
+				{/if}
 
-			{#if chatLogs.length}
-				<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
-					<form class="flex-1">
-						<div class="relative flex items-center">
-							<Input id="input-search" maxlength={500} placeholder="Search" class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
-							<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
-								{displayMessageCount}
-							</span>
-						</div>
-					</form>
-					{#if isJumpSearching}
-						{@const width = searchResults.length.toString().length + 5}
-						<div class="flex items-center gap-1">
-							<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
-							<span class="text-xs tabular-nums">/</span>
-							<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
-						</div>
-					{/if}
-				</div>
-				<div class="ml-auto flex gap-1">
-					<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
-						{#if !isJumpMode}
-							<FilterIcon />
-						{:else}
-							<SearchIcon />
+				{#if chatLogs.length}
+					<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
+						<form class="flex-1">
+							<div class="relative flex items-center">
+								<Input id="input-search" maxlength={500} placeholder="Search" class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+								<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
+									{displayMessageCount}
+								</span>
+							</div>
+						</form>
+						{#if isJumpSearching}
+							{@const width = searchResults.length.toString().length + 5}
+							<div class="flex items-center gap-1">
+								<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+								<span class="text-xs tabular-nums">/</span>
+								<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
+							</div>
 						{/if}
-					</Button>
-					<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
-						{#if scrollFromBottom}
-							<ArrowUpNarrowWideIcon />
-						{:else}
-							<ArrowDownWideNarrowIcon />
-						{/if}
-					</Button>
-					{#if isQueryMode || dateContent}
-						<Button
-							variant="ghost"
-							size="icon"
-							class="size-8 border"
-							target="_blank"
-							href={
-								isQueryMode
-									? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?jsonBasic=1&q=${encodeURIComponent(query)}`
-									: dateContent
-										? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ""}`
-										: ""
-							}
-						>
-							<FileTextIcon />
+					</div>
+					<div class="ml-auto flex gap-1">
+						<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
+							{#if !isJumpMode}
+								<FilterIcon />
+							{:else}
+								<SearchIcon />
+							{/if}
 						</Button>
-					{/if}
-				</div>
+						<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
+							{#if scrollFromBottom}
+								<ArrowUpNarrowWideIcon />
+							{:else}
+								<ArrowDownWideNarrowIcon />
+							{/if}
+						</Button>
+						{#if isQueryMode || dateContent}
+							<Button
+								variant="ghost"
+								size="icon"
+								class="size-8 border"
+								target="_blank"
+								href={
+									isQueryMode
+										? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?jsonBasic=1&q=${encodeURIComponent(query)}`
+										: dateContent
+											? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ""}`
+											: ""
+								}
+							>
+								<FileTextIcon />
+							</Button>
+						{/if}
+					</div>
+				{/if}
 			{/if}
 		</div>
 	</div>
