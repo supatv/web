@@ -214,7 +214,6 @@
 	let inputQuery = $state("");
 	let query = $state("");
 	let isQueryMode = $derived(Boolean(query.trim()));
-	let queryController: AbortController | null = null;
 
 	// Emotes
 	const channelEmotes = new SvelteMap<string, EmoteProps>();
@@ -441,12 +440,8 @@
 
 	$effect(() => {
 		// fetch available dates
-		if (isQueryMode) return;
-		if (!channelName) return;
+		if (isQueryMode || !channelName) return;
 		untrack(async () => {
-			availableDates = [];
-			chatLogs = [];
-			channelStats = null;
 			loading = true;
 
 			const res = await fetch(`https://logs.zonian.dev/list?${parseChannelUser(channelName, userName, true)}`);
@@ -467,9 +462,8 @@
 	let logsController: AbortController | null = null;
 	$effect(() => {
 		// fetch logs
-		if (isQueryMode) return;
 		const date = dateContent;
-		if (!date) return;
+		if (!date && !query) return;
 
 		untrack(async () => {
 			error = null;
@@ -478,11 +472,21 @@
 			logsController?.abort();
 			logsController = new AbortController();
 
-			const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}?jsonBasic=1`, {
-				signal: logsController.signal,
+			const queryParams = new URLSearchParams({
+				jsonBasic: "1",
+				q: isQueryMode ? query : "",
 			});
+			const res = await fetch(
+				`https://logs.zonian.dev/
+					${parseChannelUser(channelName, userName, false)}
+					${date ? `/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}` : "/search"}
+					?${queryParams}`,
+				{
+					signal: logsController.signal,
+				}
+			);
 			if (!res.ok) {
-				if (res.status === 404) error = "No logs found for this date";
+				if (res.status === 404) error = "No results found";
 				else error = `Error from server: ${res.status} ${res.statusText}`;
 				loading = false;
 				throw error;
@@ -493,61 +497,6 @@
 			loading = false;
 
 			channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
-		});
-	});
-
-	const fetchQueryResults = async () => {
-		if (!channelName) {
-			error = "Channel is required";
-			return;
-		}
-		if (!userName) {
-			error = "User is required";
-			return;
-		}
-		if (!query.trim()) {
-			error = "Query is required";
-			return;
-		}
-
-		error = null;
-		loading = true;
-		chatLogs = [];
-
-		queryController?.abort();
-		queryController = new AbortController();
-
-		try {
-			const qs = `jsonBasic=1&q=${encodeURIComponent(query)}`;
-			const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?${qs}`, {
-				signal: queryController.signal,
-			});
-			if (!res.ok) {
-				if (res.status === 404) error = "No results found";
-				else error = `Error from server: ${res.status} ${res.statusText}`;
-				return;
-			}
-
-			const data: { messages: Message[] } = await res.json();
-			chatLogs = data.messages;
-			if (!data.messages.length) {
-				error = "No results found";
-				return;
-			}
-			channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
-		} catch (err) {
-			if ((err as { name?: string })?.name === "AbortError") return;
-			error = err instanceof Error ? err.message : "Failed to fetch search results";
-		} finally {
-			loading = false;
-		}
-	};
-
-	$effect(() => {
-		if (!isQueryMode) return;
-		if (!channelName || !userName || !query) return;
-		untrack(() => {
-			fetchQueryResults();
 		});
 	});
 
@@ -701,29 +650,22 @@
 		event.preventDefault();
 		if (loading || !inputChannelName) return;
 
-		channelName = inputChannelName;
-		userName = inputUserName;
-
-		if (userName) {
-			query = inputQuery.trim();
-			if (query) {
-				availableDates = [];
-				dateValue = "";
-				logsController?.abort();
-				return;
-			}
-		}
-
-		queryController?.abort();
-
 		// force reload
 		channelName = "";
 		userName = "";
+		query = "";
 
+		// reset
 		availableDates = [];
 		dateValue = "";
+		chatLogs = [];
+		channelStats = null;
+
 		channelName = inputChannelName;
 		userName = inputUserName;
+		if (userName) {
+			query = inputQuery.trim();
+		}
 	};
 
 	const selectResult = (index: number) => {
