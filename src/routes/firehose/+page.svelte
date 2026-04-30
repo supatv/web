@@ -349,7 +349,7 @@
 			</div>
 
 			<div class="w-full self-end">
-				<Input id="input-search" maxlength={500} placeholder="Search" class="h-8" bind:ref={searchInput} bind:value={searchValue} />
+				<Input id="input-search" maxlength={500} placeholder="Filter..." class="h-8" bind:ref={searchInput} bind:value={searchValue} />
 			</div>
 		</div>
 
