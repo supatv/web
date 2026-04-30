@@ -188,9 +188,9 @@
 		searchValue = q.get("s") || "";
 		isJumpMode = (q.get("sm") || window.localStorage.getItem("logs-search-mode")) === "jump";
 
-		searchQueryInput = searchQuery = q.get("q") || "";
+		queryInput = query = q.get("q") || "";
 
-		if (searchQuery.trim()) {
+		if (query.trim()) {
 			scrollFromBottom = false;
 			window.localStorage.setItem("logs-bottom-scroll-state", "false");
 		}
@@ -216,15 +216,11 @@
 	let channelStats = $state<StatsResponse | null>(null);
 	let statsError = $state<string | null>(null);
 
-	// Search
-	let searchQueryInput = $state("");
-	let searchQuery = $state("");
-	let searchLoading = $state(false);
-	let searchError = $state<string | null>(null);
-	let searchLogs: Message[] = $state([]);
-	let searchController: AbortController | null = null;
-
-	let isSearch = $derived(Boolean(searchQuery.trim()));
+	// Query mode
+	let queryInput = $state("");
+	let query = $state("");
+	let isQueryMode = $derived(Boolean(query.trim()));
+	let queryController: AbortController | null = null;
 
 	// Emotes
 	const channelEmotes = new SvelteMap<string, EmoteProps>();
@@ -243,21 +239,21 @@
 			d: dateValue,
 			s: searchValue,
 			sm: searchValue && isJumpMode ? "jump" : null,
-			q: isSearch ? searchQuery : null,
+			q: isQueryMode ? query : null,
 		};
 
 		untrack(() => {
-			const query = page.url.searchParams;
+			const params = page.url.searchParams;
 
 			for (const [key, value] of Object.entries(search)) {
 				if (!value) {
-					query.delete(key);
-				} else if (value !== query.get(key)) {
-					query.set(key, value);
+					params.delete(key);
+				} else if (value !== params.get(key)) {
+					params.set(key, value);
 				}
 			}
 
-			if (!isJumpSearching && (isSearch ? searchLogs.length : chatLogs.length)) page.url.hash = "";
+			if (!isJumpSearching && chatLogs.length) page.url.hash = "";
 
 			goto(page.url.search + page.url.hash, { replaceState: true, keepFocus: true });
 		});
@@ -315,27 +311,23 @@
 	let contentRef = $state<HTMLElement | null>(null);
 
 	let searchValue = $state("");
-	let baseLogs = $derived(isSearch ? searchLogs : chatLogs);
-	let searchResults = $derived(messageSearch(searchValue, baseLogs, scrollFromBottom));
-	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", baseLogs, scrollFromBottom) : searchResults);
+	let searchResults = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
+	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", chatLogs, scrollFromBottom) : searchResults);
 	let isJumpSearching = $derived(isJumpMode && searchResults.length && searchValue);
 	let jumpHighlights = $derived(isJumpSearching ? new Set(searchResults.map((m) => getMessageId(m))) : void 0);
 	let jumpIndex = $derived(isJumpSearching ? searchResults.findIndex((m) => getMessageId(m) === page.url.hash.slice(1)) : -1);
 	let jumpInputValue = $state(1);
 
-	let activeLogs = $derived(filteredChatLogs);
-	let activeError = $derived(isSearch ? searchError : error);
-
 	let displayMessageCount = $derived.by(() => {
 		if (searchValue && !isJumpMode) {
-			return `${searchResults.length.toLocaleString()} / ${baseLogs.length.toLocaleString()}`;
+			return `${searchResults.length.toLocaleString()} / ${chatLogs.length.toLocaleString()}`;
 		}
-		return baseLogs.length.toLocaleString();
+		return chatLogs.length.toLocaleString();
 	});
 
 	$effect(() => {
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		activeLogs;
+		filteredChatLogs;
 		untrack(async () => {
 			await tick();
 			const virtualList = document.querySelector(".virtual-list-wrapper");
@@ -374,7 +366,7 @@
 	$effect(() => {
 		const id = page.url.hash.slice(1);
 		if (!id) return;
-		const msgIdx = baseLogs.findIndex((m) => getMessageId(m) === id);
+		const msgIdx = chatLogs.findIndex((m) => getMessageId(m) === id);
 		if (msgIdx === -1) return;
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		scrollFromBottom;
@@ -456,7 +448,7 @@
 
 	$effect(() => {
 		// fetch available dates
-		if (isSearch) return;
+		if (isQueryMode) return;
 		if (!channelName) return;
 		untrack(async () => {
 			availableDates = [];
@@ -482,7 +474,7 @@
 	let logsController: AbortController | null = null;
 	$effect(() => {
 		// fetch logs
-		if (isSearch) return;
+		if (isQueryMode) return;
 		const date = dateContent;
 		if (!date) return;
 
@@ -511,58 +503,58 @@
 		});
 	});
 
-	const fetchSearch = async () => {
+	const fetchQueryResults = async () => {
 		if (!channelName) {
-			searchError = "Channel is required";
+			error = "Channel is required";
 			return;
 		}
 		if (!userName) {
-			searchError = "User is required";
+			error = "User is required";
 			return;
 		}
-		if (!searchQuery.trim()) {
-			searchError = "Query is required";
+		if (!query.trim()) {
+			error = "Query is required";
 			return;
 		}
 
-		searchError = null;
-		searchLoading = true;
-		searchLogs = [];
+		error = null;
+		loading = true;
+		chatLogs = [];
 
-		searchController?.abort();
-		searchController = new AbortController();
+		queryController?.abort();
+		queryController = new AbortController();
 
 		try {
-			const qs = `jsonBasic=1&q=${encodeURIComponent(searchQuery)}`;
+			const qs = `jsonBasic=1&q=${encodeURIComponent(query)}`;
 			const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?${qs}`, {
-				signal: searchController.signal,
+				signal: queryController.signal,
 			});
 			if (!res.ok) {
-				if (res.status === 404) searchError = "No results found";
-				else searchError = `Error from server: ${res.status} ${res.statusText}`;
+				if (res.status === 404) error = "No results found";
+				else error = `Error from server: ${res.status} ${res.statusText}`;
 				return;
 			}
 
 			const data: { messages: Message[] } = await res.json();
-			searchLogs = data.messages;
+			chatLogs = data.messages;
 			if (!data.messages.length) {
-				searchError = "No results found";
+				error = "No results found";
 				return;
 			}
 			channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
 		} catch (err) {
 			if ((err as { name?: string })?.name === "AbortError") return;
-			searchError = err instanceof Error ? err.message : "Failed to fetch search results";
+			error = err instanceof Error ? err.message : "Failed to fetch search results";
 		} finally {
-			searchLoading = false;
+			loading = false;
 		}
 	};
 
 	$effect(() => {
-		if (!isSearch) return;
-		if (!channelName || !searchQuery) return;
+		if (!isQueryMode) return;
+		if (!channelName || !userName || !query) return;
 		untrack(() => {
-			fetchSearch();
+			fetchQueryResults();
 		});
 	});
 
@@ -714,45 +706,30 @@
 
 	const formSubmit = (event: SubmitEvent) => {
 		event.preventDefault();
-		const nextQuery = searchQueryInput.trim();
+		if (loading || !inputChannelName) return;
 
-		if (!nextQuery) {
-			if (loading || !inputChannelName) return;
+		channelName = inputChannelName;
+		userName = inputUserName;
+		query = queryInput.trim();
 
-			searchController?.abort();
-			searchError = null;
-			searchLogs = [];
-			searchQuery = "";
-
-			// force reload
-			channelName = "";
-			userName = "";
+		if (query) {
+			scrollFromBottom = false;
+			window.localStorage.setItem("logs-bottom-scroll-state", "false");
 
 			availableDates = [];
 			dateValue = "";
-			channelName = inputChannelName;
-			userName = inputUserName;
+			logsController?.abort();
 			return;
 		}
 
-		if (searchLoading || !inputChannelName) return;
+		queryController?.abort();
 
-		scrollFromBottom = false;
-		window.localStorage.setItem("logs-bottom-scroll-state", "false");
-
+		// force reload
 		channelName = "";
 		userName = "";
-		channelId = "";
 
-		error = null;
-		chatLogs = [];
 		availableDates = [];
 		dateValue = "";
-
-		searchError = null;
-		searchLogs = [];
-		searchQuery = nextQuery;
-
 		channelName = inputChannelName;
 		userName = inputUserName;
 	};
@@ -979,14 +956,12 @@
 
 					<div class="flex flex-col">
 						<Label for="input-query" class="text-base">Query</Label>
-						<Input id="input-query" maxlength={500} bind:value={searchQueryInput} placeholder="query" autocomplete="off" />
+						<Input id="input-query" maxlength={500} bind:value={queryInput} placeholder="query" autocomplete="off" />
 					</div>
 
 					<div class="flex flex-row items-center gap-1 self-end">
-						<Button type="submit" id="load-btn" class="sticky" disabled={searchQueryInput.trim() ? searchLoading : loading}>
-							Load
-						</Button>
-						{#if searchQueryInput.trim() ? searchLoading : loading}
+						<Button type="submit" id="load-btn" class="sticky" disabled={loading}>Load</Button>
+						{#if loading}
 							<LoaderCircleIcon class="size-8 animate-spin" />
 						{/if}
 					</div>
@@ -1060,7 +1035,7 @@
 
 	<div class="mb-1 flex flex-row flex-wrap-reverse justify-between gap-1">
 		<div class="flex flex-1 flex-wrap gap-1 md:flex-nowrap">
-			{#if !isSearch && dateContent}
+			{#if !isQueryMode && dateContent}
 				{#if dateContent.day}
 						<Popover.Root bind:open={datePopoverOpen}>
 							<Popover.Trigger
@@ -1181,7 +1156,7 @@
 					{/if}
 				{/if}
 
-				{#if baseLogs.length}
+				{#if chatLogs.length}
 					<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
 						<form class="flex-1">
 							<div class="relative flex items-center">
@@ -1215,15 +1190,15 @@
 								<ArrowDownWideNarrowIcon />
 							{/if}
 						</Button>
-						{#if isSearch || dateContent}
+						{#if isQueryMode || dateContent}
 							<Button
 								variant="ghost"
 								size="icon"
 								class="size-8 border"
 								target="_blank"
 								href={
-									isSearch
-										? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?jsonBasic=1&q=${encodeURIComponent(searchQuery)}`
+									isQueryMode
+										? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?jsonBasic=1&q=${encodeURIComponent(query)}`
 										: dateContent
 											? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ""}`
 											: ""
@@ -1237,17 +1212,17 @@
 		</div>
 	</div>
 
-	{#if activeError}
-		<p class="text-red-500">{activeError}</p>
-	{:else if activeLogs.length}
+	{#if error}
+		<p class="text-red-500">{error}</p>
+	{:else if filteredChatLogs.length}
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
 			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
-				<VirtualList height={logsBoxHeight} itemCount={activeLogs.length} itemSize={lineHeight}>
+				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
 					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
-						{@const msg = activeLogs[index]}
+						{@const msg = filteredChatLogs[index]}
 						{@const msgId = getMessageId(msg)}
 						{@const dayKey = dayjs(msg.timestamp).format("YYYY-MM-DD")}
-						{@const prevDayKey = index > 0 ? dayjs(activeLogs[index - 1].timestamp).format("YYYY-MM-DD") : null}
+						{@const prevDayKey = index > 0 ? dayjs(filteredChatLogs[index - 1].timestamp).format("YYYY-MM-DD") : null}
 						{@const isNewDay = index > 0 && prevDayKey !== dayKey}
 						{@const isHashMatch = msgId === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
@@ -1271,7 +1246,7 @@
 							{/if}
 							<span class="h-5 w-max">
 								{#if msg.tags["target-msg-id"]}
-									{@const msgDeleted = activeLogs.find((m) => m.id === msg.tags["target-msg-id"])}
+									{@const msgDeleted = chatLogs.find((m) => m.id === msg.tags["target-msg-id"])}
 									<span class="text-neutral-500">
 										{#if msgDeleted}
 											<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
