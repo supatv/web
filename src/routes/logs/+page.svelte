@@ -703,13 +703,15 @@
 
 		channelName = inputChannelName;
 		userName = inputUserName;
-		query = inputQuery.trim();
 
-		if (query) {
-			availableDates = [];
-			dateValue = "";
-			logsController?.abort();
-			return;
+		if (userName) {
+			query = inputQuery.trim();
+			if (query) {
+				availableDates = [];
+				dateValue = "";
+				logsController?.abort();
+				return;
+			}
 		}
 
 		queryController?.abort();
