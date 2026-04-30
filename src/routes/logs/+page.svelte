@@ -187,6 +187,13 @@
 		dateValue = q.get("d") || "";
 		searchValue = q.get("s") || "";
 		isJumpMode = (q.get("sm") || window.localStorage.getItem("logs-search-mode")) === "jump";
+
+		searchQueryInput = searchQuery = q.get("q") || "";
+
+		if (searchQuery.trim()) {
+			scrollFromBottom = false;
+			window.localStorage.setItem("logs-bottom-scroll-state", "false");
+		}
 	});
 
 	onDestroy(() => {
@@ -209,6 +216,16 @@
 	let channelStats = $state<StatsResponse | null>(null);
 	let statsError = $state<string | null>(null);
 
+	// Search
+	let searchQueryInput = $state("");
+	let searchQuery = $state("");
+	let searchLoading = $state(false);
+	let searchError = $state<string | null>(null);
+	let searchLogs: Message[] = $state([]);
+	let searchController: AbortController | null = null;
+
+	let isSearch = $derived(Boolean(searchQuery.trim()));
+
 	// Emotes
 	const channelEmotes = new SvelteMap<string, EmoteProps>();
 	const globalEmotes = new SvelteMap<string, EmoteProps>();
@@ -226,6 +243,7 @@
 			d: dateValue,
 			s: searchValue,
 			sm: searchValue && isJumpMode ? "jump" : null,
+			q: isSearch ? searchQuery : null,
 		};
 
 		untrack(() => {
@@ -239,7 +257,7 @@
 				}
 			}
 
-			if (!isJumpSearching && chatLogs.length) page.url.hash = "";
+			if (!isJumpSearching && (isSearch ? searchLogs.length : chatLogs.length)) page.url.hash = "";
 
 			goto(page.url.search + page.url.hash, { replaceState: true, keepFocus: true });
 		});
@@ -297,22 +315,27 @@
 	let contentRef = $state<HTMLElement | null>(null);
 
 	let searchValue = $state("");
-	let searchResults = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
-	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", chatLogs, scrollFromBottom) : searchResults);
+	let baseLogs = $derived(isSearch ? searchLogs : chatLogs);
+	let searchResults = $derived(messageSearch(searchValue, baseLogs, scrollFromBottom));
+	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", baseLogs, scrollFromBottom) : searchResults);
 	let isJumpSearching = $derived(isJumpMode && searchResults.length && searchValue);
 	let jumpHighlights = $derived(isJumpSearching ? new Set(searchResults.map((m) => getMessageId(m))) : void 0);
 	let jumpIndex = $derived(isJumpSearching ? searchResults.findIndex((m) => getMessageId(m) === page.url.hash.slice(1)) : -1);
 	let jumpInputValue = $state(1);
 
+	let activeLogs = $derived(filteredChatLogs);
+	let activeError = $derived(isSearch ? searchError : error);
+
 	let displayMessageCount = $derived.by(() => {
 		if (searchValue && !isJumpMode) {
-			return `${searchResults.length.toLocaleString()} / ${chatLogs.length.toLocaleString()}`;
+			return `${searchResults.length.toLocaleString()} / ${baseLogs.length.toLocaleString()}`;
 		}
-		return chatLogs.length.toLocaleString();
+		return baseLogs.length.toLocaleString();
 	});
 
 	$effect(() => {
-		if (!filteredChatLogs) return;
+		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
+		activeLogs;
 		untrack(async () => {
 			await tick();
 			const virtualList = document.querySelector(".virtual-list-wrapper");
@@ -351,7 +374,7 @@
 	$effect(() => {
 		const id = page.url.hash.slice(1);
 		if (!id) return;
-		const msgIdx = chatLogs.findIndex((m) => getMessageId(m) === id);
+		const msgIdx = baseLogs.findIndex((m) => getMessageId(m) === id);
 		if (msgIdx === -1) return;
 		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 		scrollFromBottom;
@@ -433,6 +456,7 @@
 
 	$effect(() => {
 		// fetch available dates
+		if (isSearch) return;
 		if (!channelName) return;
 		untrack(async () => {
 			availableDates = [];
@@ -458,6 +482,7 @@
 	let logsController: AbortController | null = null;
 	$effect(() => {
 		// fetch logs
+		if (isSearch) return;
 		const date = dateContent;
 		if (!date) return;
 
@@ -483,6 +508,61 @@
 			loading = false;
 
 			channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
+		});
+	});
+
+	const fetchSearch = async () => {
+		if (!channelName) {
+			searchError = "Channel is required";
+			return;
+		}
+		if (!userName) {
+			searchError = "User is required";
+			return;
+		}
+		if (!searchQuery.trim()) {
+			searchError = "Query is required";
+			return;
+		}
+
+		searchError = null;
+		searchLoading = true;
+		searchLogs = [];
+
+		searchController?.abort();
+		searchController = new AbortController();
+
+		try {
+			const qs = `jsonBasic=1&q=${encodeURIComponent(searchQuery)}`;
+			const res = await fetch(`https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?${qs}`, {
+				signal: searchController.signal,
+			});
+			if (!res.ok) {
+				if (res.status === 404) searchError = "No results found";
+				else searchError = `Error from server: ${res.status} ${res.statusText}`;
+				return;
+			}
+
+			const data: { messages: Message[] } = await res.json();
+			searchLogs = data.messages;
+			if (!data.messages.length) {
+				searchError = "No results found";
+				return;
+			}
+			channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
+		} catch (err) {
+			if ((err as { name?: string })?.name === "AbortError") return;
+			searchError = err instanceof Error ? err.message : "Failed to fetch search results";
+		} finally {
+			searchLoading = false;
+		}
+	};
+
+	$effect(() => {
+		if (!isSearch) return;
+		if (!channelName || !searchQuery) return;
+		untrack(() => {
+			fetchSearch();
 		});
 	});
 
@@ -634,14 +714,45 @@
 
 	const formSubmit = (event: SubmitEvent) => {
 		event.preventDefault();
-		if (loading || !inputChannelName) return;
+		const nextQuery = searchQueryInput.trim();
 
-		// force reload
+		if (!nextQuery) {
+			if (loading || !inputChannelName) return;
+
+			searchController?.abort();
+			searchError = null;
+			searchLogs = [];
+			searchQuery = "";
+
+			// force reload
+			channelName = "";
+			userName = "";
+
+			availableDates = [];
+			dateValue = "";
+			channelName = inputChannelName;
+			userName = inputUserName;
+			return;
+		}
+
+		if (searchLoading || !inputChannelName) return;
+
+		scrollFromBottom = false;
+		window.localStorage.setItem("logs-bottom-scroll-state", "false");
+
 		channelName = "";
 		userName = "";
+		channelId = "";
 
+		error = null;
+		chatLogs = [];
 		availableDates = [];
 		dateValue = "";
+
+		searchError = null;
+		searchLogs = [];
+		searchQuery = nextQuery;
+
 		channelName = inputChannelName;
 		userName = inputUserName;
 	};
@@ -866,9 +977,16 @@
 						<Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="username or id:123" />
 					</div>
 
+					<div class="flex flex-col">
+						<Label for="input-query" class="text-base">Query</Label>
+						<Input id="input-query" maxlength={500} bind:value={searchQueryInput} placeholder="query" autocomplete="off" />
+					</div>
+
 					<div class="flex flex-row items-center gap-1 self-end">
-						<Button type="submit" id="load-btn" class="sticky" disabled={loading}>Load</Button>
-						{#if loading}
+						<Button type="submit" id="load-btn" class="sticky" disabled={searchQueryInput.trim() ? searchLoading : loading}>
+							Load
+						</Button>
+						{#if searchQueryInput.trim() ? searchLoading : loading}
 							<LoaderCircleIcon class="size-8 animate-spin" />
 						{/if}
 					</div>
@@ -876,9 +994,9 @@
 			</div>
 		</form>
 
-		<div class="flex self-end">
+		<div class="flex items-center gap-1 self-end">
 			<Popover.Root bind:open={statsPopoverOpen}>
-				<Popover.Trigger class={cn(buttonVariants({ variant: "secondary" }), [!chatLogs.length && "hidden"])} title="Channel Stats" aria-label="Channel Stats">
+				<Popover.Trigger class={cn(buttonVariants({ variant: "secondary" }), [!channelName && "hidden"])} title="Channel Stats" aria-label="Channel Stats">
 					<ChartColumnIcon />
 					<span class="hidden md:block">Stats</span>
 				</Popover.Trigger>
@@ -942,126 +1060,128 @@
 
 	<div class="mb-1 flex flex-row flex-wrap-reverse justify-between gap-1">
 		<div class="flex flex-1 flex-wrap gap-1 md:flex-nowrap">
-			{#if dateContent}
+			{#if !isSearch && dateContent}
 				{#if dateContent.day}
-					<Popover.Root bind:open={datePopoverOpen}>
-						<Popover.Trigger
-							disabled={loading}
-							class={cn(
-								buttonVariants({
-									variant: "outline",
-									class: "flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm tabular-nums hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-								})
-							)}
-						>
-							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
-							<CalendarIcon class="opacity-50" />
-						</Popover.Trigger>
-
-						<Popover.Content bind:ref={contentRef} class="w-auto border-0 p-0" align="start">
-							<CalendarPrimitive.Root
-								type="single"
-								weekdayFormat="short"
-								class="rounded-md border p-3 tabular-nums"
-								onPlaceholderChange={(date) => adjustDate(date)}
-								onValueChange={(date) => updateDateValue(date)}
-								isDateUnavailable={(date) => !isDateAvailable(date)}
-								bind:value={calendarDate}
+						<Popover.Root bind:open={datePopoverOpen}>
+							<Popover.Trigger
+								disabled={loading}
+								class={cn(
+									buttonVariants({
+										variant: "outline",
+										class: "flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm tabular-nums hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+									})
+								)}
 							>
-								{#snippet children({ months, weekdays })}
-									<Calendar.Header class="flex w-full items-center justify-between gap-2">
-										<Select.Root
-											type="single"
-											value={`${defaultYear?.value}`}
-											onValueChange={(v) => {
-												if (!v || !calendarDate) return;
-												if (v === `${calendarDate?.year}`) return;
-												calendarDate = calendarDate.set({ year: Number.parseInt(v) });
-											}}
-										>
-											<Select.Trigger aria-label="Select year" class="h-8 max-w-24 tabular-nums">
-												{defaultYear?.label ?? "Year"}
-											</Select.Trigger>
-											<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
-												{#each yearOptions as { value, label } (value)}
-													<Select.Item value={`${value}`} {label} />
-												{/each}
-											</Select.Content>
-										</Select.Root>
-										<Select.Root
-											type="single"
-											value={`${defaultMonth?.value}`}
-											onValueChange={(v) => {
-												if (!calendarDate) return;
-												if (v === `${calendarDate.month}`) return;
-												calendarDate = calendarDate.set({ month: Number.parseInt(v) });
-											}}
-										>
-											<Select.Trigger aria-label="Select month" class="h-8 w-full break-keep tabular-nums">
-												{monthLabel}
-											</Select.Trigger>
-											<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
-												{#each monthOptions as { value, label } (value)}
-													<Select.Item value={`${value}`} {label} />
-												{/each}
-											</Select.Content>
-										</Select.Root>
-									</Calendar.Header>
-									<Calendar.Months>
-										{#each months as month (month)}
-											<Calendar.Grid>
-												<Calendar.GridHead>
-													<Calendar.GridRow class="flex">
-														{#each weekdays as weekday (weekday)}
-															<Calendar.HeadCell>
-																{weekday.slice(0, 2)}
-															</Calendar.HeadCell>
-														{/each}
-													</Calendar.GridRow>
-												</Calendar.GridHead>
-												<Calendar.GridBody>
-													{#each month.weeks as weekDates (weekDates)}
-														<Calendar.GridRow class="mt-2 w-full">
-															{#each weekDates as date (date)}
-																<Calendar.Cell
-																	class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none [&[data-unavailable]]:pointer-events-none [&[data-unavailable]]:opacity-50"
-																	{date}
-																	month={month.value}
-																>
-																	<Calendar.Day />
-																</Calendar.Cell>
+								{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
+								<CalendarIcon class="opacity-50" />
+							</Popover.Trigger>
+
+							<Popover.Content bind:ref={contentRef} class="w-auto border-0 p-0" align="start">
+								<CalendarPrimitive.Root
+									type="single"
+									weekdayFormat="short"
+									class="rounded-md border p-3 tabular-nums"
+									onPlaceholderChange={(date) => adjustDate(date)}
+									onValueChange={(date) => updateDateValue(date)}
+									isDateUnavailable={(date) => !isDateAvailable(date)}
+									bind:value={calendarDate}
+								>
+									{#snippet children({ months, weekdays })}
+										<Calendar.Header class="flex w-full items-center justify-between gap-2">
+											<Select.Root
+												type="single"
+												value={`${defaultYear?.value}`}
+												onValueChange={(v) => {
+													if (!v || !calendarDate) return;
+													if (v === `${calendarDate?.year}`) return;
+													calendarDate = calendarDate.set({ year: Number.parseInt(v) });
+												}}
+											>
+												<Select.Trigger aria-label="Select year" class="h-8 max-w-24 tabular-nums">
+													{defaultYear?.label ?? "Year"}
+												</Select.Trigger>
+												<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
+													{#each yearOptions as { value, label } (value)}
+														<Select.Item value={`${value}`} {label} />
+													{/each}
+												</Select.Content>
+											</Select.Root>
+											<Select.Root
+												type="single"
+												value={`${defaultMonth?.value}`}
+												onValueChange={(v) => {
+													if (!calendarDate) return;
+													if (v === `${calendarDate.month}`) return;
+													calendarDate = calendarDate.set({ month: Number.parseInt(v) });
+												}}
+											>
+												<Select.Trigger aria-label="Select month" class="h-8 w-full break-keep tabular-nums">
+													{monthLabel}
+												</Select.Trigger>
+												<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
+													{#each monthOptions as { value, label } (value)}
+														<Select.Item value={`${value}`} {label} />
+													{/each}
+												</Select.Content>
+											</Select.Root>
+										</Calendar.Header>
+										<Calendar.Months>
+											{#each months as month (month)}
+												<Calendar.Grid>
+													<Calendar.GridHead>
+														<Calendar.GridRow class="flex">
+															{#each weekdays as weekday (weekday)}
+																<Calendar.HeadCell>
+																	{weekday.slice(0, 2)}
+																</Calendar.HeadCell>
 															{/each}
 														</Calendar.GridRow>
-													{/each}
-												</Calendar.GridBody>
-											</Calendar.Grid>
+													</Calendar.GridHead>
+													<Calendar.GridBody>
+														{#each month.weeks as weekDates (weekDates)}
+															<Calendar.GridRow class="mt-2 w-full">
+																{#each weekDates as date (date)}
+																	<Calendar.Cell
+																		class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none [&[data-unavailable]]:pointer-events-none [&[data-unavailable]]:opacity-50"
+																		{date}
+																		month={month.value}
+																	>
+																		<Calendar.Day />
+																	</Calendar.Cell>
+																{/each}
+															</Calendar.GridRow>
+														{/each}
+													</Calendar.GridBody>
+												</Calendar.Grid>
+											{/each}
+										</Calendar.Months>
+									{/snippet}
+								</CalendarPrimitive.Root>
+							</Popover.Content>
+						</Popover.Root>
+					{:else}
+						<div class="flex flex-row">
+							<Select.Root type="single" name="input-date" bind:open={datePopoverOpen} bind:value={dateValue} disabled={loading}>
+								<Select.Trigger class="h-8 w-32 tabular-nums">
+									{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
+								</Select.Trigger>
+								<Select.Content>
+									<Select.Group>
+										{#each availableDates as date, index (index)}
+											{#if index > 0 && date.year !== availableDates[index - 1].year}
+												<Select.Separator class="mx-0" />
+											{/if}
+											{@const str = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`}
+											<Select.Item class="m-0 justify-center p-1 tabular-nums" value={str} label={str} />
 										{/each}
-									</Calendar.Months>
-								{/snippet}
-							</CalendarPrimitive.Root>
-						</Popover.Content>
-					</Popover.Root>
-				{:else}
-					<div class="flex flex-row">
-						<Select.Root type="single" name="input-date" bind:open={datePopoverOpen} bind:value={dateValue} disabled={loading}>
-							<Select.Trigger class="h-8 w-32 tabular-nums">
-								{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Group>
-									{#each availableDates as date, index (index)}
-										{#if index > 0 && date.year !== availableDates[index - 1].year}
-											<Select.Separator class="mx-0" />
-										{/if}
-										{@const str = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`}
-										<Select.Item class="m-0 justify-center p-1 tabular-nums" value={str} label={str} />
-									{/each}
-								</Select.Group>
-							</Select.Content>
-						</Select.Root>
-					</div>
+									</Select.Group>
+								</Select.Content>
+							</Select.Root>
+						</div>
+					{/if}
 				{/if}
-				{#if chatLogs.length}
+
+				{#if baseLogs.length}
 					<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
 						<form class="flex-1">
 							<div class="relative flex items-center">
@@ -1095,32 +1215,39 @@
 								<ArrowDownWideNarrowIcon />
 							{/if}
 						</Button>
-						<Button
-							variant="ghost"
-							size="icon"
-							class="size-8 border"
-							target="_blank"
-							href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent.year}/{dateContent.month}{dateContent.day ? `/${dateContent.day}` : ''}"
-						>
-							<FileTextIcon />
-						</Button>
+						{#if isSearch || dateContent}
+							<Button
+								variant="ghost"
+								size="icon"
+								class="size-8 border"
+								target="_blank"
+								href={
+									isSearch
+										? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?jsonBasic=1&q=${encodeURIComponent(searchQuery)}`
+										: dateContent
+											? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ""}`
+											: ""
+								}
+							>
+								<FileTextIcon />
+							</Button>
+						{/if}
 					</div>
 				{/if}
-			{/if}
 		</div>
 	</div>
 
-	{#if error}
-		<p class="text-red-500">{error}</p>
-	{:else if chatLogs.length}
+	{#if activeError}
+		<p class="text-red-500">{activeError}</p>
+	{:else if activeLogs.length}
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
 			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
-				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
+				<VirtualList height={logsBoxHeight} itemCount={activeLogs.length} itemSize={lineHeight}>
 					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
-						{@const msg = filteredChatLogs[index]}
+						{@const msg = activeLogs[index]}
 						{@const msgId = getMessageId(msg)}
 						{@const dayKey = dayjs(msg.timestamp).format("YYYY-MM-DD")}
-						{@const prevDayKey = index > 0 ? dayjs(filteredChatLogs[index - 1].timestamp).format("YYYY-MM-DD") : null}
+						{@const prevDayKey = index > 0 ? dayjs(activeLogs[index - 1].timestamp).format("YYYY-MM-DD") : null}
 						{@const isNewDay = index > 0 && prevDayKey !== dayKey}
 						{@const isHashMatch = msgId === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
@@ -1144,7 +1271,7 @@
 							{/if}
 							<span class="h-5 w-max">
 								{#if msg.tags["target-msg-id"]}
-									{@const msgDeleted = chatLogs.find((m) => m.id === msg.tags["target-msg-id"])}
+									{@const msgDeleted = activeLogs.find((m) => m.id === msg.tags["target-msg-id"])}
 									<span class="text-neutral-500">
 										{#if msgDeleted}
 											<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
