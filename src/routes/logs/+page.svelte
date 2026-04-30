@@ -188,7 +188,7 @@
 		searchValue = q.get("s") || "";
 		isJumpMode = (q.get("sm") || window.localStorage.getItem("logs-search-mode")) === "jump";
 
-		queryInput = query = q.get("q") || "";
+		inputQuery = query = q.get("q") || "";
 
 		if (query.trim()) {
 			scrollFromBottom = false;
@@ -217,7 +217,7 @@
 	let statsError = $state<string | null>(null);
 
 	// Query mode
-	let queryInput = $state("");
+	let inputQuery = $state("");
 	let query = $state("");
 	let isQueryMode = $derived(Boolean(query.trim()));
 	let queryController: AbortController | null = null;
@@ -709,7 +709,7 @@
 
 		channelName = inputChannelName;
 		userName = inputUserName;
-		query = queryInput.trim();
+		query = inputQuery.trim();
 
 		if (query) {
 			scrollFromBottom = false;
@@ -955,7 +955,7 @@
 
 					<div class="flex flex-col">
 						<Label for="input-query" class="text-base">Query</Label>
-						<Input id="input-query" maxlength={500} bind:value={queryInput} placeholder="query" autocomplete="off" />
+						<Input id="input-query" maxlength={500} bind:value={inputQuery} placeholder="query" autocomplete="off" />
 					</div>
 
 					<div class="flex flex-row items-center gap-1 self-end">
