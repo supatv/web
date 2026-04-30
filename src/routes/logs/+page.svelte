@@ -184,16 +184,10 @@
 
 		inputChannelName = channelName = q.get("c") || "";
 		inputUserName = userName = q.get("u") || "";
+		inputQuery = query = q.get("q") || "";
 		dateValue = q.get("d") || "";
 		searchValue = q.get("s") || "";
 		isJumpMode = (q.get("sm") || window.localStorage.getItem("logs-search-mode")) === "jump";
-
-		inputQuery = query = q.get("q") || "";
-
-		if (query.trim()) {
-			scrollFromBottom = false;
-			window.localStorage.setItem("logs-bottom-scroll-state", "false");
-		}
 	});
 
 	onDestroy(() => {
@@ -712,9 +706,6 @@
 		query = inputQuery.trim();
 
 		if (query) {
-			scrollFromBottom = false;
-			window.localStorage.setItem("logs-bottom-scroll-state", "false");
-
 			availableDates = [];
 			dateValue = "";
 			logsController?.abort();
