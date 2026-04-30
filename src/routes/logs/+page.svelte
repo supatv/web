@@ -326,8 +326,7 @@
 	});
 
 	$effect(() => {
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		filteredChatLogs;
+		if (!filteredChatLogs) return;
 		untrack(async () => {
 			await tick();
 			const virtualList = document.querySelector(".virtual-list-wrapper");
@@ -969,9 +968,9 @@
 			</div>
 		</form>
 
-		<div class="flex items-center gap-1 self-end">
+		<div class="flex self-end">
 			<Popover.Root bind:open={statsPopoverOpen}>
-				<Popover.Trigger class={cn(buttonVariants({ variant: "secondary" }), [!channelName && "hidden"])} title="Channel Stats" aria-label="Channel Stats">
+				<Popover.Trigger class={cn(buttonVariants({ variant: "secondary" }), [!chatLogs.length && "hidden"])} title="Channel Stats" aria-label="Channel Stats">
 					<ChartColumnIcon />
 					<span class="hidden md:block">Stats</span>
 				</Popover.Trigger>
@@ -1156,65 +1155,65 @@
 				{/if}
 			{/if}
 
-				{#if chatLogs.length}
-					<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
-						<form class="flex-1">
-							<div class="relative flex items-center">
-								<Input id="input-search" maxlength={500} placeholder="Search" class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
-								<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
-									{displayMessageCount}
-								</span>
-							</div>
-						</form>
-						{#if isJumpSearching}
-							{@const width = searchResults.length.toString().length + 5}
-							<div class="flex items-center gap-1">
-								<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
-								<span class="text-xs tabular-nums">/</span>
-								<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
-							</div>
+			{#if chatLogs.length}
+				<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
+					<form class="flex-1">
+						<div class="relative flex items-center">
+							<Input id="input-search" maxlength={500} placeholder="Search" class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+							<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
+								{displayMessageCount}
+							</span>
+						</div>
+					</form>
+					{#if isJumpSearching}
+						{@const width = searchResults.length.toString().length + 5}
+						<div class="flex items-center gap-1">
+							<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+							<span class="text-xs tabular-nums">/</span>
+							<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
+						</div>
+					{/if}
+				</div>
+				<div class="ml-auto flex gap-1">
+					<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
+						{#if !isJumpMode}
+							<FilterIcon />
+						{:else}
+							<SearchIcon />
 						{/if}
-					</div>
-					<div class="ml-auto flex gap-1">
-						<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
-							{#if !isJumpMode}
-								<FilterIcon />
-							{:else}
-								<SearchIcon />
-							{/if}
-						</Button>
-						<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
-							{#if scrollFromBottom}
-								<ArrowUpNarrowWideIcon />
-							{:else}
-								<ArrowDownWideNarrowIcon />
-							{/if}
-						</Button>
-						{#if isQueryMode || dateContent}
-							<Button
-								variant="ghost"
-								size="icon"
-								class="size-8 border"
-								target="_blank"
-								href={
-									isQueryMode
-										? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?jsonBasic=1&q=${encodeURIComponent(query)}`
-										: dateContent
-											? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ""}`
-											: ""
-								}
-							>
-								<FileTextIcon />
-							</Button>
+					</Button>
+					<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
+						{#if scrollFromBottom}
+							<ArrowUpNarrowWideIcon />
+						{:else}
+							<ArrowDownWideNarrowIcon />
 						{/if}
-					</div>
-				{/if}
+					</Button>
+					{#if isQueryMode || dateContent}
+						<Button
+							variant="ghost"
+							size="icon"
+							class="size-8 border"
+							target="_blank"
+							href={
+								isQueryMode
+									? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/search?jsonBasic=1&q=${encodeURIComponent(query)}`
+									: dateContent
+										? `https://logs.zonian.dev/${parseChannelUser(channelName, userName, false)}/${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ""}`
+										: ""
+							}
+						>
+							<FileTextIcon />
+						</Button>
+					{/if}
+				</div>
+			{/if}
 		</div>
 	</div>
 
 	{#if error}
 		<p class="text-red-500">{error}</p>
-	{:else if filteredChatLogs.length}
+	{:else if chatLogs.length}
 		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
 			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
 				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
