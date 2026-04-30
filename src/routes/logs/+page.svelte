@@ -662,7 +662,7 @@
 		channelStats = null;
 
 		if (inputQuery.trim() && !inputUserName) {
-			error = "User is required for query mode";
+			error = "User is required for global search";
 			return;
 		}
 
@@ -863,7 +863,7 @@
 						<Label for="input-channel" class="text-base">
 							Channel<span class="text-red-500">*</span>
 						</Label>
-						<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="channel or id:123" onkeydown={channelKeydown} autocomplete="off" autofocus />
+						<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="Channel or id:123" onkeydown={channelKeydown} autocomplete="off" autofocus />
 
 						{#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
 							<div class="absolute left-0 right-0 top-full z-10 mt-1">
@@ -890,12 +890,12 @@
 						<Label for="input-user" class="text-base">
 							User{#if inputQuery.trim()}<span class="text-red-500">*</span>{/if}
 						</Label>
-						<Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="username or id:123" />
+						<Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="Username or id:123" />
 					</div>
 
 					<div class="flex flex-col">
 						<Label for="input-query" class="text-base">Query</Label>
-						<Input id="input-query" maxlength={500} bind:value={inputQuery} placeholder="query" autocomplete="off" />
+						<Input id="input-query" maxlength={500} bind:value={inputQuery} placeholder="Global search" autocomplete="off" />
 					</div>
 
 					<div class="flex flex-row items-center gap-1 self-end">
@@ -1098,7 +1098,7 @@
 				<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
 					<form class="flex-1">
 						<div class="relative flex items-center">
-							<Input id="input-search" maxlength={500} placeholder="Search" class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+							<Input id="input-search" maxlength={500} placeholder="Find..." class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
 							<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
 								{displayMessageCount}
 							</span>
