@@ -661,11 +661,14 @@
 		chatLogs = [];
 		channelStats = null;
 
+		if (inputQuery.trim() && !inputUserName) {
+			error = "User is required for query mode";
+			return;
+		}
+
 		channelName = inputChannelName;
 		userName = inputUserName;
-		if (userName) {
-			query = inputQuery.trim();
-		}
+		query = inputQuery.trim();
 	};
 
 	const selectResult = (index: number) => {
@@ -884,7 +887,9 @@
 					</div>
 
 					<div class="flex flex-col">
-						<Label for="input-user" class="text-base">User</Label>
+						<Label for="input-user" class="text-base">
+							User{#if inputQuery.trim()}<span class="text-red-500">*</span>{/if}
+						</Label>
 						<Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="username or id:123" />
 					</div>
 
