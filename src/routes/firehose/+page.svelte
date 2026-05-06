@@ -71,6 +71,16 @@
 	let instanceValue = $state("");
 	let searchValue = $state("");
 
+	const openMonthlyUserLogs = async (msg: Message) => {
+		const c = (msg.channel || "").trim();
+		const userId = msg.tags?.["user-id"];
+		const u = (userId ? `id:${userId}` : msg.displayName || "").trim();
+		if (!c || !u) return;
+
+		const d = new Date(msg.timestamp).toISOString().slice(0, 7); // YYYY-MM
+		await goto(`/logs?c=${encodeURIComponent(c)}&u=${encodeURIComponent(u)}&d=${encodeURIComponent(d)}`, { keepFocus: true });
+	};
+
 	onMount(() => {
 		fetchGlobalBadges();
 		fetchGlobalEmotes();
@@ -374,9 +384,15 @@
 							</span>
 						{/if}
 						<span class="h-5">
-							<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+							<button
+								type="button"
+								class:hidden={msg.tags["target-user-id"]}
+								class="font-bold hover:underline"
+								style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})"
+								onclick={() => openMonthlyUserLogs(msg)}
+							>
 								{msg.displayName}:
-							</span>
+							</button>
 							<span class={[msg.tags["target-user-id"] && "text-neutral-500"]}>
 								{#key emoteUpdates}
 									{#each parseMessage(msg) as { type: Component, props }, index (index)}

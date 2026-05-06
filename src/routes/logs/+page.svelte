@@ -413,6 +413,24 @@
 		else return `${channelType}/${encodeURIComponent(channel)}${user ? `/${userType}/${encodeURIComponent(user)}` : ""}`;
 	};
 
+	const openMonthlyUserLogs = async (msg: Message) => {
+		const c = (channelName || msg.channel || "").trim();
+		const userId = msg.tags?.["user-id"];
+		const u = (userId ? `id:${userId}` : msg.displayName || "").trim();
+		if (!c || !u) return;
+
+		const d = new Date(msg.timestamp).toISOString().slice(0, 7); // YYYY-MM
+		untrack(() => {
+			inputChannelName = c;
+			channelName = c;
+			inputUserName = u;
+			userName = u;
+			dateValue = d;
+		});
+
+		await goto(`/logs?c=${encodeURIComponent(c)}&u=${encodeURIComponent(u)}&d=${encodeURIComponent(d)}`, { keepFocus: true });
+	};
+
 	const fetchChannelStats = async () => {
 		if (!channelName) return;
 
@@ -1192,9 +1210,14 @@
 										{msg.text}
 									</span>
 								{:else}
-									<span style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+									<button
+										type="button"
+										class="font-bold hover:underline"
+										style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})"
+										onclick={() => openMonthlyUserLogs(msg)}
+									>
 										{msg.displayName}:
-									</span>
+									</button>
 									<span>
 										{#key emoteUpdates}
 											{#each parseMessage(msg) as { type: Component, props }, index (index)}
