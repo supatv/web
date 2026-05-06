@@ -413,24 +413,6 @@
 		else return `${channelType}/${encodeURIComponent(channel)}${user ? `/${userType}/${encodeURIComponent(user)}` : ""}`;
 	};
 
-	const openMonthlyUserLogs = async (msg: Message) => {
-		const c = (channelName || msg.channel || "").trim();
-		const userId = msg.tags?.["user-id"];
-		const u = (userId ? `id:${userId}` : msg.displayName || "").trim();
-		if (!c || !u) return;
-
-		const d = new Date(msg.timestamp).toISOString().slice(0, 7); // YYYY-MM
-		untrack(() => {
-			inputChannelName = c;
-			channelName = c;
-			inputUserName = u;
-			userName = u;
-			dateValue = d;
-		});
-
-		await goto(`/logs?c=${encodeURIComponent(c)}&u=${encodeURIComponent(u)}&d=${encodeURIComponent(d)}`, { keepFocus: true });
-	};
-
 	const fetchChannelStats = async () => {
 		if (!channelName) return;
 
@@ -1210,14 +1192,27 @@
 										{msg.text}
 									</span>
 								{:else}
-									<button
-										type="button"
+									<a
+										href={`/logs?c=${encodeURIComponent((channelName || msg.channel || "").trim())}&u=${encodeURIComponent(((msg.tags?.["user-id"] ? `id:${msg.tags["user-id"]}` : msg.displayName) || "").trim())}&d=${encodeURIComponent(new Date(msg.timestamp).toISOString().slice(0, 7))}`}
 										class="font-bold hover:underline"
 										style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})"
-										onclick={() => openMonthlyUserLogs(msg)}
+										onclick={(e) => {
+											e.preventDefault();
+
+											const href = e.currentTarget.getAttribute("href") || "";
+											const q = new URL(href, page.url).searchParams;
+
+											untrack(() => {
+												inputChannelName = channelName = q.get("c") || "";
+												inputUserName = userName = q.get("u") || "";
+												dateValue = q.get("d") || "";
+											});
+
+											goto(href, { keepFocus: true });
+										}}
 									>
 										{msg.displayName}:
-									</button>
+									</a>
 									<span>
 										{#key emoteUpdates}
 											{#each parseMessage(msg) as { type: Component, props }, index (index)}
