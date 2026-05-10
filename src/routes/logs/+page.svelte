@@ -32,7 +32,7 @@
 	import Reply from "$lib/components/message/reply.svelte";
 
 	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
-	import { SvelteMap } from "svelte/reactivity";
+	import { SvelteMap, SvelteURLSearchParams } from "svelte/reactivity";
 
 	import { browser } from "$app/environment";
 	import { page } from "$app/state";
@@ -472,15 +472,13 @@
 			logsController?.abort();
 			logsController = new AbortController();
 
-			const queryParams = new URLSearchParams({
-				jsonBasic: "1",
-				q: isQueryMode ? query : "",
-			});
+			const logsParams = new SvelteURLSearchParams({ jsonBasic: "1" });
+			if (isQueryMode) logsParams.set("q", query);
 			const res = await fetch(
 				`https://logs.zonian.dev/
 					${parseChannelUser(channelName, userName, false)}
 					${date ? `/${date.year}/${date.month}${date.day ? `/${date.day}` : ""}` : "/search"}
-					?${queryParams}`,
+					?${logsParams}`,
 				{
 					signal: logsController.signal,
 				}
