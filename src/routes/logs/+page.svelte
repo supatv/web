@@ -199,6 +199,9 @@
 	let channelName = $state("");
 	let inputUserName = $state("");
 	let userName = $state("");
+
+	let activeElement: HTMLElement | null = $state(null);
+	let channelInput: HTMLInputElement | null = $state(null);
 	let searchInput: HTMLInputElement | null = $state(null);
 
 	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true");
@@ -276,7 +279,7 @@
 
 	const windowKeydown = (event: KeyboardEvent) => {
 		const isMod = event.ctrlKey || event.metaKey;
-		const isSearchFocused = searchInput === document.activeElement;
+		const isSearchFocused = searchInput === activeElement;
 		if (isMod && event.key === "f") {
 			if (isSearchFocused) {
 				searchModeToggle();
@@ -842,6 +845,8 @@
 </svelte:head>
 
 <svelte:window on:keydown={windowKeydown} />
+
+<svelte:document bind:activeElement />
 
 <div id="main-fit-screen" class="hidden"></div>
 
