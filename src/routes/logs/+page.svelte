@@ -253,7 +253,7 @@
 	});
 
 	const channelKeydown = (event: KeyboardEvent) => {
-		if (!foundChannels.length || foundChannels[0].target === inputChannelName.toLowerCase()) return;
+		if (!foundChannels.length || (foundChannels.length === 1 && foundChannels[0].target === inputChannelName.toLowerCase())) return;
 
 		switch (event.key) {
 			case "ArrowDown":
@@ -863,7 +863,7 @@
 						</Label>
 						<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="Channel or id:123" onkeydown={channelKeydown} autocomplete="off" autofocus />
 
-						{#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
+						{#if foundChannels.length && !(foundChannels.length === 1 && foundChannels[0].target === inputChannelName.toLowerCase())}
 							<div class="absolute left-0 right-0 top-full z-10 mt-1">
 								<ScrollArea class="flex-1 rounded-md">
 									<!-- svelte-ignore a11y_click_events_have_key_events -->
