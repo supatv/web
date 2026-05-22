@@ -993,7 +993,7 @@
 							<CalendarIcon class="opacity-50" />
 						</Popover.Trigger>
 
-						<Popover.Content bind:ref={contentRef} class="w-auto border-0 p-0" align="start">
+						<Popover.Content class="w-auto border-0 p-0" align="start">
 							<CalendarPrimitive.Root
 								type="single"
 								weekdayFormat="short"
