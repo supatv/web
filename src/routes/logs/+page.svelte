@@ -199,6 +199,9 @@
 	let channelName = $state("");
 	let inputUserName = $state("");
 	let userName = $state("");
+
+	let activeElement: HTMLElement | null = $state(null);
+	let channelInput: HTMLInputElement | null = $state(null);
 	let searchInput: HTMLInputElement | null = $state(null);
 
 	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true");
@@ -252,8 +255,10 @@
 		});
 	});
 
+	const showAutocomplete = $derived(browser && channelInput === activeElement && foundChannels.length && !(foundChannels.length === 1 && foundChannels[0].target === inputChannelName.toLowerCase()));
+
 	const channelKeydown = (event: KeyboardEvent) => {
-		if (!foundChannels.length || foundChannels[0].target === inputChannelName.toLowerCase()) return;
+		if (!showAutocomplete) return;
 
 		switch (event.key) {
 			case "ArrowDown":
@@ -276,7 +281,7 @@
 
 	const windowKeydown = (event: KeyboardEvent) => {
 		const isMod = event.ctrlKey || event.metaKey;
-		const isSearchFocused = searchInput === document.activeElement;
+		const isSearchFocused = searchInput === activeElement;
 		if (isMod && event.key === "f") {
 			if (isSearchFocused) {
 				searchModeToggle();
@@ -300,8 +305,6 @@
 	};
 
 	let chatLogs: Message[] = $state([]);
-
-	let contentRef = $state<HTMLElement | null>(null);
 
 	let searchValue = $state("");
 	let searchResults = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
@@ -843,6 +846,8 @@
 
 <svelte:window on:keydown={windowKeydown} />
 
+<svelte:document bind:activeElement />
+
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
@@ -861,20 +866,27 @@
 						<Label for="input-channel" class="text-base">
 							Channel<span class="text-red-500">*</span>
 						</Label>
-						<Input id="input-channel" maxlength={25} bind:value={inputChannelName} placeholder="Channel or id:123" onkeydown={channelKeydown} autocomplete="off" autofocus />
+						<Input
+							id="input-channel"
+							maxlength={25}
+							bind:ref={channelInput}
+							bind:value={inputChannelName}
+							placeholder="Channel or id:123"
+							onkeydown={channelKeydown}
+							autocomplete="off"
+							autofocus
+						/>
 
-						{#if foundChannels.length && foundChannels[0].target !== inputChannelName.toLowerCase()}
+						{#if showAutocomplete}
 							<div class="absolute left-0 right-0 top-full z-10 mt-1">
 								<ScrollArea class="flex-1 rounded-md">
-									<!-- svelte-ignore a11y_click_events_have_key_events -->
 									<!-- svelte-ignore a11y_no_static_element_interactions -->
 									{#each foundChannels as c, index (c.target)}
-										<!-- svelte-ignore a11y_click_events_have_key_events -->
 										<div
 											class="flex h-8 items-center text-sm hover:cursor-pointer
                                         {index === selectedIndex ? 'bg-zinc-200 dark:bg-zinc-800' : 'bg-zinc-100 dark:bg-zinc-900'}"
 											onmouseenter={() => (selectedIndex = index)}
-											onclick={() => selectResult(index)}
+											onmousedown={() => selectResult(index)}
 										>
 											<span class="mx-3">{c.target}</span>
 										</div>
@@ -988,7 +1000,7 @@
 							<CalendarIcon class="opacity-50" />
 						</Popover.Trigger>
 
-						<Popover.Content bind:ref={contentRef} class="w-auto border-0 p-0" align="start">
+						<Popover.Content class="w-auto border-0 p-0" align="start">
 							<CalendarPrimitive.Root
 								type="single"
 								weekdayFormat="short"
