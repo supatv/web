@@ -455,6 +455,7 @@
 						class="aspect-video w-full"
 						controls
 						autoplay
+						playsinline={true}
 						onclick={(e) => e.stopPropagation()}
 					></video>
 				</div>
