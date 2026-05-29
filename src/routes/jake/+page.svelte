@@ -103,11 +103,13 @@
 	$effect(() => {
 		if (selectedFile === null) return;
 		untrack(() => {
-			document.querySelector(".active-card")?.classList.remove("active-card");
+			const style = ["bg-zinc-800", "p-1", "text-zinc-50", "ring-2", "ring-ring"];
+
+			document.querySelector(".active-card")?.classList.remove("active-card", ...style);
 			const fileCard = document.getElementById(`file-card-${selectedFile}`);
 			if (!fileCard) return;
 			fileCard.scrollIntoView({ behavior: "smooth", block: "center" });
-			fileCard.classList.add("active-card");
+			fileCard.classList.add("active-card", ...style);
 		});
 	});
 
@@ -505,12 +507,4 @@
 		{/if}
 	</div>
 {/if}
-
-<div class="active-card hidden"></div>
-
-<style>
-	.active-card {
-		@apply bg-zinc-800 p-1 text-zinc-50 ring-2 ring-ring;
-	}
-</style>
 
