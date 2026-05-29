@@ -9,26 +9,14 @@
 
 	import type { PageProps } from "./$types";
 	import type { Stream } from "$lib/twitch/vods";
-	import { dateFormat, dateTimeFormat, type TitleContext } from "$lib/common";
+	import { dateFormat, dateTimeFormat, formatDuration, type TitleContext } from "$lib/common";
 
 	import dayjs from "dayjs";
 	import relativeTime from "dayjs/plugin/relativeTime";
-	import duration from "dayjs/plugin/duration";
 
 	const title = getContext<TitleContext>("title");
 
 	dayjs.extend(relativeTime);
-	dayjs.extend(duration);
-
-	const formatDuration = (time: number, unit?: duration.DurationUnitType) => {
-		const d = dayjs.duration(time, unit);
-
-		const hours = Math.floor(d.asHours());
-		const minutes = d.minutes().toString();
-		const secs = d.seconds().toString().padStart(2, "0");
-
-		return hours > 0 ? `${hours}:${minutes.padStart(2, "0")}:${secs}` : `${minutes}:${secs}`;
-	};
 
 	let { data }: PageProps = $props();
 	let { user } = data;
