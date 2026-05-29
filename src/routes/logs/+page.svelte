@@ -532,24 +532,13 @@
 			const [id, version] = badge.split("/");
 			const key = `${id}/${version}`;
 
-			const channelBadge = channelBadges.get(key);
-			if (channelBadge) {
+			const badgeData = channelBadges.get(key) || globalBadges.get(key);
+			if (badgeData) {
 				badges.push({
 					id,
-					src: channelBadge.url,
-					title: channelBadge.title,
-					alt: channelBadge.title,
-				});
-				continue;
-			}
-
-			const globalBadge = globalBadges.get(key);
-			if (globalBadge) {
-				badges.push({
-					id,
-					src: globalBadge.url,
-					title: globalBadge.title,
-					alt: globalBadge.title,
+					src: badgeData.url,
+					title: badgeData.title,
+					alt: badgeData.title,
 				});
 			}
 		}
