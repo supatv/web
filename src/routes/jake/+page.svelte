@@ -400,8 +400,12 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" tabindex="-1">
 		{#if files}
-			<div class="flex h-full w-full">
-				<div class="flex min-w-80 max-w-80 flex-col overflow-y-scroll overscroll-contain bg-zinc-100 dark:bg-zinc-900" bind:clientHeight={listHeight}>
+			<div class="flex h-full w-full flex-col md:flex-row">
+				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="block bg-zinc-200 py-1 text-center text-lg font-medium dark:bg-zinc-800 md:hidden">Close</div>
+				<div
+					class="order-last flex h-2/5 w-full flex-col overflow-y-scroll overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:order-none md:h-full md:min-w-80 md:max-w-80"
+					bind:clientHeight={listHeight}
+				>
 					<VirtualList height={listHeight} itemCount={files.length} {itemSize}>
 						<div
 							slot="item"
@@ -429,7 +433,7 @@
 					</VirtualList>
 				</div>
 				<div
-					class="flex flex-1 items-center overflow-y-hidden overscroll-contain"
+					class="flex w-full items-center overflow-y-hidden overscroll-contain md:border-none"
 					onclick={() => (selectedFile = null)}
 					onwheel={(e) => {
 						if (selectedFile === null || !files) return;
@@ -452,8 +456,8 @@
 						onclick={(e) => e.stopPropagation()}
 					></video>
 				</div>
-				<div class="flex min-w-80 max-w-80 flex-col overflow-y-scroll overscroll-contain bg-zinc-100 dark:bg-zinc-900">
-					<div class="flex justify-center border-b py-4">
+				<div class="flex w-full flex-1 flex-col overflow-y-scroll overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:min-w-80 md:max-w-80">
+					<div class="hidden justify-center border-b py-4 md:flex">
 						<p class="text-lg font-semibold">Chat Replay</p>
 					</div>
 					{#if chatError}
