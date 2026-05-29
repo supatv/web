@@ -452,7 +452,7 @@
 					<video
 						bind:currentTime={currentVideoTime}
 						src="https://fi.supa.sh/.archive/jake/{files[selectedFile].id}.mp4"
-						class="aspect-video w-full"
+						class="aspect-video max-h-full w-full"
 						controls
 						autoplay
 						playsinline={true}
