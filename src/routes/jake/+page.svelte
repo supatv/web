@@ -30,6 +30,8 @@
 
 	const channelId = "94682428";
 
+	const emotesClass = "max-h-7 -my-1 -z-10";
+
 	let listHeight = $state(0);
 	let chatList: HTMLDivElement | null = $state(null);
 	let itemSize = 96;
@@ -322,6 +324,7 @@
 				components.push({
 					type: Emote,
 					props: {
+						_class: emotesClass,
 						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
 						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
 						url: `https://emotes.susgee.dev/emote/${nextEmote.id}`,
@@ -352,7 +355,7 @@
 	const processWord = (word: string, components: ChatComponents) => {
 		const emoteProps = channelEmotes.get(word) || globalEmotes.get(word);
 		if (emoteProps) {
-			components.push({ type: Emote, props: { name: word, ...emoteProps } });
+			components.push({ type: Emote, props: { _class: emotesClass, name: word, ...emoteProps } });
 			return;
 		}
 
@@ -474,7 +477,7 @@
 					></video>
 				</div>
 				<div class="flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:min-w-80 md:max-w-80">
-					<div class="hidden justify-center border-b py-4 md:flex">
+					<div class="hidden justify-center border-b py-2 md:flex">
 						<p class="text-lg font-semibold">Chat Replay</p>
 					</div>
 					{#if chatError}
@@ -484,7 +487,7 @@
 					{:else if chatLogs.length === 0}
 						<div class="p-2 text-muted-foreground">No chat logs found for this date :(</div>
 					{:else}
-						<div class="flex h-full flex-col gap-y-1 overflow-y-scroll p-2 leading-tight" bind:this={chatList}>
+						<div class="flex h-full flex-col gap-y-1.5 overflow-y-scroll p-2 leading-tight" bind:this={chatList}>
 							{#each chatBuffer as msg, index (index)}
 								{#if isNewMessageDivider(msg, index)}
 									<div class="my-2 flex items-center text-muted-foreground">
