@@ -6,6 +6,8 @@
 	import { dateTimeFormat, formatDuration, humanFileSize, type TitleContext } from "$lib/common";
 	import linkParser from "$lib/link-parser";
 
+	import { page } from "$app/state";
+	import { goto } from "$app/navigation";
 	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
 	import { SvelteMap } from "svelte/reactivity";
 
@@ -62,6 +64,12 @@
 	const fetchFiles = async () => {
 		const res = await fetch("https://fi.supa.sh/.archive/jake/files.json");
 		files = await res.json();
+
+		const fileId = page.url.searchParams.get("i");
+		if (fileId) {
+			const fileIndex = files?.findIndex((f) => f.id === fileId);
+			if (fileIndex !== undefined && fileIndex !== -1) openFile(fileIndex);
+		}
 	};
 
 	const openFile = async (index: number) => {
@@ -76,14 +84,20 @@
 
 	let logsController: AbortController | null = null;
 	$effect(() => {
-		if (selectedFile === null) return;
-		chatLogs = null;
-		chatBuffer = [];
+		if (!files) return;
 
-		const file = files?.[selectedFile];
+		if (selectedFile === null) {
+			untrack(() => goto(page.url.pathname, { replaceState: true, keepFocus: true, noScroll: true }));
+			return;
+		}
+
+		const file = files[selectedFile];
 		if (!file) return;
 
 		untrack(async () => {
+			chatLogs = null;
+			chatBuffer = [];
+
 			logsController?.abort();
 			logsController = new AbortController();
 
@@ -100,13 +114,11 @@
 			const data: { messages: Message[] } = await res.json();
 			chatLogs = data.messages;
 		});
-	});
 
-	$effect(() => {
-		if (selectedFile === null) return;
-		untrack(() => {
+		untrack(async () => {
+			await goto(`?i=${file.id}`, { replaceState: true, keepFocus: true, noScroll: true });
+
 			const style = ["bg-zinc-800", "p-1", "text-zinc-50", "ring-2", "ring-ring"];
-
 			document.querySelector(".active-card")?.classList.remove("active-card", ...style);
 			const fileCard = document.getElementById(`file-card-${selectedFile}`);
 			if (!fileCard) return;
