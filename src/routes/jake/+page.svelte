@@ -20,6 +20,8 @@
 	import VirtualList from "svelte-tiny-virtual-list";
 	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
 
+	import { LoaderCircleIcon } from "@lucide/svelte";
+
 	import * as TwitchServices from "$lib/twitch/services/index.js";
 
 	getContext<TitleContext>("title").set("The Jake Files");
@@ -405,7 +407,7 @@
 			<div class="flex h-full w-full flex-col md:flex-row">
 				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="block bg-zinc-200 py-1 text-center text-lg font-medium dark:bg-zinc-800 md:hidden">Close</div>
 				<div
-					class="order-last flex h-2/5 w-full flex-col overflow-y-scroll overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:order-none md:h-full md:min-w-80 md:max-w-80"
+					class="order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:order-none md:h-full md:min-w-80 md:max-w-80"
 					bind:clientHeight={listHeight}
 				>
 					<VirtualList height={listHeight} itemCount={files.length} {itemSize}>
@@ -459,7 +461,7 @@
 						onclick={(e) => e.stopPropagation()}
 					></video>
 				</div>
-				<div class="flex w-full flex-1 flex-col overflow-y-scroll overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:min-w-80 md:max-w-80">
+				<div class="flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:min-w-80 md:max-w-80">
 					<div class="hidden justify-center border-b py-4 md:flex">
 						<p class="text-lg font-semibold">Chat Replay</p>
 					</div>
@@ -470,7 +472,7 @@
 					{:else if chatLogs.length === 0}
 						<div class="p-2 text-muted-foreground">No chat logs found for this date :(</div>
 					{:else}
-						<div class="flex flex-col gap-y-1 overflow-auto p-2 leading-tight" bind:this={chatList}>
+						<div class="flex h-full flex-col gap-y-1 overflow-y-scroll p-2 leading-tight" bind:this={chatList}>
 							{#each chatBuffer as msg, index (index)}
 								{#if isNewMessageDivider(msg, index)}
 									<div class="my-2 flex items-center text-muted-foreground">
@@ -504,7 +506,7 @@
 				</div>
 			</div>
 		{:else}
-			<Skeleton class="h-10 w-40" />
+			<LoaderCircleIcon class="size-8 animate-spin" />
 		{/if}
 	</div>
 {/if}
