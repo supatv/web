@@ -1191,9 +1191,27 @@
 										{msg.text}
 									</span>
 								{:else}
-									<span style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+									<a
+										href={`/logs?c=${encodeURIComponent((channelName || msg.channel || "").trim())}&u=${encodeURIComponent(((msg.tags?.["user-id"] ? `id:${msg.tags["user-id"]}` : msg.displayName) || "").trim())}&d=${encodeURIComponent(new Date(msg.timestamp).toISOString().slice(0, 7))}`}
+										class="font-bold hover:underline"
+										style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})"
+										onclick={(e) => {
+											e.preventDefault();
+
+											const href = e.currentTarget.getAttribute("href") || "";
+											const q = new URL(href, page.url).searchParams;
+
+											untrack(() => {
+												inputChannelName = channelName = q.get("c") || "";
+												inputUserName = userName = q.get("u") || "";
+												dateValue = q.get("d") || "";
+											});
+
+											goto(href, { keepFocus: true });
+										}}
+									>
 										{msg.displayName}:
-									</span>
+									</a>
 									<span>
 										{#key emoteUpdates}
 											{#each parseMessage(msg) as { type: Component, props }, index (index)}
