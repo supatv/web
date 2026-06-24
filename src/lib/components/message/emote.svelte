@@ -1,13 +1,11 @@
 <script>
-	import Image from "../image.svelte";
-
 	// import * as Tooltip from "$lib/components/ui/tooltip";
 
-	let { name, src, url } = $props();
+	let { name, src, url, _class = "" } = $props();
 </script>
 
 <a href={url} target="_blank">
-	<Image {src} alt={name} title={name} class="inline-block max-h-5 align-text-bottom" />
+	<img {src} alt={name} title={name} decoding="async" class={["inline-block max-h-5 align-text-bottom", _class]} />
 </a>
 <!-- <Tooltip.Provider>
     <Tooltip.Root delayDuration={200} disableHoverableContent={true}>
