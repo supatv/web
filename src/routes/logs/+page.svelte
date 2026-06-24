@@ -441,12 +441,15 @@
 	$effect(() => {
 		// fetch available dates
 		if (isQueryMode || !channelName) return;
+		const channel = channelName;
+		const user = userName;
+		availableDates = [];
 		untrack(async () => {
 			loading = true;
 
-			const res = await fetch(`https://logs.zonian.dev/list?${parseChannelUser(channelName, userName, true)}`);
+			const res = await fetch(`https://logs.zonian.dev/list?${parseChannelUser(channel, user, true)}`);
 			if (!res.ok) {
-				if (res.status === 404) error = `No logs found for this channel ${userName ? "and user" : ""}`;
+				if (res.status === 404) error = `No logs found for this channel ${user ? "and user" : ""}`;
 				else error = `Error from server: ${res.status} ${res.statusText}`;
 				loading = false;
 				dateValue = "";
@@ -1202,11 +1205,10 @@
 											const href = e.currentTarget.getAttribute("href") || "";
 											const q = new URL(href, page.url).searchParams;
 
-											untrack(() => {
-												inputChannelName = channelName = q.get("c") || "";
-												inputUserName = userName = q.get("u") || "";
-												dateValue = q.get("d") || "";
-											});
+											inputChannelName = channelName = q.get("c") || "";
+											inputUserName = userName = q.get("u") || "";
+											dateValue = q.get("d") || "";
+											channelStats = null;
 
 											goto(href, { keepFocus: true });
 										}}
