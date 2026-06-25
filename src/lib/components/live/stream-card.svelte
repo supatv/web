@@ -9,6 +9,9 @@
 
 	import { toast } from "svelte-sonner";
 
+	import TwitchWordmark from "$lib/assets/logos/twitch_wordmark_flat_purple.svg";
+	import KickWordmark from "$lib/assets/logos/kick_wordmark_green.svg";
+
 	const formatUptime = (s: string) => {
 		let string = "";
 		const date = Date.parse(s);
@@ -23,7 +26,7 @@
 		return string;
 	};
 
-	let { stream, lastRefresh }: { stream: Stream; lastRefresh: number } = $props();
+	let { stream, showKick, lastRefresh }: { stream: Stream; showKick: boolean; lastRefresh: number } = $props();
 
 	let focused = $state(false);
 	let active = $state(false);
@@ -45,15 +48,23 @@
 		}}
 		oncontextmenu={(e) => e.preventDefault()}
 	>
+		{#if showKick}
+			{#if stream.platform === "twitch"}
+				<img src={TwitchWordmark} alt="Twitch" class="absolute z-20 m-1 h-5 w-auto rounded-sm bg-black/60 p-0.5" />
+			{:else if stream.platform === "kick"}
+				<img src={KickWordmark} alt="Kick" class="absolute z-20 m-1 h-5 w-auto rounded-sm bg-black/60 p-0.5" />
+			{/if}
+		{/if}
+
 		<span class="absolute right-0 top-0 z-30 m-1 rounded-sm bg-black/60 p-0.5 text-xs text-neutral-100">
 			{formatUptime(stream.started)}
 		</span>
 
 		{#if focused || active}
-			<StreamPlayer channelName={stream.login} />
+			<StreamPlayer channelName={stream.login} platform={stream.platform} />
 		{/if}
 		<Image
-			src="https://static-cdn.jtvnw.net/previews-ttv/live_user_{stream.login}-{$gridCols && $gridCols < 4 ? '900x507' : '600x338'}.jpg?t={lastRefresh}"
+			src={(stream.thumbnail || `https://static-cdn.jtvnw.net/previews-ttv/live_user_${stream.login}-${$gridCols && $gridCols < 4 ? "900x507" : "600x338"}.jpg`) + `?t=${lastRefresh}`}
 			loading="lazy"
 			alt="Thumbnail"
 			class="aspect-video w-full"

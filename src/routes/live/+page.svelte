@@ -1,5 +1,8 @@
 <script lang="ts">
+	import { browser } from "$app/environment";
+
 	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
+	import { Checkbox } from "$lib/components/ui/checkbox/index.js";
 
 	import type { TitleContext } from "$lib/common";
 	import type { Stream } from "$lib/twitch/livestreams";
@@ -17,19 +20,24 @@
 
 	let windowScrollY: number = $state(0);
 
+	let showKick = $state(browser && localStorage.getItem("live-show-kick") === "true");
+	$effect(() => window.localStorage.setItem("live-show-kick", showKick.toString()));
+
 	let loading = $state(false);
 	let lastRefresh = $state(0);
 
-	let streams: Stream[] | null = $state(null);
+	let ogStreams: Stream[] = $state([]);
 	const fetchStreams = async () => {
 		loading = true;
 		lastRefresh = Date.now();
 		const t1 = Date.now();
 		const res = await fetch("https://api-tv.supa.sh/tags/ro");
-		streams = await res.json();
+		ogStreams = await res.json();
 		const t2 = Date.now();
 		setTimeout(() => (loading = false), t1 - t2 < 500 ? 500 - (t2 - t1) : 0);
 	};
+
+	let streams = $derived(showKick ? ogStreams : ogStreams.filter((s) => s.platform === "twitch"));
 
 	const windowKeydown = (event: KeyboardEvent) => {
 		if (event.altKey || event.ctrlKey) return;
@@ -71,28 +79,34 @@
 </button>
 
 <div class="flex w-full max-w-[2500px] flex-col self-center p-5">
-	<div class="flex flex-wrap items-end">
-		<h1 class="text-4xl font-bold">
-			<span class="bg-gradient-to-r from-blue-700 via-yellow-300 to-red-600 bg-clip-text font-extrabold text-transparent">Romanian</span> Livestreams
-		</h1>
-		{#if streams !== null}
-			<span class="ml-auto text-2xl font-light">
-				<span class="font-normal">{streams.length.toLocaleString()}</span>
-				channels with
-				<span class="font-normal">{streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()}</span>
-				viewers
-			</span>
+	<h1 class="text-4xl font-bold">
+		<span class="bg-gradient-to-r from-blue-700 via-yellow-300 to-red-600 bg-clip-text font-extrabold text-transparent">Romanian</span> Livestreams
+	</h1>
+
+	<span class="font-light">
+		{#if streams.length}
+			<span class="font-normal">{streams.length.toLocaleString()}</span>
+			channels with
+			<span class="font-normal">{streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()}</span>
+			viewers
+		{:else}
+			&nbsp;
 		{/if}
+	</span>
+
+	<div class="mb-1">
+		<Checkbox id="show-kick-checkbox" bind:checked={showKick} />
+		<label for="show-kick-checkbox">Show Kick streams</label>
 	</div>
 
 	<div
 		class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4"
 		style={$gridCols ? `grid-template-columns: repeat(${$gridCols}, minmax(0, 1fr));` : ""}
 	>
-		{#if streams !== null}
-			{#each streams as stream (stream.login)}
-				<a href="https://www.twitch.tv/{stream.login}" target="_blank" rel="nofollow">
-					<StreamCard {stream} {lastRefresh} />
+		{#if streams.length}
+			{#each streams as stream (stream.uid)}
+				<a href="https://{stream.platform === 'kick' ? 'kick.com' : 'www.twitch.tv'}/{stream.login}" target="_blank" rel="nofollow">
+					<StreamCard {stream} {showKick} {lastRefresh} />
 				</a>
 			{/each}
 		{:else}

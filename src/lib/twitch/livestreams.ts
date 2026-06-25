@@ -6,6 +6,8 @@ export type Stream = {
 	viewers: number;
 	game: string;
 	title: string;
+	thumbnail?: string;
 	avatar: string;
+	platform: "twitch" | "kick";
 	type: string;
 };

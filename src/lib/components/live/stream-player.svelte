@@ -5,11 +5,12 @@
 	import { manifestMap } from "./playlist-cache";
 	import { playerVol, playerMuted } from "$lib/stores/live";
 
-	import { LoaderCircleIcon } from "@lucide/svelte";
+	// import { LoaderCircleIcon } from "@lucide/svelte";
 
-	const { channelName }: { channelName: string } = $props();
+	const { channelName, platform }: { channelName: string; platform: string } = $props();
 
-	const playlistUrl = `https://luminous.alienpls.org/live/${channelName}?allow_source=true&fast_bread=true&warp=true&platform=web`;
+	const playlistUrl =
+		platform === "kick" ? `https://api-tv.supa.sh/kick_playback/${channelName}.m3u8` : `https://luminous.alienpls.org/live/${channelName}?allow_source=true&fast_bread=true&warp=true&platform=web`;
 
 	let video: HTMLVideoElement;
 	let hls: Hls;
@@ -126,9 +127,9 @@
 {/if}
 
 {#if loading}
-	<div class="absolute z-20 m-1 justify-center rounded-full bg-black/60">
-		<LoaderCircleIcon class="m-0.5 size-5 animate-spin text-white" />
-	</div>
+	<!-- <div class="absolute flex h-full w-full items-center justify-center">
+		<LoaderCircleIcon class="size-6 animate-spin text-white drop-shadow-sm" />
+	</div> -->
 {/if}
 
 <video
