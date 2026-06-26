@@ -9,7 +9,7 @@
 
 	import { toast } from "svelte-sonner";
 
-	import TwitchWordmark from "$lib/assets/logos/twitch_wordmark_flat_purple.svg";
+	import TwitchWordmark from "$lib/assets/logos/twitch_wordmark_purple.svg";
 	import KickWordmark from "$lib/assets/logos/kick_wordmark_green.svg";
 
 	const formatUptime = (s: string) => {
@@ -49,14 +49,16 @@
 		oncontextmenu={(e) => e.preventDefault()}
 	>
 		{#if showKick}
-			{#if stream.platform === "twitch"}
-				<img src={TwitchWordmark} alt="Twitch" class="absolute z-20 m-1 h-5 w-auto rounded-sm bg-black/60 p-0.5" />
-			{:else if stream.platform === "kick"}
-				<img src={KickWordmark} alt="Kick" class="absolute z-20 m-1 h-5 w-auto rounded-sm bg-black/60 p-0.5" />
-			{/if}
+			<div class="absolute z-30 m-1 h-5 rounded-sm bg-black/60 p-1">
+				{#if stream.platform === "kick"}
+					<img src={KickWordmark} alt="Kick" class="h-full" />
+				{:else}
+					<img src={TwitchWordmark} alt="Twitch" class="h-full" />
+				{/if}
+			</div>
 		{/if}
 
-		<span class="absolute right-0 top-0 z-30 m-1 rounded-sm bg-black/60 p-0.5 text-xs text-neutral-100">
+		<span class="absolute right-0 top-0 z-30 m-1 rounded-sm bg-black/60 px-1 py-0.5 text-xs text-neutral-100">
 			{formatUptime(stream.started)}
 		</span>
 
