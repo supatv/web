@@ -55,8 +55,8 @@
 
 <svelte:head>
 	<title>Twitch Romanian Livestreams</title>
-	<meta name="keywords" content="twitch, twitch tools, twitch romania, livestreams, live channels directory, twitch chat, viewers, followers" />
-	<meta name="description" content="Browse every Romanian Twitch livestream and channel." />
+	<meta name="keywords" content="twitch, kick, twitch tools, twitch romania, kick romania, livestreams, live channels directory, twitch chat" />
+	<meta name="description" content="Browse Romanian livestreams from Twitch and Kick." />
 </svelte:head>
 
 <svelte:window on:keydown={windowKeydown} bind:scrollY={windowScrollY} />
