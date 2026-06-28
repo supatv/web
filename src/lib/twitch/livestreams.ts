@@ -9,5 +9,5 @@ export type Stream = {
 	thumbnail?: string;
 	avatar: string;
 	platform: "twitch" | "kick";
-	type: string;
+	type?: string;
 };
