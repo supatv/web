@@ -60,7 +60,7 @@
 <svelte:window on:keydown={windowKeydown} bind:scrollY={windowScrollY} />
 
 <button
-	class="fixed bottom-5 right-5 z-50 rounded-full bg-neutral-200 p-3 opacity-80 transition-opacity hover:opacity-100 dark:bg-neutral-900"
+	class="fixed bottom-5 right-5 z-50 rounded-full bg-neutral-200 p-2 opacity-80 transition-opacity hover:opacity-100 dark:bg-neutral-900"
 	aria-disabled={loading}
 	oncontextmenu={(e) => e.preventDefault()}
 	onmouseup={(e) => {
@@ -72,9 +72,9 @@
 	}}
 >
 	{#if loading}
-		<RefreshCwIcon size={32} class="animate-spin" />
+		<RefreshCwIcon size={28} class="animate-spin" />
 	{:else}
-		<ChevronsDownIcon size={32} class={["transition-all", windowScrollY > 100 && "rotate-180"]} />
+		<ChevronsDownIcon size={28} class={["transition-all", windowScrollY > 100 && "rotate-180"]} />
 	{/if}
 </button>
 
