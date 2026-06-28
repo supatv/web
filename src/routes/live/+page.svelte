@@ -43,6 +43,8 @@
 		if (event.altKey || event.ctrlKey) return;
 		if (event.key === "m") {
 			playerMuted.update((v) => !v);
+		} else if (event.key === "r") {
+			if (!loading) fetchStreams();
 		}
 	};
 
