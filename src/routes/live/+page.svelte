@@ -106,7 +106,7 @@
 		style={$gridCols ? `grid-template-columns: repeat(${$gridCols}, minmax(0, 1fr));` : ""}
 	>
 		{#if streams.length}
-			{#each streams as stream (stream.uid)}
+			{#each streams as stream (`${stream.platform}:${stream.uid}`)}
 				<a href="https://{stream.platform === 'kick' ? 'kick.com' : 'www.twitch.tv'}/{stream.login}" target="_blank" rel="nofollow">
 					<StreamCard {stream} {showKick} {lastRefresh} />
 				</a>

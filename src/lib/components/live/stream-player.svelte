@@ -8,6 +8,7 @@
 	// import { LoaderCircleIcon } from "@lucide/svelte";
 
 	const { channelName, platform }: { channelName: string; platform: string } = $props();
+	const channelKey = `${platform}:${channelName}`;
 
 	const playlistUrl =
 		platform === "kick" ? `https://api-tv.supa.sh/kick_playback/${channelName}.m3u8` : `https://luminous.alienpls.org/live/${channelName}?allow_source=true&fast_bread=true&warp=true&platform=web`;
@@ -31,7 +32,7 @@
 					if (response.data.includes("#EXT-X-MAP")) hls.config.progressive = false;
 					else response.data = response.data.replace(/#EXT-X-(?:TWITCH-)?PREFETCH:(.+)/g, "#EXTINF:2.0,\n$1");
 				} else if (context.type === "manifest") {
-					manifestMap.set(channelName, response.data);
+					manifestMap.set(channelKey, response.data);
 				}
 
 				onSuccess(response, stats, context, networkDetails);
@@ -74,7 +75,7 @@
 					}
 				}
 
-				if (manifestMap.delete(channelName)) {
+				if (manifestMap.delete(channelKey)) {
 					hls.loadSource(playlistUrl);
 					return;
 				}
@@ -94,7 +95,7 @@
 			}
 		});
 
-		const cache = manifestMap.get(channelName);
+		const cache = manifestMap.get(channelKey);
 		if (cache) {
 			const blob = new Blob([cache], { type: "application/vnd.apple.mpegurl" });
 			hls.loadSource(URL.createObjectURL(blob));
