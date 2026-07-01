@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { mode } from "mode-watcher";
 	import dayjs from "dayjs";
+	import ReconnectingWebSocket from "reconnecting-websocket";
+
 	import linkParser from "$lib/link-parser";
 
 	import { Input } from "$lib/components/ui/input/index.js";
@@ -48,7 +50,7 @@
 
 	let messagesPerSecond = $state(0);
 
-	let socket: WebSocket | null = $state(null);
+	let socket: ReconnectingWebSocket | null = $state(null);
 
 	const destroySocket = () => {
 		if (socket) {
@@ -137,7 +139,7 @@
 			chatBuffer = [];
 			scrollPaused = false;
 
-			socket = new WebSocket(`wss://${instanceValue}/firehose?jsonBasic=true`);
+			socket = new ReconnectingWebSocket(`wss://${instanceValue}/firehose?jsonBasic=true`);
 			socket.addEventListener("message", (event) => {
 				messagesPerSecond++;
 				setTimeout(() => {
