@@ -336,10 +336,10 @@
 	{:else}
 		<div class="mb-1 flex flex-row gap-1">
 			<div class="flex w-48 flex-col">
-				<Label for="input-channel" class="text-base">Instance</Label>
+				<Label for="select-instance" class="text-base">Instance</Label>
 
 				<Select.Root type="single" bind:open={isPopoverOpen} bind:value={instanceValue}>
-					<Select.Trigger class="h-8">
+					<Select.Trigger id="select-instance" class="h-8">
 						{instanceValue}
 					</Select.Trigger>
 					<Select.Content>
