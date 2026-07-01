@@ -3,6 +3,8 @@
 
 	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 	import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+	import { Button } from "$lib/components/ui/button/index.js";
+	import * as Dialog from "$lib/components/ui/dialog/index.js";
 
 	import type { TitleContext } from "$lib/common";
 	import type { Stream } from "$lib/twitch/livestreams";
@@ -21,10 +23,13 @@
 	let windowScrollY: number = $state(0);
 
 	let showKick = $state(browser && localStorage.getItem("live-show-kick") === "true");
+	let kickConsent = $state(browser && localStorage.getItem("live-kick-consent") === "true");
 	$effect(() => window.localStorage.setItem("live-show-kick", showKick.toString()));
+	$effect(() => window.localStorage.setItem("live-kick-consent", kickConsent.toString()));
 
 	let loading = $state(false);
 	let lastRefresh = $state(0);
+	let isKickDialogOpen = $state(false);
 
 	let ogStreams: Stream[] = $state([]);
 	const fetchStreams = async () => {
@@ -80,6 +85,33 @@
 	{/if}
 </button>
 
+<Dialog.Root bind:open={isKickDialogOpen}>
+	<Dialog.Content>
+		<Dialog.Header>
+			<Dialog.Title>Heads up before you continue</Dialog.Title>
+		</Dialog.Header>
+		<p>Kick operates under different content moderation standards than most streaming platforms.</p>
+		<p>Streams may contain material that some viewers may find offensive.</p>
+		<p>The platform has a known history of viewbotting, and viewer counts may not reflect genuine audience size.</p>
+		<p>Kick content is not endorsed or affiliated with supa.sh. Viewer discretion is advised.</p>
+
+		<div class="flex gap-2">
+			<Button
+				variant="default"
+				class="flex-1"
+				onclick={() => {
+					kickConsent = true;
+					showKick = true;
+					isKickDialogOpen = false;
+				}}
+			>
+				Show Kick streams anyway
+			</Button>
+			<Button variant="secondary" class="flex-1" onclick={() => (isKickDialogOpen = false)}>Cancel</Button>
+		</div>
+	</Dialog.Content>
+</Dialog.Root>
+
 <div class="flex w-full max-w-[2500px] flex-col self-center p-5">
 	<h1 class="text-4xl font-bold">
 		<span class="bg-gradient-to-r from-blue-700 via-yellow-300 to-red-600 bg-clip-text font-extrabold text-transparent">Romanian</span> Livestreams
@@ -97,7 +129,16 @@
 	</span>
 
 	<div class="mb-1">
-		<Checkbox id="show-kick-checkbox" bind:checked={showKick} />
+		<Checkbox
+			id="show-kick-checkbox"
+			bind:checked={showKick}
+			onCheckedChange={(checked) => {
+				if (!kickConsent && checked) {
+					showKick = false;
+					isKickDialogOpen = true;
+				}
+			}}
+		/>
 		<label for="show-kick-checkbox">Show Kick streams</label>
 	</div>
 
