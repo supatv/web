@@ -171,4 +171,4 @@
 	</div>
 </div>
 
-<img alt="cat peek" src={catPeek} class="size-24 rotate-90" />
+<img alt="cat peek" src={catPeek} class="mt-auto size-24 rotate-90" />
