@@ -315,7 +315,7 @@
 </script>
 
 <svelte:head>
-	<title>Twitch Firehose</title>
+	<meta property="og:title" content="Twitch Firehose" />
 	<meta name="keywords" content="twitch, twitch firehose, twitch chat, twitch bots, twitch dev, live messages, chat logs, developers, api" />
 	<meta name="description" content="View every Twitch chat message in real-time." />
 </svelte:head>

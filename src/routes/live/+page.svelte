@@ -59,7 +59,7 @@
 </script>
 
 <svelte:head>
-	<title>Twitch Romanian Livestreams</title>
+	<meta property="og:title" content="Twitch Romanian Livestreams" />
 	<meta name="keywords" content="twitch, kick, twitch tools, twitch romania, kick romania, livestreams, live channels directory, twitch chat" />
 	<meta name="description" content="Browse Romanian livestreams from Twitch and Kick." />
 </svelte:head>
