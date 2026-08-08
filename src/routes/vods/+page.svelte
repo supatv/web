@@ -29,6 +29,7 @@
 <svelte:head>
 	<meta property="og:title" content="Twitch VODs Archive" />
 	<meta name="description" content="View archived Twitch VODs in {users.length} channels." />
+	<meta property="og:description" content="View archived Twitch VODs in {users.length} channels." />
 </svelte:head>
 
 <div class="flex flex-1 flex-col p-5">
