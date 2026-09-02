@@ -12,10 +12,14 @@ export const dateFormat = "YYYY-MM-DD";
 export const timeFormat = "HH:mm:ss";
 export const dateTimeFormat = `${dateFormat} ${timeFormat}`;
 
+const compactNumberFormat = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
+
 export const humanFileSize = (size: number) => {
 	const i = size == 0 ? 0 : Math.floor(Math.log(size) / Math.log(1000));
 	return +(size / Math.pow(1000, i)).toFixed(2) * 1 + " " + ["B", "kB", "MB", "GB", "TB"][i];
 };
+
+export const compactNumber = (value: number) => compactNumberFormat.format(value);
 
 export const formatDuration = (time: number, unit?: duration.DurationUnitType) => {
 	const d = dayjs.duration(time, unit);

@@ -37,7 +37,7 @@
 
 	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon, ChartColumnIcon } from "@lucide/svelte";
 
-	import { dateTimeFormat, type TitleContext } from "$lib/common";
+	import { compactNumber, dateTimeFormat, type TitleContext } from "$lib/common";
 
 	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
 	import { messageSearch } from "$lib/twitch/logs";
@@ -848,7 +848,7 @@
 	<div class="flex flex-wrap items-end">
 		<h1 class="text-4xl font-bold">Twitch Logs&nbsp;</h1>
 		{#if channelsCount}
-			<span class="text-xl font-light">for <span class="font-normal">{channelsCount.toLocaleString()}</span> channels</span>
+			<span class="text-xl font-light">for <span class="font-normal">{compactNumber(channelsCount)}</span> channels</span>
 		{/if}
 	</div>
 
