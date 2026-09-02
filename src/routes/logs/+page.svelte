@@ -137,6 +137,7 @@
 
 	let channelsCount = $state(0);
 	let foundChannels: { name: string; userID: string }[] = $state([]);
+	let channelTyped = $state(false);
 
 	const fetchChannelsCount = async () => {
 		const res = await fetch("https://logs.zonian.dev/health");
@@ -148,7 +149,7 @@
 
 	$effect(() => {
 		const query = inputChannelName.trim();
-		if (!query) {
+		if (!query || !channelTyped) {
 			foundChannels = [];
 			return;
 		}
@@ -867,6 +868,7 @@
 							bind:value={inputChannelName}
 							placeholder="Channel or id:123"
 							onkeydown={channelKeydown}
+							oninput={() => (channelTyped = true)}
 							autocomplete="off"
 							autofocus
 						/>
