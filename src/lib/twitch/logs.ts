@@ -1,5 +1,4 @@
 import { type Component } from "svelte";
-import fuzzysort from "fuzzysort";
 
 export type Message = {
 	text: string;
@@ -63,18 +62,35 @@ const searchPrefixes: Record<string, (searchString: string, chatLogs: Message[])
 
 type SearchPrefixKey = keyof typeof searchPrefixes;
 
+const escapeRegex = (value: string) => value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+
+let lastQuery: string | null = null;
+let lastSource: Message[] | null = null;
+let lastWithChannel = false;
+let lastResult: Message[] = [];
+
+const textSearch = (searchValue: string, chatLogs: Message[], withChannel: boolean): Message[] => {
+	// appending to a query can only shrink the hit set, so narrow the previous results instead of rescanning everything
+	const source = lastQuery !== null && lastSource === chatLogs && lastWithChannel === withChannel && searchValue.startsWith(lastQuery) ? lastResult : chatLogs;
+
+	const matcher = new RegExp(escapeRegex(searchValue), "i");
+	const result = withChannel ? source.filter((msg) => matcher.test(msg.text) || matcher.test(msg.displayName) || matcher.test(msg.channel ?? "")) : source.filter((msg) => matcher.test(msg.text) || matcher.test(msg.displayName));
+
+	lastQuery = searchValue;
+	lastSource = chatLogs;
+	lastWithChannel = withChannel;
+	lastResult = result;
+
+	return result;
+};
+
 export const messageSearch = (searchValue: string, chatLogs: Message[], scrollFromBottom: boolean | null): Message[] => {
 	const searchKey = searchValue.split(":", 1)[0].toLowerCase();
 	const searchString = searchValue.slice(searchKey.length + 1);
 	if (searchKey in searchPrefixes && searchString) {
 		chatLogs = searchPrefixes[searchKey as SearchPrefixKey](searchString, chatLogs);
 	} else if (searchValue) {
-		const searchOptions = scrollFromBottom === null ? { keys: ["channel", "displayName", "text"], threshold: 0.5 } : { keys: ["displayName", "text"], threshold: 0.5, limit: 5000 };
-
-		chatLogs = fuzzysort
-			.go(searchValue, chatLogs, searchOptions)
-			.map((x) => x.obj)
-			.sort((a, b) => Date.parse(a.timestamp) - Date.parse(b.timestamp));
+		chatLogs = textSearch(searchValue, chatLogs, scrollFromBottom === null);
 	}
 
 	return scrollFromBottom === false ? [...chatLogs].reverse() : chatLogs;
