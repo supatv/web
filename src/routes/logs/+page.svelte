@@ -4,9 +4,6 @@
 	import dayjs from "dayjs";
 	import linkParser from "$lib/link-parser";
 
-	import LogsWorker from "$lib/workers/logs?worker";
-	import { op } from "$lib/workers/common/logs";
-
 	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
 	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
 	import { Input } from "$lib/components/ui/input/index.js";
@@ -31,7 +28,7 @@
 	import Badge from "$lib/components/message/badge.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
 
-	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
+	import { getContext, onMount, tick, untrack } from "svelte";
 	import { SvelteMap, SvelteURLSearchParams } from "svelte/reactivity";
 
 	import { browser } from "$app/environment";
@@ -139,35 +136,46 @@
 	};
 
 	let channelsCount = $state(0);
-	let foundChannels: Fuzzysort.Result[] = $state([]);
+	let foundChannels: { name: string; userID: string }[] = $state([]);
 
-	let logsWorker: Worker;
-	const initLogsWorker = () => {
-		logsWorker = new LogsWorker();
-		logsWorker.postMessage({ op: op.READY });
+	const fetchChannelsCount = async () => {
+		const res = await fetch("https://logs.zonian.dev/health");
+		if (!res.ok) return;
 
-		const handlers = {
-			[op.CLIENT_DATA]: (payload: { channelsCount: number }) => {
-				channelsCount = payload.channelsCount;
-			},
-			[op.CLIENT_SEARCH_RESULTS]: (payload: Fuzzysort.Result[]) => {
-				foundChannels = payload;
-				selectedIndex = 0;
-			},
-		};
-
-		logsWorker.onmessage = (event) => {
-			handlers[event.data.op]?.(event.data.payload);
-		};
-
-		$effect(() => {
-			logsWorker.postMessage({ op: op.SEARCH, payload: inputChannelName });
-		});
+		const data = await res.json();
+		channelsCount = data.channels ?? 0;
 	};
+
+	$effect(() => {
+		const query = inputChannelName.trim();
+		if (!query) {
+			foundChannels = [];
+			return;
+		}
+
+		const controller = new AbortController();
+		const timeout = setTimeout(async () => {
+			try {
+				const res = await fetch(`https://logs.zonian.dev/meta/search?q=${encodeURIComponent(query)}`, { signal: controller.signal });
+				if (!res.ok) throw res;
+
+				const data = await res.json();
+				foundChannels = (data.channels ?? []).slice(0, 5);
+				selectedIndex = 0;
+			} catch (err) {
+				if ((err as Error)?.name !== "AbortError") foundChannels = [];
+			}
+		}, 60);
+
+		return () => {
+			clearTimeout(timeout);
+			controller.abort();
+		};
+	});
 
 	let isJumpMode = $state(false);
 	onMount(() => {
-		initLogsWorker();
+		fetchChannelsCount();
 		fetchGlobalBadges();
 		fetchGlobalEmotes();
 
@@ -188,10 +196,6 @@
 		dateValue = q.get("d") || "";
 		searchValue = q.get("s") || "";
 		isJumpMode = (q.get("sm") || window.localStorage.getItem("logs-search-mode")) === "jump";
-	});
-
-	onDestroy(() => {
-		logsWorker?.terminate();
 	});
 
 	let logsBoxHeight = $state(0);
@@ -255,7 +259,7 @@
 		});
 	});
 
-	const showAutocomplete = $derived(browser && channelInput === activeElement && foundChannels.length && !(foundChannels.length === 1 && foundChannels[0].target === inputChannelName.toLowerCase()));
+	const showAutocomplete = $derived(browser && channelInput === activeElement && foundChannels.length && !(foundChannels.length === 1 && foundChannels[0].name === inputChannelName.toLowerCase()));
 
 	const channelKeydown = (event: KeyboardEvent) => {
 		if (!showAutocomplete) return;
@@ -662,7 +666,7 @@
 	};
 
 	const selectResult = (index: number) => {
-		inputChannelName = foundChannels[index].target;
+		inputChannelName = foundChannels[index].name;
 		selectedIndex = 0; // reset selection after choosing
 	};
 
@@ -871,14 +875,14 @@
 							<div class="absolute left-0 right-0 top-full z-10 mt-1">
 								<ScrollArea class="flex-1 rounded-md">
 									<!-- svelte-ignore a11y_no_static_element_interactions -->
-									{#each foundChannels as c, index (c.target)}
+									{#each foundChannels as c, index (c.name)}
 										<div
 											class="flex h-8 items-center text-sm hover:cursor-pointer
                                         {index === selectedIndex ? 'bg-zinc-200 dark:bg-zinc-800' : 'bg-zinc-100 dark:bg-zinc-900'}"
 											onmouseenter={() => (selectedIndex = index)}
 											onmousedown={() => selectResult(index)}
 										>
-											<span class="mx-3">{c.target}</span>
+											<span class="mx-3">{c.name}</span>
 										</div>
 									{/each}
 								</ScrollArea>
@@ -1234,3 +1238,4 @@
 		padding-bottom: 0.5rem;
 	}
 </style>
+
