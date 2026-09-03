@@ -488,6 +488,7 @@
 		dateValue = "";
 		chatLogs = [];
 		channelStats = null;
+		channelTyped = false;
 
 		if (inputQuery.trim() && !inputUserName) {
 			error = "User is required for global search";
@@ -713,7 +714,16 @@
 
 			{#if chatLogs.length}
 				<div class="relative flex min-w-44 flex-1 items-center">
-					<Input id="input-search" size="sm" class="pr-20" maxlength={500} placeholder={isJumpMode ? "Find..." : "Filter..."} autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+					<Input
+						id="input-search"
+						size="sm"
+						class="pr-20"
+						maxlength={500}
+						placeholder={isJumpMode ? "Find..." : "Filter..."}
+						autocomplete="off"
+						bind:ref={searchInput}
+						bind:value={searchValue}
+					/>
 					<span class="tnum text-dim pointer-events-none absolute right-2.5 text-xs select-none">{displayMessageCount}</span>
 				</div>
 
