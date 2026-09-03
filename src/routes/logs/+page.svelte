@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { Calendar as CalendarPrimitive } from "bits-ui";
 	import dayjs from "dayjs";
 
 	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
@@ -9,9 +8,9 @@
 	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 
 	import { cn } from "$lib/utils.js";
-	import { CalendarDate, DateFormatter, getLocalTimeZone, today, type DateValue } from "@internationalized/date";
+	import { CalendarDate, type DateValue } from "@internationalized/date";
 
-	import * as Calendar from "$lib/components/ui/calendar/index.js";
+	import { Calendar } from "$lib/components/ui/calendar/index.js";
 	import * as Popover from "$lib/components/ui/popover/index.js";
 	import * as Select from "$lib/components/ui/select/index.js";
 	import * as Card from "$lib/components/ui/card/index.js";
@@ -66,62 +65,25 @@
 	let calendarDate = $state<DateValue>();
 	let dateValue = $state("");
 
-	const currentDate = today(getLocalTimeZone());
-
-	const monthFmt = new DateFormatter("en-US", {
-		month: "long",
-	});
-
 	const availableYears = $derived(new Set(availableDates.map((date) => date.year)));
 	const availableMonthsByYear = $derived(
 		availableDates.reduce(
 			(acc, date) => {
-				if (!acc[date.year]) {
-					acc[date.year] = new Set();
-				}
-				acc[date.year].add(date.month);
+				const months = (acc[date.year] ??= []);
+				if (!months.includes(date.month)) months.push(date.month);
 				return acc;
 			},
-			{} as Record<string, Set<string>>
+			{} as Record<string, string[]>
 		)
 	);
 
-	const monthOptions = $derived(
-		calendarDate
-			? Array.from(availableMonthsByYear[calendarDate.year] || [])
-					.map((month) => {
-						const monthNum = parseInt(month);
-						const date = currentDate.set({ month: monthNum });
-						return {
-							value: monthNum,
-							label: `${String(monthNum).padStart(2, "0")} (${monthFmt.format(date.toDate(getLocalTimeZone()))})`,
-						};
-					})
-					.sort((a, b) => a.value - b.value)
-			: []
-	);
+	const monthOptions = $derived(calendarDate ? (availableMonthsByYear[calendarDate.year] ?? []).map(Number).sort((a, b) => a - b) : []);
 
 	const yearOptions = $derived(
 		Array.from(availableYears)
-			.map((year) => ({
-				label: year,
-				value: parseInt(year),
-			}))
-			.sort((a, b) => a.value - b.value)
+			.map(Number)
+			.sort((a, b) => a - b)
 	);
-
-	const defaultYear = $derived(calendarDate ? { value: calendarDate.year, label: String(calendarDate.year) } : undefined);
-
-	const defaultMonth = $derived(
-		calendarDate
-			? {
-					value: calendarDate.month,
-					label: monthFmt.format(calendarDate.toDate(getLocalTimeZone())),
-				}
-			: undefined
-	);
-
-	const monthLabel = $derived(monthOptions.find((m) => m.value === defaultMonth?.value)?.label ?? "Month");
 
 	const availableDateSet = $derived(new Set(availableDates.map((d) => `${d.year}-${d.month}${d.day ? `-${d.day}` : ""}`)));
 
@@ -765,100 +727,23 @@
 			{#if dateContent}
 				{#if dateContent.day}
 					<Popover.Root bind:open={datePopoverOpen}>
-						<Popover.Trigger
-							disabled={loading}
-							class={cn(
-								buttonVariants({
-									variant: "outline",
-									class: "focus:ring-ring flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm tabular-nums hover:bg-transparent focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-								})
-							)}
-						>
+						<Popover.Trigger disabled={loading} class={buttonVariants({ variant: "outline", class: "h-8 w-36 justify-between font-normal tabular-nums" })}>
 							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
 							<CalendarIcon class="opacity-50" />
 						</Popover.Trigger>
 
-						<Popover.Content class="w-auto border-0 p-0" align="start">
-							<CalendarPrimitive.Root
+						<Popover.Content class="w-auto overflow-hidden p-0" align="start">
+							<Calendar
 								type="single"
-								weekdayFormat="short"
-								class="rounded-md border p-3 tabular-nums"
-								onPlaceholderChange={(date) => adjustDate(date)}
-								onValueChange={(date) => updateDateValue(date)}
+								captionLayout="dropdown"
+								months={monthOptions}
+								years={yearOptions}
+								class="tabular-nums"
 								isDateUnavailable={(date) => !isDateAvailable(date)}
+								onPlaceholderChange={adjustDate}
+								onValueChange={updateDateValue}
 								bind:value={calendarDate}
-							>
-								{#snippet children({ months, weekdays })}
-									<Calendar.Header class="flex w-full items-center justify-between gap-2">
-										<Select.Root
-											type="single"
-											value={`${defaultYear?.value}`}
-											onValueChange={(v) => {
-												if (!v || !calendarDate) return;
-												if (v === `${calendarDate?.year}`) return;
-												calendarDate = calendarDate.set({ year: Number.parseInt(v) });
-											}}
-										>
-											<Select.Trigger aria-label="Select year" class="h-8 max-w-24 tabular-nums">
-												{defaultYear?.label ?? "Year"}
-											</Select.Trigger>
-											<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
-												{#each yearOptions as { value, label } (value)}
-													<Select.Item value={`${value}`} {label} />
-												{/each}
-											</Select.Content>
-										</Select.Root>
-										<Select.Root
-											type="single"
-											value={`${defaultMonth?.value}`}
-											onValueChange={(v) => {
-												if (!calendarDate) return;
-												if (v === `${calendarDate.month}`) return;
-												calendarDate = calendarDate.set({ month: Number.parseInt(v) });
-											}}
-										>
-											<Select.Trigger aria-label="Select month" class="h-8 w-full break-keep tabular-nums">
-												{monthLabel}
-											</Select.Trigger>
-											<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
-												{#each monthOptions as { value, label } (value)}
-													<Select.Item value={`${value}`} {label} />
-												{/each}
-											</Select.Content>
-										</Select.Root>
-									</Calendar.Header>
-									<Calendar.Months>
-										{#each months as month (month)}
-											<Calendar.Grid>
-												<Calendar.GridHead>
-													<Calendar.GridRow class="flex">
-														{#each weekdays as weekday (weekday)}
-															<Calendar.HeadCell>
-																{weekday.slice(0, 2)}
-															</Calendar.HeadCell>
-														{/each}
-													</Calendar.GridRow>
-												</Calendar.GridHead>
-												<Calendar.GridBody>
-													{#each month.weeks as weekDates (weekDates)}
-														<Calendar.GridRow class="mt-2 w-full">
-															{#each weekDates as date (date)}
-																<Calendar.Cell
-																	class="select-none data-disabled:pointer-events-none data-selected:pointer-events-none data-unavailable:pointer-events-none data-unavailable:opacity-50"
-																	{date}
-																	month={month.value}
-																>
-																	<Calendar.Day />
-																</Calendar.Cell>
-															{/each}
-														</Calendar.GridRow>
-													{/each}
-												</Calendar.GridBody>
-											</Calendar.Grid>
-										{/each}
-									</Calendar.Months>
-								{/snippet}
-							</CalendarPrimitive.Root>
+							/>
 						</Popover.Content>
 					</Popover.Root>
 				{:else}
@@ -871,10 +756,10 @@
 								<Select.Group>
 									{#each availableDates as date, index (index)}
 										{#if index > 0 && date.year !== availableDates[index - 1].year}
-											<Select.Separator class="mx-0" />
+											<Select.Separator class="mx-0 my-1" />
 										{/if}
 										{@const str = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`}
-										<Select.Item class="m-0 justify-center p-1 tabular-nums" value={str} label={str} />
+										<Select.Item class="justify-center py-1 tabular-nums" value={str} label={str} />
 									{/each}
 								</Select.Group>
 							</Select.Content>
@@ -902,14 +787,14 @@
 					{/if}
 				</div>
 				<div class="ml-auto flex gap-1">
-					<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
+					<Button variant="outline" size="icon" class="size-8" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
 						{#if !isJumpMode}
 							<FilterIcon />
 						{:else}
 							<SearchIcon />
 						{/if}
 					</Button>
-					<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
+					<Button variant="outline" size="icon" class="size-8" onclick={scrollFromBottomToggle} title="Toggle Sort Order" aria-label="Toggle Sort Order">
 						{#if scrollFromBottom}
 							<ArrowUpNarrowWideIcon />
 						{:else}
@@ -917,9 +802,11 @@
 						{/if}
 					</Button>
 					<Button
-						variant="ghost"
+						variant="outline"
 						size="icon"
-						class="size-8 border"
+						class="size-8"
+						title="Open raw logs"
+						aria-label="Open raw logs"
 						target="_blank"
 						href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/
 							{dateContent ? `${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ''}` : `search?q=${encodeURIComponent(query)}`}"
