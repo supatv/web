@@ -10,9 +10,12 @@
 	const isNotice = $derived(Boolean(msg.tags["target-user-id"]) || !msg.displayName);
 	const nameColor = $derived(`hsl(from ${msg.tags["color"] || "gray"} h s ${mode.current === "light" ? "40%" : "70%"})`);
 
-	// badge images arrive well after the line first paints, so reserve their width from the
-	// tag's own count (size-4 each, gap-0.5 between) to keep the message from jumping
-	const badgeCount = $derived(msg.tags["badges"] ? msg.tags["badges"].split(",").length : 0);
+	// badge images arrive well after the line first paints, so until the tables land reserve
+	// their width from the tag's own count (size-4 each, gap-0.5 between) to keep the message
+	// from jumping; once they have, only the badges that resolved take space, so ones no loaded
+	// set covers — channel badges on /firehose — leave nothing behind
+	const taggedCount = $derived(msg.tags["badges"] ? msg.tags["badges"].split(",").length : 0);
+	const badgeCount = $derived(chat.badgeVersion && chat.globalBadges.size ? chat.badges(msg).length : taggedCount);
 </script>
 
 {#if badgeCount}
