@@ -92,8 +92,7 @@
 							aria-current={active ? "page" : undefined}
 							class={[
 								"ring-focus relative flex h-10 items-center gap-2.5 rounded-md pr-2 pl-3 text-[0.9375rem] transition-colors",
-								"before:absolute before:top-1.5 before:bottom-1.5 before:left-0 before:w-0.5 before:rounded-full before:transition-colors",
-								active ? "bg-raised text-text before:bg-accent font-medium" : "text-dim hover:bg-raised/60 hover:text-text",
+								active ? "bg-raised text-text font-medium" : "text-dim hover:bg-raised/60 hover:text-text",
 							]}
 						>
 							<item.icon class={["size-4 shrink-0", active && "text-accent"]} />
