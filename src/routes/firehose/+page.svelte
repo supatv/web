@@ -210,10 +210,10 @@
 			</VirtualList>
 
 			{#if scrollPaused}
-				<div class="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
-					<Button variant="accent" size="sm" class="pointer-events-auto shadow-lg" onclick={resumeScroll}>
+				<div class="pointer-events-none absolute inset-x-0 bottom-8 flex justify-center">
+					<Button variant="solid" size="md" class="pointer-events-auto px-6 shadow-lg" onclick={resumeScroll}>
 						<ChevronsDownIcon />
-						Jump to newest
+						More messages below
 					</Button>
 				</div>
 			{/if}
