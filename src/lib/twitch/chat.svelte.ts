@@ -74,6 +74,13 @@ export class ChatSource {
 	#emoteTicks = 0;
 	#badgeTicks = 0;
 
+	// a virtualised row re-runs `parse`/`badges` for every message on screen on every
+	// scroll tick, so hold the results until the tables underneath them actually change
+	#parsed = new WeakMap<Message, ChatComponents>();
+	#parsedAt = -1;
+	#badged = new WeakMap<Message, MessageBadge[]>();
+	#badgedAt = -1;
+
 	readonly #emoteClass: string;
 
 	constructor({ emoteClass = "" }: { emoteClass?: string } = {}) {
@@ -148,6 +155,14 @@ export class ChatSource {
 	}
 
 	badges(msg: Message): MessageBadge[] {
+		if (this.#badgedAt !== this.#badgeTicks) {
+			this.#badged = new WeakMap();
+			this.#badgedAt = this.#badgeTicks;
+		}
+
+		const cached = this.#badged.get(msg);
+		if (cached) return cached;
+
 		const badges: MessageBadge[] = [];
 
 		for (const badge of (msg.tags["badges"] ?? "").split(",")) {
@@ -158,6 +173,7 @@ export class ChatSource {
 			if (props) badges.push({ id, src: props.url, title: props.title });
 		}
 
+		this.#badged.set(msg, badges);
 		return badges;
 	}
 
@@ -178,6 +194,14 @@ export class ChatSource {
 	}
 
 	parse(msg: Message): ChatComponents {
+		if (this.#parsedAt !== this.#emoteTicks) {
+			this.#parsed = new WeakMap();
+			this.#parsedAt = this.#emoteTicks;
+		}
+
+		const cached = this.#parsed.get(msg);
+		if (cached) return cached;
+
 		const components: ChatComponents = [];
 
 		// native emote positions are codepoint offsets into the *rendered* line, which
@@ -241,6 +265,7 @@ export class ChatSource {
 			};
 		}
 
+		this.#parsed.set(msg, components);
 		return components;
 	}
 }

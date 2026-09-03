@@ -589,6 +589,29 @@
 	};
 
 	const getMessageId = (msg: Message) => msg.id || msg.timestamp;
+
+	// a CLEARMSG row would otherwise scan the whole log to name the message it removed
+	let messagesById = new Map<string, Message>();
+	let messagesByIdFor: Message[] | null = null;
+	const messageById = (id: string) => {
+		if (messagesByIdFor !== chatLogs) {
+			messagesById = new Map(chatLogs.filter((m) => m.id).map((m) => [m.id, m]));
+			messagesByIdFor = chatLogs;
+		}
+		return messagesById.get(id);
+	};
+
+	// same reason as the parse cache in ChatSource: three dayjs parses per row per scroll tick
+	const times = new WeakMap<Message, { at: string; day: string }>();
+	const messageTime = (msg: Message) => {
+		let time = times.get(msg);
+		if (!time) {
+			const parsed = dayjs(msg.timestamp);
+			time = { at: parsed.format(dateTimeFormat), day: parsed.format("YYYY-MM-DD") };
+			times.set(msg, time);
+		}
+		return time;
+	};
 </script>
 
 <svelte:head>
@@ -917,9 +940,8 @@
 					{#snippet item(index, style)}
 						{@const msg = filteredChatLogs[index]}
 						{@const msgId = getMessageId(msg)}
-						{@const dayKey = dayjs(msg.timestamp).format("YYYY-MM-DD")}
-						{@const prevDayKey = index > 0 ? dayjs(filteredChatLogs[index - 1].timestamp).format("YYYY-MM-DD") : null}
-						{@const isNewDay = index > 0 && prevDayKey !== dayKey}
+						{@const time = messageTime(msg)}
+						{@const isNewDay = index > 0 && messageTime(filteredChatLogs[index - 1]).day !== time.day}
 						{@const isHashMatch = msgId === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
 						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
@@ -931,10 +953,10 @@
 									(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
 								]}
 							>
-								<span class="text-xs text-neutral-500 tabular-nums select-none">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
+								<span class="text-xs text-neutral-500 tabular-nums select-none">{time.at}</span>
 								<span class="h-5 w-max">
 									{#if msg.tags["target-msg-id"]}
-										{@const msgDeleted = chatLogs.find((m) => m.id === msg.tags["target-msg-id"])}
+										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
 										<span class="text-neutral-500">
 											{#if msgDeleted}
 												<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
