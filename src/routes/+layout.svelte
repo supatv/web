@@ -92,7 +92,7 @@
 <Sidebar.Provider onOpenChange={sidebarOpenChange} open={sidebarOpened}>
 	<AppSidebar />
 	<main class="flex flex-1 flex-col">
-		<div class="group sticky top-1 z-50 mx-1 flex w-fit gap-1 rounded-md transition-all hover:bg-zinc-300/50 hover:backdrop-blur dark:hover:bg-zinc-600/50">
+		<div class="group hover:bg-muted/70 hover:ring-border sticky top-1 z-50 mx-1 flex w-fit items-center gap-0.5 rounded-lg p-0.5 transition-colors hover:ring-1 hover:backdrop-blur">
 			<Sidebar.Trigger class="size-7" />
 			<Button onclick={toggleMode} variant="ghost" size="icon" class="size-7">
 				<SunIcon class="scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
@@ -138,18 +138,21 @@
 				</div>
 			{:else if page.url.pathname === "/logs"}
 				<Dialog.Root>
-					<Dialog.Trigger class={[buttonVariants({ variant: "ghost" }), "h-7! px-1.5!"]}>Removals</Dialog.Trigger>
+					<Dialog.Trigger class={[buttonVariants({ variant: "ghost", size: "sm" }), "h-7! px-2!"]}>Removals</Dialog.Trigger>
 					<Dialog.Content>
 						<Dialog.Header>
 							<Dialog.Title>Removals</Dialog.Title>
+							<Dialog.Description><span class="text-foreground font-semibold">tv.supa.sh</span> is not able to process deletion requests.</Dialog.Description>
 						</Dialog.Header>
-						<p><span class="font-bold">tv.supa.sh</span> is not able to process deletion requests.</p>
-						<p>
-							This service does not store any data itself; it only fetches publicly available logs from
-							<a href="https://logs.zonian.dev/status" target="_blank" rel="nofollow" class="dark:text-primary text-blue-600 hover:underline">third-party sources</a>.
-						</p>
-						<p>Opting out may be possible for each specific instance, depending on that site's own policy.</p>
-						<p>We are not affiliated with Twitch or its creators.</p>
+
+						<div class="text-muted-foreground space-y-2">
+							<p>
+								This service does not store any data itself; it only fetches publicly available logs from
+								<a href="https://logs.zonian.dev/status" target="_blank" rel="nofollow" class="dark:text-primary text-blue-600 hover:underline">third-party sources</a>.
+							</p>
+							<p>Opting out may be possible for each specific instance, depending on that site's own policy.</p>
+							<p>We are not affiliated with Twitch or its creators.</p>
+						</div>
 					</Dialog.Content>
 				</Dialog.Root>
 			{/if}

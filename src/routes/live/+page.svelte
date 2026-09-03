@@ -3,6 +3,7 @@
 
 	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
 	import { Checkbox } from "$lib/components/ui/checkbox/index.js";
+	import { Label } from "$lib/components/ui/label/index.js";
 	import { Button } from "$lib/components/ui/button/index.js";
 	import * as Dialog from "$lib/components/ui/dialog/index.js";
 
@@ -90,16 +91,18 @@
 	<Dialog.Content>
 		<Dialog.Header>
 			<Dialog.Title>Heads up before you continue</Dialog.Title>
+			<Dialog.Description>Kick operates under different content moderation standards than most streaming platforms.</Dialog.Description>
 		</Dialog.Header>
-		<p>Kick operates under different content moderation standards than most streaming platforms.</p>
-		<p>Streams may contain material that some viewers may find offensive.</p>
-		<p>The platform has a known history of viewbotting, and viewer counts may not reflect genuine audience size.</p>
-		<p>Kick content is not endorsed or affiliated with supa.sh. Viewer discretion is advised.</p>
 
-		<div class="flex gap-2">
+		<ul class="text-muted-foreground list-disc space-y-1.5 pl-4">
+			<li>Streams may contain material that some viewers may find offensive.</li>
+			<li>The platform has a known history of viewbotting, and viewer counts may not reflect genuine audience size.</li>
+			<li>Kick content is not endorsed or affiliated with supa.sh. Viewer discretion is advised.</li>
+		</ul>
+
+		<Dialog.Footer>
+			<Button variant="outline" onclick={() => (isKickDialogOpen = false)}>Cancel</Button>
 			<Button
-				variant="default"
-				class="flex-1"
 				onclick={() => {
 					kickConsent = true;
 					showKick = true;
@@ -108,8 +111,7 @@
 			>
 				Show Kick streams anyway
 			</Button>
-			<Button variant="secondary" class="flex-1" onclick={() => (isKickDialogOpen = false)}>Cancel</Button>
-		</div>
+		</Dialog.Footer>
 	</Dialog.Content>
 </Dialog.Root>
 
@@ -129,7 +131,7 @@
 		{/if}
 	</span>
 
-	<div class="mb-1">
+	<div class="mb-2 flex items-center gap-2">
 		<Checkbox
 			id="show-kick-checkbox"
 			bind:checked={showKick}
@@ -140,7 +142,7 @@
 				}
 			}}
 		/>
-		<label for="show-kick-checkbox">Show Kick streams</label>
+		<Label for="show-kick-checkbox" class="font-normal">Show Kick streams</Label>
 	</div>
 
 	<div
