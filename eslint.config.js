@@ -24,6 +24,9 @@ export default ts.config(
 		},
 		rules: {
 			"require-await": "error",
+			// the site is served from the domain root with no `base` path, and most
+			// navigations here are query-string-only
+			"svelte/no-navigation-without-resolve": "off",
 		},
 	},
 	{

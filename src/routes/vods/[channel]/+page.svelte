@@ -19,9 +19,9 @@
 	dayjs.extend(relativeTime);
 
 	let { data }: PageProps = $props();
-	let { user } = data;
+	const user = $derived(data.user);
 
-	title.set(`${user.display_name}: VODs`);
+	$effect(() => title.set(`${user.display_name}: VODs`));
 
 	let streams: Stream[] | null = $state(null);
 

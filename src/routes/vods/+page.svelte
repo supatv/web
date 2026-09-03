@@ -12,7 +12,7 @@
 	getContext<TitleContext>("title").set("VODs");
 
 	let { data }: PageProps = $props();
-	let { users } = data;
+	const users = $derived(data.users);
 
 	let bucketUsage: BucketUsage | null = $state(null);
 
