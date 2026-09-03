@@ -434,25 +434,16 @@
 		chat.loadChannelEmotes(channelId);
 	});
 
+	const closestTo = (target: number, values: number[]) => values.sort((a, b) => a - b).reduce((prev, curr) => (Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev));
+
 	const findClosestAvailableDate = (date: DateValue) => {
-		const year = String(date.year);
-		const month = String(date.month);
+		const yearDates = availableDates.filter((d) => Number(d.year) === date.year);
+		if (!yearDates.length) return null;
 
-		const availableDays = availableDates
-			.filter((d) => d.year === year && d.month === month)
-			.map((d) => parseInt(d.day || "1"))
-			.sort((a, b) => a - b);
+		const month = closestTo(date.month, [...new Set(yearDates.map((d) => Number(d.month)))]);
+		const days = yearDates.filter((d) => Number(d.month) === month).map((d) => parseInt(d.day || "1"));
 
-		if (availableDays.length > 0) {
-			const targetDay = date.day;
-			const closestDay = availableDays.reduce((prev, curr) => {
-				return Math.abs(curr - targetDay) < Math.abs(prev - targetDay) ? curr : prev;
-			});
-
-			return new CalendarDate(date.year, date.month, closestDay);
-		}
-
-		return null;
+		return new CalendarDate(date.year, month, closestTo(date.day, days));
 	};
 
 	const adjustDate = (date: DateValue) => {

@@ -1,8 +1,9 @@
 <script lang="ts">
 	import { Calendar as CalendarPrimitive } from "bits-ui";
-	import { ChevronDownIcon, ChevronLeftIcon, ChevronRightIcon } from "@lucide/svelte";
+	import type { DateValue } from "@internationalized/date";
 
 	import { cn } from "$lib/utils";
+	import Select, { type SelectOption } from "./select.svelte";
 
 	type Props = {
 		class?: string;
@@ -10,52 +11,61 @@
 		years?: number[];
 	} & CalendarPrimitive.RootProps;
 
-	let { class: className, months: monthList, years: yearList, value = $bindable(), placeholder = $bindable(), ...rest }: Props = $props();
+	let { class: className, months: monthList, years: yearList, value = $bindable(), placeholder = $bindable(), onPlaceholderChange, locale = "en-US", ...rest }: Props = $props();
 
-	const nav = "ring-focus text-dim hover:bg-raised hover:text-text grid size-9 place-items-center rounded-md transition-colors disabled:opacity-40";
-	const dropdown = "ring-focus border-line bg-raised hover:border-accent relative flex h-9 items-center gap-1 rounded-md border pr-2 pl-2.5 text-sm font-medium transition-colors";
+	// writing the bound placeholder skips the setter bits-ui fires onPlaceholderChange from, so navigating by select has to announce itself
+	const navigate = (date: DateValue) => {
+		placeholder = date;
+		onPlaceholderChange?.(date);
+	};
+
+	const monthName = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" });
+
+	// the shown month or year can sit outside the allowed list, and dropping it would leave the select blank
+	const withShown = (list: number[], shown: number) => (list.includes(shown) ? list : [...list, shown].sort((a, b) => a - b));
+
+	const monthOptions = (shown: number): SelectOption[] =>
+		withShown(monthList?.length ? monthList : Array.from({ length: 12 }, (_, i) => i + 1), shown).map((month) => ({
+			value: String(month),
+			label: `${String(month).padStart(2, "0")} ${monthName.format(Date.UTC(2000, month - 1, 1))}`,
+		}));
+
+	const yearOptions = (shown: number): SelectOption[] => withShown(yearList ?? [], shown).map((year) => ({ value: String(year), label: String(year) }));
 </script>
 
-<CalendarPrimitive.Root bind:value={value as never} bind:placeholder weekdayFormat="short" class={cn("tnum w-fit p-3", className)} monthFormat="short" yearFormat="numeric" {...rest}>
+<CalendarPrimitive.Root
+	bind:value={value as never}
+	bind:placeholder
+	{onPlaceholderChange}
+	preventDeselect
+	weekdayFormat="short"
+	class={cn("tnum w-fit p-3", className)}
+	monthFormat="short"
+	yearFormat="numeric"
+	{locale}
+	{...rest}
+>
 	{#snippet children({ months, weekdays })}
-		<div class="mb-2 flex items-center justify-between gap-1">
-			<CalendarPrimitive.PrevButton class={nav}>
-				<ChevronLeftIcon class="size-4" />
-			</CalendarPrimitive.PrevButton>
-
-			<div class="flex items-center gap-1">
-				<CalendarPrimitive.MonthSelect months={monthList} class="absolute inset-0 cursor-pointer opacity-0">
-					{#snippet child({ props, monthItems, selectedMonthItem })}
-						<span class={dropdown}>
-							<span>{selectedMonthItem.label}</span>
-							<ChevronDownIcon class="text-dim size-3" />
-							<select {...props}>
-								{#each monthItems as item (item.value)}
-									<option value={item.value} selected={item.value === selectedMonthItem.value}>{item.label}</option>
-								{/each}
-							</select>
-						</span>
-					{/snippet}
-				</CalendarPrimitive.MonthSelect>
-
-				<CalendarPrimitive.YearSelect years={yearList} class="absolute inset-0 cursor-pointer opacity-0">
-					{#snippet child({ props, yearItems, selectedYearItem })}
-						<span class={dropdown}>
-							<span>{selectedYearItem.label}</span>
-							<ChevronDownIcon class="text-dim size-3" />
-							<select {...props}>
-								{#each yearItems as item (item.value)}
-									<option value={item.value} selected={item.value === selectedYearItem.value}>{item.label}</option>
-								{/each}
-							</select>
-						</span>
-					{/snippet}
-				</CalendarPrimitive.YearSelect>
-			</div>
-
-			<CalendarPrimitive.NextButton class={nav}>
-				<ChevronRightIcon class="size-4" />
-			</CalendarPrimitive.NextButton>
+		{@const shown = months[0].value}
+		<div class="mb-2 flex items-center gap-1">
+			<Select
+				size="sm"
+				aria-label="Year"
+				options={yearOptions(shown.year)}
+				value={String(shown.year)}
+				onValueChange={(year) => navigate(shown.set({ year: Number(year) }))}
+				class="min-w-0 flex-1"
+				contentClass="tnum"
+			/>
+			<Select
+				size="sm"
+				aria-label="Month"
+				options={monthOptions(shown.month)}
+				value={String(shown.month)}
+				onValueChange={(month) => navigate(shown.set({ month: Number(month) }))}
+				class="min-w-0 flex-1"
+				contentClass="tnum"
+			/>
 		</div>
 
 		{#each months as month (month.value)}
@@ -76,7 +86,7 @@
 								<CalendarPrimitive.Cell {date} month={month.value} class="p-0">
 									<CalendarPrimitive.Day
 										class={cn(
-											"ring-focus grid size-9 place-items-center rounded-md text-sm transition-colors",
+											"ring-focus grid size-9 cursor-pointer place-items-center rounded-md text-sm transition-colors select-none",
 											"hover:bg-raised data-selected:bg-accent data-selected:text-accent-ink data-selected:font-semibold",
 											"data-outside-month:opacity-30 data-unavailable:pointer-events-none data-unavailable:opacity-25",
 											"data-today:text-accent data-selected:data-today:text-accent-ink data-today:font-semibold"

@@ -28,6 +28,7 @@
 		open?: boolean;
 		options: SelectOption[];
 		size?: SelectSize;
+		onValueChange?: (value: string) => void;
 		placeholder?: string;
 		disabled?: boolean;
 		id?: string;
@@ -36,12 +37,12 @@
 		"aria-label"?: string;
 	};
 
-	let { value = $bindable(""), open = $bindable(false), options, size, placeholder = "Select", disabled = false, id, class: className, contentClass, "aria-label": ariaLabel }: Props = $props();
+	let { value = $bindable(""), open = $bindable(false), options, size, onValueChange, placeholder = "Select", disabled = false, id, class: className, contentClass, "aria-label": ariaLabel }: Props = $props();
 
 	const label = $derived(options.find((o) => o.value === value)?.label ?? placeholder);
 </script>
 
-<SelectPrimitive.Root type="single" bind:value bind:open {disabled}>
+<SelectPrimitive.Root type="single" bind:value bind:open {onValueChange} {disabled}>
 	<SelectPrimitive.Trigger {id} aria-label={ariaLabel} class={cn(selectTrigger({ size }), className)}>
 		<span class="truncate">{label}</span>
 		<ChevronDownIcon class="text-dim size-4 shrink-0" />
