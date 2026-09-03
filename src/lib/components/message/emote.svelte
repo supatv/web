@@ -1,21 +1,9 @@
-<script>
-	// import * as Tooltip from "$lib/components/ui/tooltip";
+<script lang="ts">
+	import { cn } from "$lib/utils";
 
-	let { name, src, url, _class = "" } = $props();
+	let { name, src, url, class: className }: { name: string; src: string; url: string; class?: string } = $props();
 </script>
 
-<a href={url} target="_blank">
-	<img {src} alt={name} title={name} decoding="async" class={["inline-block max-h-5 align-text-bottom", _class]} />
+<a href={url} target="_blank" rel="noopener noreferrer">
+	<img {src} alt={name} title={name} decoding="async" class={cn("inline-block max-h-5 align-text-bottom", className)} />
 </a>
-<!-- <Tooltip.Provider>
-    <Tooltip.Root delayDuration={200} disableHoverableContent={true}>
-        <Tooltip.Trigger class="align-middle">
-            <img {src} alt={name} class="max-h-5" />
-        </Tooltip.Trigger>
-        <Tooltip.Content class="p-2 flex flex-col items-center" collisionBoundary={boundary}>
-            <img {src} alt={name} class="max-h-28" />
-            <p class="text-base">{name}</p>
-            <span class="text-xs opacity-60">Twitch Emote</span>
-        </Tooltip.Content>
-    </Tooltip.Root>
-</Tooltip.Provider> -->

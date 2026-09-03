@@ -1,7 +1,5 @@
-<script>
-	let { src, title = "", alt = "" } = $props();
+<script lang="ts">
+	let { src, title = "" }: { src: string; title?: string } = $props();
 </script>
 
-<span class="size-4">
-	<img {src} {title} {alt} />
-</span>
+<img {src} {title} alt="" class="inline-block size-[18px] align-middle" />

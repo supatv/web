@@ -1,9 +1,6 @@
 <script lang="ts">
-	import { mode } from "mode-watcher";
 	import dayjs from "dayjs";
 	import ReconnectingWebSocket from "reconnecting-websocket";
-
-	import linkParser from "$lib/link-parser";
 
 	import { Input } from "$lib/components/ui/input/index.js";
 	import { Label } from "$lib/components/ui/label/index.js";
@@ -16,15 +13,11 @@
 
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
-	import TextFragment from "$lib/components/message/text-fragment.svelte";
-	import Emote from "$lib/components/message/emote.svelte";
-	import Link from "$lib/components/message/link.svelte";
-	import Badge from "$lib/components/message/badge.svelte";
+	import MessageContent from "$lib/components/message/content.svelte";
 
 	import { ChevronsDownIcon } from "@lucide/svelte";
 
 	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
-	import { SvelteMap } from "svelte/reactivity";
 
 	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
@@ -32,16 +25,16 @@
 
 	import { timeFormat, type TitleContext } from "$lib/common";
 
-	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
+	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
 	import { messageSearch } from "$lib/twitch/logs";
-
-	import * as TwitchServices from "$lib/twitch/services/index.js";
 
 	import instances from "./instances.json";
 
 	getContext<TitleContext>("title").set("Firehose");
 
 	const lineHeight = 20;
+
+	const chat = new ChatSource();
 
 	let logsList: ReturnType<typeof VirtualList> | undefined = $state();
 
@@ -64,20 +57,12 @@
 	// let logsBox: HTMLDivElement | null = $state(null);
 	let searchInput: HTMLInputElement | null = $state(null);
 
-	// Emotes
-	const globalEmotes = new SvelteMap<string, EmoteProps>();
-	let emoteUpdates = $state(0);
-
-	// Badges
-	const globalBadges = new SvelteMap<string, BadgeProps>();
-	let badgeUpdates = $state(0);
-
 	let instanceValue = $state("");
 	let searchValue = $state("");
 
 	onMount(() => {
-		fetchGlobalBadges();
-		fetchGlobalEmotes();
+		chat.loadGlobalBadges();
+		chat.loadGlobalEmotes();
 
 		const q = page.url.searchParams;
 
@@ -168,144 +153,6 @@
 			}
 		});
 	});
-
-	const getBadges = (msg: Message) => {
-		const badges: { id: string; src: string; title: string; alt: string }[] = [];
-
-		const badgeList = msg.tags["badges"].split(",");
-		for (const badge of badgeList) {
-			const [id, version] = badge.split("/");
-			const key = `${id}/${version}`;
-
-			const globalBadge = globalBadges.get(key);
-			if (globalBadge) {
-				badges.push({
-					id,
-					src: globalBadge.url,
-					title: globalBadge.title,
-					alt: globalBadge.title,
-				});
-			}
-		}
-
-		return badges;
-	};
-
-	const fetchGlobalBadges = async () => {
-		const globalBadgesList = await TwitchServices.IVR.getGlobalBadges();
-
-		globalBadgesList.forEach((badge) => {
-			badge.versions.forEach((version) => {
-				globalBadges.set(`${badge.set_id}/${version.id}`, {
-					url: version.image_url_1x,
-					title: version.title,
-				});
-			});
-		});
-
-		badgeUpdates++;
-	};
-
-	const fetchGlobalEmotes = async () => {
-		const [stvEmotes, bttvEmotes, ffzEmotes] = (
-			await Promise.allSettled([TwitchServices.SevenTV.getGlobalEmotes(), TwitchServices.BetterTTV.getGlobalEmotes(), TwitchServices.FrankerFaceZ.getGlobalEmotes()])
-		).map((p) => (p.status === "fulfilled" ? p.value : []));
-
-		stvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name!, {
-				url: `https://7tv.app/emotes/${emote.id}`,
-				src: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
-			});
-		});
-
-		bttvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.code!, {
-				url: `https://betterttv.com/emotes/${emote.id}`,
-				src: `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`,
-			});
-		});
-
-		ffzEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name!, {
-				url: `https://www.frankerfacez.com/emoticon/${emote.id}-${emote.name}`,
-				src: `https://cdn.frankerfacez.com/emote/${emote.id}/1`,
-			});
-		});
-
-		emoteUpdates++;
-	};
-
-	const parseMessage = (msg: Message) => {
-		let components: ChatComponents = [];
-
-		let twitchEmotes: TMIEmote[] = [];
-		const systemMsg = msg.tags["system-msg"];
-		const posOffset = systemMsg ? [...systemMsg].length + 1 : 0;
-		if (msg.tags["emotes"]) {
-			for (const e of msg.tags["emotes"].split("/")) {
-				const [id, positions] = e.split(":");
-				for (const pos of positions.split(",")) {
-					twitchEmotes.push({ id, pos: pos.split("-").map((s) => Number(s) + posOffset) });
-				}
-			}
-			twitchEmotes = twitchEmotes.sort((a, b) => a.pos[0] - b.pos[0]);
-		}
-
-		let cum = "";
-		const unicode = [...msg.text];
-		for (let i = 0; i < unicode.length; i++) {
-			const c = unicode[i];
-
-			const nextEmote = twitchEmotes[0];
-			if (nextEmote?.pos[0] === i) {
-				twitchEmotes.shift();
-				components.push({
-					type: Emote,
-					props: {
-						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
-						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
-						url: `https://emotes.susgee.dev/emote/${nextEmote.id}`,
-					},
-				});
-				i = nextEmote.pos[1];
-				continue;
-			}
-
-			if (c === " ") {
-				if (cum.trim()) {
-					processWord(cum, components);
-					cum = "";
-				}
-				components.push({ type: TextFragment, props: { text: " " } });
-			} else {
-				cum += c;
-			}
-
-			if (i === unicode.length - 1 && cum.trim()) {
-				processWord(cum, components);
-			}
-		}
-
-		return components;
-	};
-
-	const processWord = (word: string, components: ChatComponents) => {
-		const emoteProps = globalEmotes.get(word);
-		if (emoteProps) {
-			components.push({ type: Emote, props: { name: word, ...emoteProps } });
-			return;
-		}
-
-		const url = linkParser.parse(word);
-		if (url) {
-			components.push({
-				type: Link,
-				props: { href: `${url.protocol || "//"}${url.host}${url.rest}`, text: word },
-			});
-		} else {
-			components.push({ type: TextFragment, props: { text: word } });
-		}
-	};
 </script>
 
 <svelte:head>
@@ -368,26 +215,8 @@
 								</a>
 							</span>
 							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
-							{#if msg.tags["badges"]}
-								<span class="inline-flex select-none gap-x-0.5 empty:hidden">
-									{#key badgeUpdates}
-										{#each getBadges(msg) as badge (badge.id)}
-											<Badge src={badge.src} title={badge.title} alt="" />
-										{/each}
-									{/key}
-								</span>
-							{/if}
-							<span class="h-5">
-								<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-									{msg.displayName}:
-								</span>
-								<span class={[msg.tags["target-user-id"] && "text-neutral-500"]}>
-									{#key emoteUpdates}
-										{#each parseMessage(msg) as { type: Component, props }, index (index)}
-											<Component {...props} />
-										{/each}
-									{/key}
-								</span>
+							<span class="h-5 w-max">
+								<MessageContent {chat} {msg} />
 							</span>
 						</div>
 					{/snippet}

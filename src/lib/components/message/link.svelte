@@ -1,5 +1,5 @@
-<script>
-	let { text, href } = $props();
+<script lang="ts">
+	let { text, href }: { text: string; href: string } = $props();
 </script>
 
-<a {href} target="_blank" class="text-blue-600 hover:underline dark:text-primary" rel="noopener noreferrer">{text}</a>
+<a {href} target="_blank" rel="noopener noreferrer" class="text-blue-600 hover:underline dark:text-primary">{text}</a>

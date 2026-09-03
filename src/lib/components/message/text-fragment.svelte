@@ -1,5 +1,5 @@
-<script>
-	let { text } = $props();
+<script lang="ts">
+	let { text }: { text: string } = $props();
 </script>
 
 {text}
