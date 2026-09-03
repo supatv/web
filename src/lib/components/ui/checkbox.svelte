@@ -13,7 +13,7 @@
 	bind:checked
 	bind:indeterminate
 	class={cn(
-		"ring-focus border-line bg-raised grid size-6 shrink-0 place-items-center rounded-[5px] border transition-colors",
+		"ring-focus border-line bg-surface grid size-6 shrink-0 place-items-center rounded-[5px] border transition-colors",
 		"hover:border-accent checked:bg-accent checked:border-accent checked:text-accent-ink disabled:opacity-50",
 		className
 	)}

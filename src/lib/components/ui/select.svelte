@@ -4,7 +4,7 @@
 	export type SelectOption = { value: string; label: string; separatorBefore?: boolean };
 
 	export const selectTrigger = tv({
-		base: "field-focus border-line bg-raised text-text flex items-center justify-between gap-2 rounded-md border transition-colors hover:border-accent focus-visible:border-accent open:border-accent disabled:opacity-50",
+		base: "field-focus border-line bg-surface text-text hover:border-accent focus-visible:border-accent open:border-accent flex items-center justify-between gap-2 rounded-md border transition-colors disabled:opacity-50",
 		variants: {
 			size: {
 				sm: "h-9 px-2.5 text-sm",
@@ -37,7 +37,19 @@
 		"aria-label"?: string;
 	};
 
-	let { value = $bindable(""), open = $bindable(false), options, size, onValueChange, placeholder = "Select", disabled = false, id, class: className, contentClass, "aria-label": ariaLabel }: Props = $props();
+	let {
+		value = $bindable(""),
+		open = $bindable(false),
+		options,
+		size,
+		onValueChange,
+		placeholder = "Select",
+		disabled = false,
+		id,
+		class: className,
+		contentClass,
+		"aria-label": ariaLabel,
+	}: Props = $props();
 
 	const label = $derived(options.find((o) => o.value === value)?.label ?? placeholder);
 </script>
