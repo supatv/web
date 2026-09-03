@@ -95,7 +95,7 @@
 								active ? "bg-raised text-text font-medium" : "text-dim hover:bg-raised/60 hover:text-text",
 							]}
 						>
-							<item.icon class={["size-4 shrink-0", active && "text-accent"]} />
+							<item.icon class={["size-4 shrink-0", active && "text-accent fill-accent/25"]} />
 							<span>{item.name}</span>
 						</a>
 					{/each}
