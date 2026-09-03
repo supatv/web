@@ -86,7 +86,7 @@
 								<CalendarPrimitive.Cell {date} month={month.value} class="p-0">
 									<CalendarPrimitive.Day
 										class={cn(
-											"ring-focus grid size-9 cursor-pointer place-items-center rounded-md text-sm transition-colors select-none",
+											"ring-focus grid size-9 place-items-center rounded-md text-sm transition-colors select-none",
 											"hover:bg-raised data-selected:bg-accent data-selected:text-accent-ink data-selected:font-semibold",
 											"data-outside-month:opacity-30 data-unavailable:pointer-events-none data-unavailable:opacity-25",
 											"data-today:text-accent data-selected:data-today:text-accent-ink data-today:font-semibold"

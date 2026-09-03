@@ -73,6 +73,16 @@
 		color: var(--text);
 	}
 
+	/* browsers default `button` to an arrow; everything clickable here should read as clickable */
+	button:not(:disabled),
+	summary,
+	[role="button"]:not([aria-disabled="true"]),
+	[role="option"],
+	[role="tab"],
+	label:has(input[type="checkbox"], input[type="radio"]) {
+		cursor: pointer;
+	}
+
 	/* the interface is mostly counts and timestamps; keep them from shifting as they tick */
 	.tnum {
 		font-variant-numeric: tabular-nums;
