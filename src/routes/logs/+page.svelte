@@ -587,7 +587,7 @@
 			<Label for="input-channel">Channel <span class="text-accent">required</span></Label>
 			<Input
 				id="input-channel"
-				class="w-44"
+				class={showAutocomplete ? "w-44 rounded-b-none" : "w-44"}
 				maxlength={25}
 				bind:ref={channelInput}
 				bind:value={inputChannelName}
@@ -599,11 +599,12 @@
 			/>
 
 			{#if showAutocomplete}
-				<Panel class="absolute top-full right-0 left-0 z-20 mt-1 overflow-hidden p-1 shadow-xl">
+				<!-- one shell with the field: flush under it, squared at the join and carrying the same accent border, so the pair reads as one outline -->
+				<Panel class="border-accent absolute top-full right-0 left-0 z-20 overflow-hidden rounded-t-none rounded-b-md border-t-0 p-1 shadow-lg">
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					{#each foundChannels as c, index (c.name)}
 						<div
-							class={["flex h-9 cursor-pointer items-center rounded-[5px] px-2.5 text-base transition-colors", index === selectedIndex ? "bg-raised text-text" : "text-dim"]}
+							class={["flex h-9 cursor-pointer items-center rounded-[5px] px-2 text-base transition-colors", index === selectedIndex ? "bg-raised text-text" : "text-dim"]}
 							onmouseenter={() => (selectedIndex = index)}
 							onmousedown={() => selectResult(index)}
 						>

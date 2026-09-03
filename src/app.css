@@ -80,14 +80,18 @@
 }
 
 @layer components {
-	/* one focus treatment everywhere, in the current tool's accent */
-	.ring-focus {
+	.ring-focus,
+	.field-focus {
 		outline: 2px solid transparent;
 		outline-offset: 2px;
 	}
 
 	.ring-focus:focus-visible {
 		outline-color: var(--accent);
+	}
+
+	.field-focus {
+		outline-offset: 0;
 	}
 }
 

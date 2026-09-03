@@ -2,7 +2,7 @@
 	import { tv, type VariantProps } from "tailwind-variants";
 
 	export const input = tv({
-		base: "ring-focus border-line bg-raised text-text placeholder:text-dim/70 w-full rounded-md border transition-colors hover:border-line/80 focus:border-accent disabled:opacity-50",
+		base: "field-focus border-line bg-raised text-text placeholder:text-dim/70 w-full rounded-md border transition-colors hover:border-line/80 focus:border-accent disabled:opacity-50",
 		variants: {
 			size: {
 				sm: "h-9 px-2.5 text-sm",
