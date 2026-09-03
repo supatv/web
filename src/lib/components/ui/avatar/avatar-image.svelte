@@ -9,4 +9,9 @@
 	}: AvatarPrimitive.ImageProps = $props();
 </script>
 
-<AvatarPrimitive.Image bind:ref class={cn("aspect-square size-full", className)} {...restProps} />
+<AvatarPrimitive.Image
+	bind:ref
+	data-slot="avatar-image"
+	class={cn("rounded-full aspect-square size-full object-cover", className)}
+	{...restProps}
+/>

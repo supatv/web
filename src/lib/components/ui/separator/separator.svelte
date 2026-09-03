@@ -5,18 +5,19 @@
 	let {
 		ref = $bindable(null),
 		class: className,
-		orientation = "horizontal",
+		"data-slot": dataSlot = "separator",
 		...restProps
 	}: SeparatorPrimitive.RootProps = $props();
 </script>
 
 <SeparatorPrimitive.Root
 	bind:ref
+	data-slot={dataSlot}
 	class={cn(
-		"bg-border shrink-0",
-		orientation === "horizontal" ? "h-px w-full" : "min-h-full w-px",
+		"shrink-0 bg-border data-[orientation=horizontal]:h-px data-[orientation=horizontal]:w-full data-[orientation=vertical]:w-px",
+		// this is different in shadcn/ui but self-stretch breaks things for us
+		"data-[orientation=vertical]:h-full",
 		className
 	)}
-	{orientation}
 	{...restProps}
 />

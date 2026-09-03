@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { Slider as SliderPrimitive, type WithoutChildrenOrChild } from "bits-ui";
-	import { cn } from "$lib/utils.js";
+	import { Slider as SliderPrimitive } from "bits-ui";
+	import { cn, type WithoutChildrenOrChild } from "$lib/utils.js";
 
 	let {
 		ref = $bindable(null),
@@ -18,26 +18,34 @@ get along, so we shut typescript up by casting `value` to `never`.
 <SliderPrimitive.Root
 	bind:ref
 	bind:value={value as never}
+	data-slot="slider"
 	{orientation}
 	class={cn(
-		"relative flex touch-none select-none items-center data-[orientation='vertical']:h-full data-[orientation='vertical']:min-h-44 data-[orientation='horizontal']:w-full data-[orientation='vertical']:w-auto data-[orientation='vertical']:flex-col",
+		"data-vertical:min-h-40 relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:w-auto data-vertical:flex-col",
 		className
 	)}
 	{...restProps}
 >
-	{#snippet children({ thumbs })}
+	{#snippet children({ thumbItems })}
 		<span
+			data-slot="slider-track"
 			data-orientation={orientation}
-			class="bg-secondary relative grow overflow-hidden rounded-full data-[orientation='horizontal']:h-2 data-[orientation='vertical']:h-full data-[orientation='horizontal']:w-full data-[orientation='vertical']:w-2"
+			class={cn(
+				"rounded-full bg-muted data-horizontal:h-1 data-horizontal:w-full data-vertical:h-full data-vertical:w-1 relative grow overflow-hidden bg-muted data-horizontal:w-full data-vertical:h-full"
+			)}
 		>
 			<SliderPrimitive.Range
-				class="bg-primary absolute data-[orientation='horizontal']:h-full data-[orientation='vertical']:w-full"
+				data-slot="slider-range"
+				class={cn(
+					"bg-primary absolute select-none data-horizontal:h-full data-vertical:w-full"
+				)}
 			/>
 		</span>
-		{#each thumbs as thumb (thumb)}
+		{#each thumbItems as thumb (thumb.index)}
 			<SliderPrimitive.Thumb
-				index={thumb}
-				class="border-primary bg-background ring-offset-background focus-visible:ring-ring block size-5 rounded-full border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50"
+				data-slot="slider-thumb"
+				index={thumb.index}
+				class="relative size-3 rounded-full border border-ring bg-white ring-ring/50 transition-[color,box-shadow] after:absolute after:-inset-2 hover:ring-3 focus-visible:ring-3 focus-visible:outline-hidden active:ring-3 block shrink-0 select-none disabled:pointer-events-none disabled:opacity-50"
 			/>
 		{/each}
 	{/snippet}

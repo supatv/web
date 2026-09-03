@@ -198,7 +198,7 @@
 		</div>
 
 		<div class="flex min-h-0 w-full flex-1">
-			<Card.Root class="relative h-full w-full flex-col overflow-hidden leading-5">
+			<Card.Root class="relative h-full w-full flex-col gap-0 overflow-hidden py-0 text-base leading-5">
 				<VirtualList
 					bind:this={logsList}
 					itemCount={filteredChatLogs.length}

@@ -618,7 +618,7 @@
 			<div class="flex flex-1">
 				<div class="flex gap-2">
 					<div class="relative flex flex-col">
-						<Label for="input-channel" class="text-base">
+						<Label for="input-channel" class="gap-0 text-base">
 							Channel<span class="text-red-500">*</span>
 						</Label>
 						<Input
@@ -653,7 +653,7 @@
 					</div>
 
 					<div class="flex flex-col">
-						<Label for="input-user" class="text-base">
+						<Label for="input-user" class="gap-0 text-base">
 							User{#if inputQuery.trim()}<span class="text-red-500">*</span>{/if}
 						</Label>
 						<Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="Username or id:123" />
@@ -913,7 +913,7 @@
 		<p class="text-red-500">{error}</p>
 	{:else if chatLogs.length}
 		<div class="flex min-h-0 w-full flex-1">
-			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
+			<Card.Root class="h-full w-full flex-col gap-0 overflow-hidden py-0 text-base leading-5">
 				<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll py-2">
 					{#snippet item(index, style)}
 						{@const msg = filteredChatLogs[index]}

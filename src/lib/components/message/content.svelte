@@ -8,7 +8,7 @@
 	let { chat, msg }: { chat: ChatSource; msg: Message } = $props();
 
 	const isNotice = $derived(Boolean(msg.tags["target-user-id"]) || !msg.displayName);
-	const nameColor = $derived(`hsl(from ${msg.tags["color"] || "gray"} h s ${$mode === "light" ? "40%" : "70%"})`);
+	const nameColor = $derived(`hsl(from ${msg.tags["color"] || "gray"} h s ${mode.current === "light" ? "40%" : "70%"})`);
 </script>
 
 {#if msg.tags["badges"]}
