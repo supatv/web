@@ -186,10 +186,10 @@
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div role="button" tabindex="0" onclick={() => openFile(index)} class="rounded-sm" id="file-card-{index}">
 					<div class="relative overflow-hidden">
-						<span class="absolute right-0 top-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs tabular-nums text-white" title={date.format(dateTimeFormat)}>
+						<span class="absolute top-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white tabular-nums" title={date.format(dateTimeFormat)}>
 							{date.format("MMM 'YY")}
 						</span>
-						<span class="absolute bottom-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs tabular-nums text-white">
+						<span class="absolute right-0 bottom-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white tabular-nums">
 							{formatDuration(file.duration, "s")}
 						</span>
 						<Image src="https://fi.supa.sh/.archive/jake/thumb/{file.id}.jpg" loading="lazy" class="aspect-video w-full rounded-sm" />
@@ -215,8 +215,8 @@
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" tabindex="-1">
 		{#if files}
 			<div class="flex h-full w-full flex-col md:flex-row">
-				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="block bg-zinc-200 py-1 text-center text-lg font-medium dark:bg-zinc-800 md:hidden">Close</div>
-				<div class="order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:order-none md:h-full md:min-w-80 md:max-w-80">
+				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="block bg-zinc-200 py-1 text-center text-lg font-medium md:hidden dark:bg-zinc-800">Close</div>
+				<div class="order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain bg-zinc-100 md:order-0 md:h-full md:max-w-80 md:min-w-80 dark:bg-zinc-900">
 					<VirtualList bind:this={fileList} itemCount={fileEntries.length} {itemSize} class="overflow-x-hidden">
 						{#snippet item(index, style)}
 							{@const file = fileEntries[index]}
@@ -234,14 +234,14 @@
 								}}
 							>
 								<div class="relative aspect-video h-full">
-									<span class="absolute bottom-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs tabular-nums text-white">
+									<span class="absolute right-0 bottom-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white tabular-nums">
 										{formatDuration(file.duration, "s")}
 									</span>
 									<Image src="https://fi.supa.sh/.archive/jake/thumb/{file.id}.jpg" class="h-full rounded-sm" />
 								</div>
-								<div class="flex min-w-0 flex-col break-words">
+								<div class="flex min-w-0 flex-col wrap-break-word">
 									<span class="line-clamp-2 text-sm" title={file.title}>{file.title}</span>
-									<span class="mt-auto text-xs text-muted-foreground">{dayjs(file.created_at * 1000).format(dateTimeFormat)}</span>
+									<span class="text-muted-foreground mt-auto text-xs">{dayjs(file.created_at * 1000).format(dateTimeFormat)}</span>
 								</div>
 							</div>
 						{/snippet}
@@ -272,27 +272,27 @@
 						onclick={(e) => e.stopPropagation()}
 					></video>
 				</div>
-				<div class="flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:min-w-80 md:max-w-80">
+				<div class="flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain bg-zinc-100 md:max-w-80 md:min-w-80 dark:bg-zinc-900">
 					<div class="hidden justify-center border-b py-2 md:flex">
 						<p class="text-lg font-semibold">Chat Replay</p>
 					</div>
 					{#if chatError}
 						<div class="p-2 text-red-500">{chatError}</div>
 					{:else if chatLogs === null}
-						<div class="p-2 text-muted-foreground">Loading chat logs...</div>
+						<div class="text-muted-foreground p-2">Loading chat logs...</div>
 					{:else if chatLogs.length === 0}
-						<div class="p-2 text-muted-foreground">No chat logs found for this date :(</div>
+						<div class="text-muted-foreground p-2">No chat logs found for this date :(</div>
 					{:else}
 						<div class="flex h-full flex-col gap-y-1.5 overflow-y-scroll p-2 leading-tight" bind:this={chatList}>
 							{#each chatBuffer as msg, index (index)}
 								{#if isNewMessageDivider(msg, index)}
-									<div class="my-2 flex items-center text-muted-foreground">
-										<div class="flex-grow border-t border-muted-foreground"></div>
+									<div class="text-muted-foreground my-2 flex items-center">
+										<div class="border-muted-foreground grow border-t"></div>
 										<span class="mx-1">New messages</span>
-										<div class="flex-grow border-t border-muted-foreground"></div>
+										<div class="border-muted-foreground grow border-t"></div>
 									</div>
 								{/if}
-								<div class="text-wrap break-words">
+								<div class="text-wrap wrap-break-word">
 									<MessageContent {chat} {msg} />
 								</div>
 							{/each}

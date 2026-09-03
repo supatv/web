@@ -68,7 +68,7 @@
 <svelte:window on:keydown={windowKeydown} bind:scrollY={windowScrollY} />
 
 <button
-	class="fixed bottom-5 right-5 z-50 rounded-md bg-zinc-100 p-2 opacity-80 transition-opacity hover:opacity-100 dark:bg-zinc-900"
+	class="fixed right-5 bottom-5 z-50 rounded-md bg-zinc-100 p-2 opacity-80 transition-opacity hover:opacity-100 dark:bg-zinc-900"
 	aria-disabled={loading}
 	oncontextmenu={(e) => e.preventDefault()}
 	onmouseup={(e) => {
@@ -115,7 +115,7 @@
 
 <div class="flex w-full max-w-[2500px] flex-col self-center p-5">
 	<h1 class="text-4xl font-bold">
-		<span class="bg-gradient-to-r from-blue-700 via-yellow-300 to-red-600 bg-clip-text font-extrabold text-transparent">Romanian</span> Livestreams
+		<span class="bg-linear-to-r from-blue-700 via-yellow-300 to-red-600 bg-clip-text font-extrabold text-transparent">Romanian</span> Livestreams
 	</h1>
 
 	<span class="font-light">

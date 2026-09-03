@@ -208,13 +208,13 @@
 				>
 					{#snippet item(index, style)}
 						{@const msg = filteredChatLogs[index]}
-						<div class="flex h-5 w-max min-w-full flex-row items-center gap-x-1 text-nowrap px-3" {style}>
-							<span class="inline-block min-w-48 max-w-48 overflow-hidden">
+						<div class="flex h-5 w-max min-w-full flex-row items-center gap-x-1 px-3 text-nowrap" {style}>
+							<span class="inline-block max-w-48 min-w-48 overflow-hidden">
 								<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel} class="font-bold text-neutral-500">
 									#{msg.channel}
 								</a>
 							</span>
-							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
+							<span class="text-xs text-neutral-500 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
 							<span class="h-5 w-max">
 								<MessageContent {chat} {msg} />
 							</span>
@@ -222,7 +222,7 @@
 					{/snippet}
 				</VirtualList>
 				{#if scrollPaused}
-					<div class="pointer-events-none absolute bottom-2 left-0 right-0 flex h-8 items-center justify-center">
+					<div class="pointer-events-none absolute right-0 bottom-2 left-0 flex h-8 items-center justify-center">
 						<Button variant="secondary" class="pointer-events-auto px-8" onclick={resumeScroll}>
 							<ChevronsDownIcon class="size-4" />
 							More messages below

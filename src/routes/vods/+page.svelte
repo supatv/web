@@ -50,7 +50,7 @@
 	</div>
 
 	{#if bucketUsage}
-		<div class="mt-auto flex items-center whitespace-pre pt-2 text-sm text-gray-500">
+		<div class="mt-auto flex items-center pt-2 text-sm whitespace-pre text-gray-500">
 			<HardDriveIcon class="inline size-4" />
 			Active content: {humanFileSize(bucketUsage.metadata_bytes + bucketUsage.payload_bytes)}
 		</div>

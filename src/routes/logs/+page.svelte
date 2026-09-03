@@ -634,7 +634,7 @@
 						/>
 
 						{#if showAutocomplete}
-							<div class="absolute left-0 right-0 top-full z-10 mt-1">
+							<div class="absolute top-full right-0 left-0 z-10 mt-1">
 								<ScrollArea class="flex-1 rounded-md">
 									<!-- svelte-ignore a11y_no_static_element_interactions -->
 									{#each foundChannels as c, index (c.name)}
@@ -691,7 +691,7 @@
 										<h3 class="text-lg font-semibold">
 											Total Messages
 											{#if userName}
-												<span class="font-light text-muted-foreground">
+												<span class="text-muted-foreground font-light">
 													by <span class="font-semibold">{channelStats?.userLogin || userName}</span>
 												</span>
 											{/if}
@@ -709,14 +709,14 @@
 											<div class="space-y-2">
 												{#if channelStats?.topChatters}
 													{#each channelStats.topChatters as chatter, index (chatter.userId)}
-														<div class="flex items-center justify-between gap-2 text-nowrap border-b pb-2 last:border-0">
+														<div class="flex items-center justify-between gap-2 border-b pb-2 text-nowrap last:border-0">
 															<div class="flex items-center gap-2 overflow-hidden">
-																<span class="ml-4 text-right tabular-nums text-muted-foreground">{index + 1}.</span>
-																<span class="overflow-hidden text-ellipsis font-medium" title={chatter.userLogin}>
+																<span class="text-muted-foreground ml-4 text-right tabular-nums">{index + 1}.</span>
+																<span class="overflow-hidden font-medium text-ellipsis" title={chatter.userLogin}>
 																	{chatter.userLogin || `id:${chatter.userId}`}
 																</span>
 															</div>
-															<span class="tabular-nums text-muted-foreground">{chatter.messageCount.toLocaleString()}</span>
+															<span class="text-muted-foreground tabular-nums">{chatter.messageCount.toLocaleString()}</span>
 														</div>
 													{/each}
 												{:else}
@@ -748,7 +748,7 @@
 							class={cn(
 								buttonVariants({
 									variant: "outline",
-									class: "flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm tabular-nums hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
+									class: "focus:ring-ring flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm tabular-nums hover:bg-transparent focus:ring-2 focus:ring-offset-2 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
 								})
 							)}
 						>
@@ -822,7 +822,7 @@
 														<Calendar.GridRow class="mt-2 w-full">
 															{#each weekDates as date (date)}
 																<Calendar.Cell
-																	class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none [&[data-unavailable]]:pointer-events-none [&[data-unavailable]]:opacity-50"
+																	class="select-none data-disabled:pointer-events-none data-selected:pointer-events-none data-unavailable:pointer-events-none data-unavailable:opacity-50"
 																	{date}
 																	month={month.value}
 																>
@@ -861,11 +861,11 @@
 				{/if}
 			{/if}
 			{#if chatLogs.length}
-				<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
+				<div class="order-1 flex flex-1 basis-full gap-1 md:order-0 md:basis-auto">
 					<form class="flex-1">
 						<div class="relative flex items-center">
 							<Input id="input-search" maxlength={500} placeholder="Find..." class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
-							<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
+							<span class="text-muted-foreground pointer-events-none absolute right-2 text-xs tabular-nums select-none">
 								{displayMessageCount}
 							</span>
 						</div>
@@ -928,11 +928,11 @@
 							<div
 								class={[
 									"flex h-5 w-full items-center gap-x-1 px-3",
-									isNewDay && "-mt-[1px] border-t border-dashed border-black/25 dark:border-white/10",
+									isNewDay && "-mt-px border-t border-dashed border-black/25 dark:border-white/10",
 									(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
 								]}
 							>
-								<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
+								<span class="text-xs text-neutral-500 tabular-nums select-none">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
 								<span class="h-5 w-max">
 									{#if msg.tags["target-msg-id"]}
 										{@const msgDeleted = chatLogs.find((m) => m.id === msg.tags["target-msg-id"])}
@@ -956,7 +956,7 @@
 										href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
 										target="_blank"
 									>
-										<ExternalLinkIcon class="!size-3" />
+										<ExternalLinkIcon class="size-3!" />
 									</Button>
 								{/if}
 							</div>

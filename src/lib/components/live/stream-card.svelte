@@ -34,7 +34,7 @@
 
 <div onmouseenter={() => (focused = true)} onmouseleave={() => (focused = false)} role="link" tabindex="-1" class="transition-transform hover:-translate-y-1">
 	<div
-		class={["relative aspect-video size-full overflow-hidden rounded transition", active && "ring-2 ring-ring"]}
+		class={["relative aspect-video size-full overflow-hidden rounded transition", active && "ring-ring ring-2"]}
 		role="button"
 		tabindex="-1"
 		onmouseup={(e) => {
@@ -58,7 +58,7 @@
 			</div>
 		{/if}
 
-		<span class="absolute right-0 top-0 z-30 m-1 rounded-sm bg-black/60 px-1 py-0.5 text-xs text-neutral-100">
+		<span class="absolute top-0 right-0 z-30 m-1 rounded-sm bg-black/60 px-1 py-0.5 text-xs text-neutral-100">
 			{formatUptime(stream.started)}
 		</span>
 
@@ -82,7 +82,7 @@
 					<span class="overflow-hidden" title={stream.name}>{stream.name}</span>
 					{#if stream.type === "partner"}
 						<span title="Partner">
-							<BadgeCheckIcon class="size-5 min-w-5 fill-purple-400 text-background dark:fill-purple-300" />
+							<BadgeCheckIcon class="text-background size-5 min-w-5 fill-purple-400 dark:fill-purple-300" />
 						</span>
 					{:else if stream.type === "affiliate"}
 						<span title="Affiliate">
@@ -98,9 +98,9 @@
 
 			<!-- <p class="text-sm capitalize text-purple-500 dark:text-purple-300">{stream.type}</p> -->
 
-			<p class="w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm" title={stream.title}>{stream.title}</p>
+			<p class="w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap" title={stream.title}>{stream.title}</p>
 
-			<p class="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted-foreground" title={stream.game}>{stream.game}</p>
+			<p class="text-muted-foreground overflow-hidden text-xs text-ellipsis whitespace-nowrap" title={stream.game}>{stream.game}</p>
 		</div>
 	</div>
 </div>

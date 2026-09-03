@@ -95,8 +95,8 @@
 		<div class="group sticky top-1 z-50 mx-1 flex w-fit gap-1 rounded-md transition-all hover:bg-zinc-300/50 hover:backdrop-blur dark:hover:bg-zinc-600/50">
 			<Sidebar.Trigger class="size-7" />
 			<Button onclick={toggleMode} variant="ghost" size="icon" class="size-7">
-				<SunIcon class="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-				<MoonIcon class="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+				<SunIcon class="scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
+				<MoonIcon class="absolute scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
 				<span class="sr-only">Toggle theme</span>
 			</Button>
 			{#if page.url.pathname === "/live"}
@@ -104,7 +104,7 @@
 					{#if $gridCols === null}
 						<Grid2X2Icon />
 					{:else}
-						<span class="text-base font-[400] tabular-nums">{$gridCols}</span>
+						<span class="text-base font-normal tabular-nums">{$gridCols}</span>
 					{/if}
 					<span class="sr-only">Change number of grid columns</span>
 				</Button>
@@ -126,7 +126,7 @@
 						type="single"
 						max={1}
 						step={0.01}
-						class="mr-1 min-w-20 opacity-0 transition-opacity group-hover:opacity-100 [&:has([data-active])]:opacity-100 [&>*]:!ring-0 [&>*]:!ring-offset-0"
+						class="mr-1 min-w-20 opacity-0 transition-opacity *:ring-0! *:ring-offset-0! group-hover:opacity-100 has-data-active:opacity-100"
 						onValueCommit={(v) => {
 							if (v !== 0) prevVolume = v;
 						}}
@@ -138,7 +138,7 @@
 				</div>
 			{:else if page.url.pathname === "/logs"}
 				<Dialog.Root>
-					<Dialog.Trigger class={[buttonVariants({ variant: "ghost" }), "!h-7 !px-1.5"]}>Removals</Dialog.Trigger>
+					<Dialog.Trigger class={[buttonVariants({ variant: "ghost" }), "h-7! px-1.5!"]}>Removals</Dialog.Trigger>
 					<Dialog.Content>
 						<Dialog.Header>
 							<Dialog.Title>Removals</Dialog.Title>
@@ -146,7 +146,7 @@
 						<p><span class="font-bold">tv.supa.sh</span> is not able to process deletion requests.</p>
 						<p>
 							This service does not store any data itself; it only fetches publicly available logs from
-							<a href="https://logs.zonian.dev/status" target="_blank" rel="nofollow" class="text-blue-600 hover:underline dark:text-primary">third-party sources</a>.
+							<a href="https://logs.zonian.dev/status" target="_blank" rel="nofollow" class="dark:text-primary text-blue-600 hover:underline">third-party sources</a>.
 						</p>
 						<p>Opting out may be possible for each specific instance, depending on that site's own policy.</p>
 						<p>We are not affiliated with Twitch or its creators.</p>

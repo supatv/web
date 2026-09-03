@@ -12,7 +12,7 @@
 </script>
 
 {#if msg.tags["badges"]}
-	<span class="inline-flex select-none gap-x-0.5 align-middle empty:hidden">
+	<span class="inline-flex gap-x-0.5 align-middle select-none empty:hidden">
 		{#key chat.badgeVersion}
 			{#each chat.badges(msg) as badge (badge.id)}
 				<Badge src={badge.src} title={badge.title} />

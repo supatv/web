@@ -60,10 +60,10 @@
 	<div class="flex w-fit flex-wrap items-center justify-center gap-3">
 		<Image src={user.avatar_url} alt="Avatar" class="size-28 rounded-full drop-shadow-md" />
 		<div class="flex flex-col">
-			<span class="break-all text-3xl drop-shadow lg:text-5xl">{user.display_name}</span>
+			<span class="text-3xl break-all drop-shadow lg:text-5xl">{user.display_name}</span>
 			{#if user.unlisted}
 				<div class="mx-1">
-					<span class="flex items-center whitespace-pre text-sm text-gray-500">
+					<span class="flex items-center text-sm whitespace-pre text-gray-500">
 						<EyeOffIcon class="inline size-4" /> Unlisted
 					</span>
 				</div>
@@ -95,7 +95,7 @@
 						{#if stream.state === "RECORDING"}
 							<span class="absolute bottom-0 left-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white">Recording...</span>
 						{/if}
-						<span class="absolute bottom-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs tabular-nums text-white">
+						<span class="absolute right-0 bottom-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white tabular-nums">
 							{#if duration === null}
 								{#key liveTicker}
 									{formatDuration(Date.now() - createdAt.getTime(), "ms")}
