@@ -20,7 +20,7 @@
 
 	import FocusTrap from "$lib/components/focus-trap.svelte";
 
-	import VirtualList from "svelte-tiny-virtual-list";
+	import VirtualList from "$lib/components/virtual-list.svelte";
 
 	import TextFragment from "$lib/components/message/text-fragment.svelte";
 	import Emote from "$lib/components/message/emote.svelte";
@@ -199,7 +199,7 @@
 		isJumpMode = (q.get("sm") || window.localStorage.getItem("logs-search-mode")) === "jump";
 	});
 
-	let logsBoxHeight = $state(0);
+	let logsList: ReturnType<typeof VirtualList> | undefined = $state();
 	let inputChannelName = $state("");
 	let channelName = $state("");
 	let inputUserName = $state("");
@@ -330,9 +330,8 @@
 		if (!filteredChatLogs) return;
 		untrack(async () => {
 			await tick();
-			const virtualList = document.querySelector(".virtual-list-wrapper");
-			if (!virtualList) return;
-			virtualList.scrollTop = scrollFromBottom ? virtualList.scrollHeight : 0;
+			if (scrollFromBottom) logsList?.scrollToBottom();
+			else logsList?.scrollTo(0);
 		});
 	});
 
@@ -366,23 +365,11 @@
 	$effect(() => {
 		const id = page.url.hash.slice(1);
 		if (!id) return;
-		const msgIdx = chatLogs.findIndex((m) => getMessageId(m) === id);
+		const msgIdx = filteredChatLogs.findIndex((m) => getMessageId(m) === id);
 		if (msgIdx === -1) return;
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		scrollFromBottom;
 		untrack(async () => {
 			await tick();
-			const virtualList = document.querySelector(".virtual-list-wrapper");
-			if (!virtualList) return;
-
-			const listHeight = virtualList.clientHeight;
-			const totalHeight = virtualList.scrollHeight;
-
-			if (scrollFromBottom) {
-				virtualList.scrollTop = msgIdx * lineHeight - listHeight * 0.5 + lineHeight;
-			} else {
-				virtualList.scrollTop = totalHeight - msgIdx * lineHeight - listHeight * 0.5 - lineHeight;
-			}
+			logsList?.scrollToIndex(msgIdx, "center");
 		});
 	});
 
@@ -1152,10 +1139,10 @@
 	{#if error}
 		<p class="text-red-500">{error}</p>
 	{:else if chatLogs.length}
-		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
+		<div class="flex min-h-0 w-full flex-1">
 			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
-				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
-					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
+				<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll py-2">
+					{#snippet item(index, style)}
 						{@const msg = filteredChatLogs[index]}
 						{@const msgId = getMessageId(msg)}
 						{@const dayKey = dayjs(msg.timestamp).format("YYYY-MM-DD")}
@@ -1164,64 +1151,66 @@
 						{@const isHashMatch = msgId === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
 						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
-						<div
-							class={[
-								"flex h-5 w-full items-center gap-x-1 px-3",
-								isNewDay && "-mt-[1px] border-t border-dashed border-black/25 dark:border-white/10",
-								(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
-							]}
-						>
-							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
-							{#if msg.tags["badges"]}
-								<span class="inline-flex select-none gap-x-0.5 empty:hidden">
-									{#key badgeUpdates}
-										{#each getBadges(msg) as badge (badge.id)}
-											<Badge src={badge.src} title={badge.title} alt="" />
-										{/each}
-									{/key}
-								</span>
-							{/if}
-							<span class="h-5 w-max">
-								{#if msg.tags["target-msg-id"]}
-									{@const msgDeleted = chatLogs.find((m) => m.id === msg.tags["target-msg-id"])}
-									<span class="text-neutral-500">
-										{#if msgDeleted}
-											<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
-												A message from {msgDeleted.displayName} was deleted
-											</span>
-										{:else}
-											A message was deleted
-										{/if}
-									</span>
-								{:else if msg.tags["target-user-id"] || !msg.displayName}
-									<span class="text-neutral-500">
-										{msg.text}
-									</span>
-								{:else}
-									<span style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-										{msg.displayName}:
-									</span>
-									<span>
-										{#key emoteUpdates}
-											{#each parseMessage(msg) as { type: Component, props }, index (index)}
-												<Component {...props} />
+						<div class="group w-max min-w-full text-nowrap" {style}>
+							<div
+								class={[
+									"flex h-5 w-full items-center gap-x-1 px-3",
+									isNewDay && "-mt-[1px] border-t border-dashed border-black/25 dark:border-white/10",
+									(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
+								]}
+							>
+								<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
+								{#if msg.tags["badges"]}
+									<span class="inline-flex select-none gap-x-0.5 empty:hidden">
+										{#key badgeUpdates}
+											{#each getBadges(msg) as badge (badge.id)}
+												<Badge src={badge.src} title={badge.title} alt="" />
 											{/each}
 										{/key}
 									</span>
 								{/if}
-							</span>
-							{#if msgId !== page.url.hash.slice(1)}
-								<Button
-									variant="outline"
-									class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
-									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
-									target="_blank"
-								>
-									<ExternalLinkIcon class="!size-3" />
-								</Button>
-							{/if}
+								<span class="h-5 w-max">
+									{#if msg.tags["target-msg-id"]}
+										{@const msgDeleted = chatLogs.find((m) => m.id === msg.tags["target-msg-id"])}
+										<span class="text-neutral-500">
+											{#if msgDeleted}
+												<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
+													A message from {msgDeleted.displayName} was deleted
+												</span>
+											{:else}
+												A message was deleted
+											{/if}
+										</span>
+									{:else if msg.tags["target-user-id"] || !msg.displayName}
+										<span class="text-neutral-500">
+											{msg.text}
+										</span>
+									{:else}
+										<span style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+											{msg.displayName}:
+										</span>
+										<span>
+											{#key emoteUpdates}
+												{#each parseMessage(msg) as { type: Component, props }, index (index)}
+													<Component {...props} />
+												{/each}
+											{/key}
+										</span>
+									{/if}
+								</span>
+								{#if msgId !== page.url.hash.slice(1)}
+									<Button
+										variant="outline"
+										class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
+										href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
+										target="_blank"
+									>
+										<ExternalLinkIcon class="!size-3" />
+									</Button>
+								{/if}
+							</div>
 						</div>
-					</div>
+					{/snippet}
 				</VirtualList>
 			</Card.Root>
 		</div>
@@ -1231,13 +1220,3 @@
 {#if datePopoverOpen || statsPopoverOpen}
 	<FocusTrap />
 {/if}
-
-<style>
-	:global(.virtual-list-wrapper) {
-		overflow: scroll !important;
-
-		padding-top: 0.5rem;
-		padding-bottom: 0.5rem;
-	}
-</style>
-

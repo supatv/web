@@ -19,7 +19,7 @@
 	import Link from "$lib/components/message/link.svelte";
 	import Badge from "$lib/components/message/badge.svelte";
 
-	import VirtualList from "svelte-tiny-virtual-list";
+	import VirtualList from "$lib/components/virtual-list.svelte";
 	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
 
 	import { LoaderCircleIcon } from "@lucide/svelte";
@@ -28,13 +28,21 @@
 
 	getContext<TitleContext>("title").set("The Jake Files");
 
+	type ArchiveFile = {
+		id: string;
+		duration: number;
+		size: number;
+		created_at: number;
+		title: string;
+	};
+
 	const channelId = "94682428";
 
 	const emotesClass = "max-h-7 -my-1 -z-10";
 
-	let listHeight = $state(0);
+	let fileList: ReturnType<typeof VirtualList> | undefined = $state();
 	let chatList: HTMLDivElement | null = $state(null);
-	let itemSize = 96;
+	const itemSize = 96;
 
 	let selectedFile: number | null = $state(null);
 
@@ -53,15 +61,9 @@
 	const globalBadges = new SvelteMap<string, BadgeProps>();
 	let badgeUpdates = $state(0);
 
-	let files:
-		| {
-				id: string;
-				duration: number;
-				size: number;
-				created_at: number;
-				title: string;
-		  }[]
-		| null = $state(null);
+	let files: ArchiveFile[] | null = $state(null);
+
+	const fileEntries: ArchiveFile[] = $derived(files ?? []);
 
 	const fetchFiles = async () => {
 		const res = await fetch("https://fi.supa.sh/.archive/jake/files.json");
@@ -79,9 +81,7 @@
 		currentVideoTime = 0;
 
 		await tick();
-		const virtualList = document.querySelector(".virtual-list-wrapper");
-		if (!virtualList) return;
-		virtualList.scrollTop = index * itemSize - virtualList.clientHeight / 2 + itemSize / 2;
+		fileList?.scrollToIndex(index, "center");
 	};
 
 	let logsController: AbortController | null = null;
@@ -421,34 +421,35 @@
 		{#if files}
 			<div class="flex h-full w-full flex-col md:flex-row">
 				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="block bg-zinc-200 py-1 text-center text-lg font-medium dark:bg-zinc-800 md:hidden">Close</div>
-				<div
-					class="order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:order-none md:h-full md:min-w-80 md:max-w-80"
-					bind:clientHeight={listHeight}
-				>
-					<VirtualList height={listHeight} itemCount={files.length} {itemSize}>
-						<div
-							slot="item"
-							let:index
-							let:style
-							{style}
-							class={["flex h-24 cursor-pointer gap-2 overflow-hidden border-b p-2 hover:bg-zinc-200 hover:dark:bg-zinc-800", index === selectedFile && "bg-zinc-300 dark:bg-zinc-800"]}
-							onclick={(e) => {
-								e.stopPropagation();
-								selectedFile = index;
-							}}
-						>
-							{@const file = files[index]}
-							<div class="relative aspect-video h-full">
-								<span class="absolute bottom-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs tabular-nums text-white">
-									{formatDuration(file.duration, "s")}
-								</span>
-								<Image src="https://fi.supa.sh/.archive/jake/thumb/{file.id}.jpg" class="h-full rounded-sm" />
+				<div class="order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:order-none md:h-full md:min-w-80 md:max-w-80">
+					<VirtualList bind:this={fileList} itemCount={fileEntries.length} {itemSize} class="overflow-x-hidden">
+						{#snippet item(index, style)}
+							{@const file = fileEntries[index]}
+							<!-- svelte-ignore a11y_click_events_have_key_events -->
+							<!-- svelte-ignore a11y_no_static_element_interactions -->
+							<div
+								{style}
+								class={[
+									"flex w-full cursor-pointer gap-2 overflow-hidden border-b p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800",
+									index === selectedFile && "bg-zinc-300 dark:bg-zinc-800",
+								]}
+								onclick={(e) => {
+									e.stopPropagation();
+									selectedFile = index;
+								}}
+							>
+								<div class="relative aspect-video h-full">
+									<span class="absolute bottom-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs tabular-nums text-white">
+										{formatDuration(file.duration, "s")}
+									</span>
+									<Image src="https://fi.supa.sh/.archive/jake/thumb/{file.id}.jpg" class="h-full rounded-sm" />
+								</div>
+								<div class="flex min-w-0 flex-col break-words">
+									<span class="line-clamp-2 text-sm" title={file.title}>{file.title}</span>
+									<span class="mt-auto text-xs text-muted-foreground">{dayjs(file.created_at * 1000).format(dateTimeFormat)}</span>
+								</div>
 							</div>
-							<div class="flex min-w-0 flex-col break-words">
-								<span class="line-clamp-2 text-sm" title={file.title}>{file.title}</span>
-								<span class="mt-auto text-xs text-muted-foreground">{dayjs(file.created_at * 1000).format(dateTimeFormat)}</span>
-							</div>
-						</div>
+						{/snippet}
 					</VirtualList>
 				</div>
 				<div
@@ -525,4 +526,3 @@
 		{/if}
 	</div>
 {/if}
-

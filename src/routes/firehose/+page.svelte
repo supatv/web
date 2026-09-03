@@ -14,7 +14,7 @@
 
 	import FocusTrap from "$lib/components/focus-trap.svelte";
 
-	import VirtualList from "svelte-tiny-virtual-list";
+	import VirtualList from "$lib/components/virtual-list.svelte";
 
 	import TextFragment from "$lib/components/message/text-fragment.svelte";
 	import Emote from "$lib/components/message/emote.svelte";
@@ -41,7 +41,9 @@
 
 	getContext<TitleContext>("title").set("Firehose");
 
-	let logsBoxHeight = $state(0);
+	const lineHeight = 20;
+
+	let logsList: ReturnType<typeof VirtualList> | undefined = $state();
 
 	let error: string | null = $state(null);
 	// let loading = $state(false);
@@ -153,17 +155,9 @@
 
 	let filteredChatLogs = $derived(messageSearch(searchValue, chatLogs, null));
 
-	const logsAfterScroll = ({ detail }: { detail: { event: Event; offset: number } }) => {
-		const el = detail.event.target as HTMLDivElement;
-		const remScroll = Math.abs(el.scrollHeight - el.clientHeight - detail.offset);
-		scrollPaused = remScroll > 24;
-	};
-
 	const resumeScroll = () => {
 		scrollPaused = false;
-		const virtualList = document.querySelector(".virtual-list-wrapper");
-		if (!virtualList) return;
-		virtualList.scrollTop = virtualList.scrollHeight;
+		logsList?.scrollToBottom();
 	};
 
 	$effect(() => {
@@ -356,42 +350,50 @@
 			</div>
 		</div>
 
-		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
-			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
-				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={20} on:afterScroll={logsAfterScroll}>
-					<div class="flex h-5 !w-auto min-w-full flex-row items-center gap-x-1 text-nowrap px-3" slot="item" let:index let:style {style}>
+		<div class="flex min-h-0 w-full flex-1">
+			<Card.Root class="relative h-full w-full flex-col overflow-hidden leading-5">
+				<VirtualList
+					bind:this={logsList}
+					itemCount={filteredChatLogs.length}
+					itemSize={lineHeight}
+					class="overflow-scroll py-2"
+					onscroll={({ distanceFromBottom }) => (scrollPaused = distanceFromBottom > lineHeight)}
+				>
+					{#snippet item(index, style)}
 						{@const msg = filteredChatLogs[index]}
-						<span class="inline-block min-w-48 max-w-48 overflow-hidden">
-							<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel} class="font-bold text-neutral-500">
-								#{msg.channel}
-							</a>
-						</span>
-						<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
-						{#if msg.tags["badges"]}
-							<span class="inline-flex select-none gap-x-0.5 empty:hidden">
-								{#key badgeUpdates}
-									{#each getBadges(msg) as badge (badge.id)}
-										<Badge src={badge.src} title={badge.title} alt="" />
-									{/each}
-								{/key}
+						<div class="flex h-5 w-max min-w-full flex-row items-center gap-x-1 text-nowrap px-3" {style}>
+							<span class="inline-block min-w-48 max-w-48 overflow-hidden">
+								<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel} class="font-bold text-neutral-500">
+									#{msg.channel}
+								</a>
 							</span>
-						{/if}
-						<span class="h-5">
-							<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-								{msg.displayName}:
+							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(timeFormat)}</span>
+							{#if msg.tags["badges"]}
+								<span class="inline-flex select-none gap-x-0.5 empty:hidden">
+									{#key badgeUpdates}
+										{#each getBadges(msg) as badge (badge.id)}
+											<Badge src={badge.src} title={badge.title} alt="" />
+										{/each}
+									{/key}
+								</span>
+							{/if}
+							<span class="h-5">
+								<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
+									{msg.displayName}:
+								</span>
+								<span class={[msg.tags["target-user-id"] && "text-neutral-500"]}>
+									{#key emoteUpdates}
+										{#each parseMessage(msg) as { type: Component, props }, index (index)}
+											<Component {...props} />
+										{/each}
+									{/key}
+								</span>
 							</span>
-							<span class={[msg.tags["target-user-id"] && "text-neutral-500"]}>
-								{#key emoteUpdates}
-									{#each parseMessage(msg) as { type: Component, props }, index (index)}
-										<Component {...props} />
-									{/each}
-								{/key}
-							</span>
-						</span>
-					</div>
+						</div>
+					{/snippet}
 				</VirtualList>
 				{#if scrollPaused}
-					<div class="pointer-events-none absolute bottom-14 left-0 right-0 flex h-8 items-center justify-center">
+					<div class="pointer-events-none absolute bottom-2 left-0 right-0 flex h-8 items-center justify-center">
 						<Button variant="secondary" class="pointer-events-auto px-8" onclick={resumeScroll}>
 							<ChevronsDownIcon class="size-4" />
 							More messages below
@@ -406,12 +408,3 @@
 {#if isPopoverOpen}
 	<FocusTrap />
 {/if}
-
-<style>
-	:global(.virtual-list-wrapper) {
-		overflow: scroll !important;
-
-		padding-top: 0.5rem;
-		padding-bottom: 0.5rem;
-	}
-</style>
