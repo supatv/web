@@ -124,9 +124,9 @@ hue, and keep the neutrals free of any tint. `--signal` is lime rather than gree
 to each other, so signal has to stay far enough from the purple accent to be told apart at those
 opacities, and clear of the orange `--warn`. `+layout.svelte` still derives `tool`
 from the pathname, but only to pick the toolbar. The site mark is
-[logo.svelte](src/lib/components/logo.svelte) — a squircle in `currentColor` with a pulse stroked
-in `var(--accent-ink)`; [static/favicon.svg](static/favicon.svg) is the same geometry with the
-dark-theme values baked in, so edit the two together.
+[logo.svelte](src/lib/components/logo.svelte) — a squircle in `currentColor` with antenna ears and a
+face (eyes, smile, blush) in `var(--accent-ink)`; [static/favicon.svg](static/favicon.svg) is the
+same geometry with the dark-theme values baked in, so edit the two together.
 
 Type is Space Grotesk (`font-display`, headings and numbers) over Inter (body and
 chat rows, chosen for its script coverage); counts and timestamps take the `.tnum` helper.
