@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
+	import { Skeleton } from "$lib/components/ui";
 
 	import { dateTimeFormat, formatDuration, humanFileSize, type TitleContext } from "$lib/common";
 
@@ -103,7 +103,7 @@
 		untrack(async () => {
 			await goto(`?i=${file.id}`, { replaceState: true, keepFocus: true, noScroll: true });
 
-			const style = ["bg-zinc-800", "p-1", "text-zinc-50", "ring-2", "ring-ring"];
+			const style = ["ring-2", "ring-accent", "rounded-md"];
 			document.querySelector(".active-card")?.classList.remove("active-card", ...style);
 			const fileCard = document.getElementById(`file-card-${selectedFile}`);
 			if (!fileCard) return;
@@ -215,8 +215,8 @@
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" tabindex="-1">
 		{#if files}
 			<div class="flex h-full w-full flex-col md:flex-row">
-				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="block bg-zinc-200 py-1 text-center text-lg font-medium md:hidden dark:bg-zinc-800">Close</div>
-				<div class="order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain bg-zinc-100 md:order-0 md:h-full md:max-w-80 md:min-w-80 dark:bg-zinc-900">
+				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="bg-surface border-line block border-b py-2 text-center text-sm font-medium md:hidden">Close</div>
+				<div class="bg-surface border-line order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain border-r md:order-0 md:h-full md:max-w-80 md:min-w-80">
 					<VirtualList bind:this={fileList} itemCount={fileEntries.length} {itemSize} class="overflow-x-hidden">
 						{#snippet item(index, style)}
 							{@const file = fileEntries[index]}
@@ -224,10 +224,7 @@
 							<!-- svelte-ignore a11y_no_static_element_interactions -->
 							<div
 								{style}
-								class={[
-									"flex w-full cursor-pointer gap-2 overflow-hidden border-b p-2 hover:bg-zinc-200 dark:hover:bg-zinc-800",
-									index === selectedFile && "bg-zinc-300 dark:bg-zinc-800",
-								]}
+								class={["border-line hover:bg-raised flex w-full cursor-pointer gap-2 overflow-hidden border-b p-2 transition-colors", index === selectedFile && "bg-raised"]}
 								onclick={(e) => {
 									e.stopPropagation();
 									selectedFile = index;
@@ -241,7 +238,7 @@
 								</div>
 								<div class="flex min-w-0 flex-col wrap-break-word">
 									<span class="line-clamp-2 text-sm" title={file.title}>{file.title}</span>
-									<span class="text-muted-foreground mt-auto text-xs">{dayjs(file.created_at * 1000).format(dateTimeFormat)}</span>
+									<span class="text-dim mt-auto text-xs">{dayjs(file.created_at * 1000).format(dateTimeFormat)}</span>
 								</div>
 							</div>
 						{/snippet}
@@ -272,24 +269,24 @@
 						onclick={(e) => e.stopPropagation()}
 					></video>
 				</div>
-				<div class="flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain bg-zinc-100 md:max-w-80 md:min-w-80 dark:bg-zinc-900">
+				<div class="bg-surface border-line flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain border-l md:max-w-80 md:min-w-80">
 					<div class="hidden justify-center border-b py-2 md:flex">
 						<p class="text-lg font-semibold">Chat Replay</p>
 					</div>
 					{#if chatError}
-						<div class="p-2 text-red-500">{chatError}</div>
+						<div class="text-warn p-2 text-sm">{chatError}</div>
 					{:else if chatLogs === null}
-						<div class="text-muted-foreground p-2">Loading chat logs...</div>
+						<div class="text-dim p-2 text-sm">Loading chat logs...</div>
 					{:else if chatLogs.length === 0}
-						<div class="text-muted-foreground p-2">No chat logs found for this date :(</div>
+						<div class="text-dim p-2 text-sm">No chat logs found for this date :(</div>
 					{:else}
 						<div class="flex h-full flex-col gap-y-1.5 overflow-y-scroll p-2 leading-tight" bind:this={chatList}>
 							{#each chatBuffer as msg, index (index)}
 								{#if isNewMessageDivider(msg, index)}
-									<div class="text-muted-foreground my-2 flex items-center">
-										<div class="border-muted-foreground grow border-t"></div>
+									<div class="text-dim my-2 flex items-center text-xs">
+										<div class="border-line grow border-t"></div>
 										<span class="mx-1">New messages</span>
-										<div class="border-muted-foreground grow border-t"></div>
+										<div class="border-line grow border-t"></div>
 									</div>
 								{/if}
 								<div class="text-wrap wrap-break-word">

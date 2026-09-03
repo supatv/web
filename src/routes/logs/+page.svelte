@@ -1,26 +1,7 @@
 <script lang="ts">
 	import dayjs from "dayjs";
 
-	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
-	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
-	import { Input } from "$lib/components/ui/input/index.js";
-	import { Label } from "$lib/components/ui/label/index.js";
-	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
-
-	import { cn } from "$lib/utils.js";
 	import { CalendarDate, type DateValue } from "@internationalized/date";
-
-	import { Calendar } from "$lib/components/ui/calendar/index.js";
-	import * as Popover from "$lib/components/ui/popover/index.js";
-	import * as Select from "$lib/components/ui/select/index.js";
-	import * as Card from "$lib/components/ui/card/index.js";
-
-	import FocusTrap from "$lib/components/focus-trap.svelte";
-
-	import VirtualList from "$lib/components/virtual-list.svelte";
-
-	import MessageContent from "$lib/components/message/content.svelte";
-
 	import { getContext, onMount, tick, untrack } from "svelte";
 	import { SvelteURLSearchParams } from "svelte/reactivity";
 
@@ -30,8 +11,11 @@
 
 	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon, ChartColumnIcon } from "@lucide/svelte";
 
-	import { compactNumber, dateTimeFormat, type TitleContext } from "$lib/common";
+	import { Button, Calendar, Input, Label, Panel, Popover, Select, Skeleton, type SelectOption } from "$lib/components/ui";
+	import VirtualList from "$lib/components/virtual-list.svelte";
+	import MessageContent from "$lib/components/message/content.svelte";
 
+	import { compactNumber, dateTimeFormat, type TitleContext } from "$lib/common";
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
 	import { messageSearch } from "$lib/twitch/logs";
 
@@ -83,6 +67,13 @@
 		Array.from(availableYears)
 			.map(Number)
 			.sort((a, b) => a - b)
+	);
+
+	const dateOptions: SelectOption[] = $derived(
+		availableDates.map((date, index) => {
+			const value = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`;
+			return { value, label: value, separatorBefore: index > 0 && date.year !== availableDates[index - 1].year };
+		})
 	);
 
 	const availableDateSet = $derived(new Set(availableDates.map((d) => `${d.year}-${d.month}${d.day ? `-${d.day}` : ""}`)));
@@ -589,293 +580,252 @@
 
 <div id="main-fit-screen" class="hidden"></div>
 
-<div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
-	<div class="flex flex-wrap items-end">
-		<h1 class="text-4xl font-bold">Twitch Logs&nbsp;</h1>
+<div class="flex min-h-0 flex-1 flex-col gap-3 p-4">
+	<header class="flex flex-wrap items-baseline gap-x-3">
+		<h1 class="font-display text-2xl font-bold tracking-tight">Logs</h1>
 		{#if channelsCount}
-			<span class="text-xl font-light">for <span class="font-normal">{compactNumber(channelsCount)}</span> channels</span>
+			<p class="text-dim text-sm">
+				<span class="tnum font-display text-text font-semibold">{compactNumber(channelsCount)}</span> channels indexed
+			</p>
+		{/if}
+	</header>
+
+	<form class="flex flex-wrap items-end gap-2" onsubmit={formSubmit}>
+		<div class="relative flex flex-col gap-1">
+			<Label for="input-channel">Channel <span class="text-accent">required</span></Label>
+			<Input
+				id="input-channel"
+				class="w-44"
+				maxlength={25}
+				bind:ref={channelInput}
+				bind:value={inputChannelName}
+				placeholder="Channel or id:123"
+				onkeydown={channelKeydown}
+				oninput={() => (channelTyped = true)}
+				autocomplete="off"
+				autofocus
+			/>
+
+			{#if showAutocomplete}
+				<Panel class="absolute top-full right-0 left-0 z-20 mt-1 overflow-hidden p-1 shadow-xl">
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					{#each foundChannels as c, index (c.name)}
+						<div
+							class={["flex h-7 cursor-pointer items-center rounded-[5px] px-2 text-sm transition-colors", index === selectedIndex ? "bg-raised text-text" : "text-dim"]}
+							onmouseenter={() => (selectedIndex = index)}
+							onmousedown={() => selectResult(index)}
+						>
+							{c.name}
+						</div>
+					{/each}
+				</Panel>
+			{/if}
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label for="input-user"
+				>User {#if inputQuery.trim()}<span class="text-accent">required</span>{/if}</Label
+			>
+			<Input id="input-user" class="w-44" maxlength={25} bind:value={inputUserName} placeholder="Username or id:123" />
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label for="input-query">Query</Label>
+			<Input id="input-query" class="w-44" maxlength={500} bind:value={inputQuery} placeholder="Search every channel" autocomplete="off" />
+		</div>
+
+		<Button type="submit" variant="accent" disabled={loading}>
+			{#if loading}
+				<LoaderCircleIcon class="animate-spin" />
+			{/if}
+			Load
+		</Button>
+
+		{#if chatLogs.length}
+			<Popover bind:open={statsPopoverOpen} align="end" class="w-80 max-w-[90vw] p-4">
+				{#snippet trigger({ props })}
+					<Button {...props} variant="outline" class="ml-auto" title="Channel stats">
+						<ChartColumnIcon />
+						<span class="hidden md:inline">Stats</span>
+					</Button>
+				{/snippet}
+
+				{#if statsError}
+					<p class="text-warn text-sm">{statsError}</p>
+				{:else}
+					<div class="space-y-4">
+						<div>
+							<h3 class="font-display text-dim text-xs font-medium tracking-wide">
+								Messages{#if userName}&nbsp;by {channelStats?.userLogin || userName}{/if}
+							</h3>
+							{#if channelStats}
+								<p class="tnum font-display text-accent mt-0.5 text-3xl font-bold">{channelStats.messageCount.toLocaleString()}</p>
+							{:else}
+								<Skeleton class="mt-1 h-8 w-28" />
+							{/if}
+						</div>
+
+						{#if !userName}
+							<div>
+								<h3 class="font-display text-dim mb-1.5 text-xs font-medium tracking-wide">Top chatters</h3>
+								<ol class="space-y-1">
+									{#if channelStats?.topChatters}
+										{#each channelStats.topChatters as chatter, index (chatter.userId)}
+											<li class="border-line flex items-center justify-between gap-2 border-b pb-1 text-sm text-nowrap last:border-0">
+												<span class="flex min-w-0 items-center gap-2">
+													<span class="tnum text-dim w-4 text-right text-xs">{index + 1}</span>
+													<span class="truncate" title={chatter.userLogin}>{chatter.userLogin || `id:${chatter.userId}`}</span>
+												</span>
+												<span class="tnum text-dim">{chatter.messageCount.toLocaleString()}</span>
+											</li>
+										{/each}
+									{:else}
+										{#each { length: 5 }}
+											<Skeleton class="h-6 w-full" />
+										{/each}
+									{/if}
+								</ol>
+							</div>
+						{/if}
+					</div>
+				{/if}
+			</Popover>
+		{/if}
+	</form>
+
+	<div class="flex flex-wrap items-center gap-1.5">
+		{#if dateContent}
+			{#if dateContent.day}
+				<Popover bind:open={datePopoverOpen}>
+					{#snippet trigger({ props })}
+						<Button {...props} variant="outline" size="sm" class="tnum h-8 w-36 justify-between" disabled={loading}>
+							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
+							<CalendarIcon class="text-dim" />
+						</Button>
+					{/snippet}
+
+					<Calendar
+						type="single"
+						months={monthOptions}
+						years={yearOptions}
+						isDateUnavailable={(date) => !isDateAvailable(date)}
+						onPlaceholderChange={adjustDate}
+						onValueChange={updateDateValue}
+						bind:value={calendarDate}
+					/>
+				</Popover>
+			{:else}
+				<Select bind:open={datePopoverOpen} bind:value={dateValue} options={dateOptions} disabled={loading} aria-label="Date" class="tnum h-8 w-36" contentClass="tnum" />
+			{/if}
+		{/if}
+
+		{#if chatLogs.length}
+			<div class="relative flex min-w-52 flex-1 items-center">
+				<Input id="input-search" class="h-8 pr-24" maxlength={500} placeholder={isJumpMode ? "Jump to..." : "Filter..."} autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+				<span class="tnum text-dim pointer-events-none absolute right-2.5 text-xs select-none">{displayMessageCount}</span>
+			</div>
+
+			{#if isJumpSearching}
+				{@const width = searchResults.length.toString().length + 4}
+				<div class="flex items-center gap-1">
+					<Input type="number" class="tnum h-8" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+					<span class="text-dim text-xs">of</span>
+					<span class="tnum text-dim text-xs">{searchResults.length.toLocaleString()}</span>
+				</div>
+			{/if}
+
+			<div class="ml-auto flex gap-1">
+				<Button
+					variant="outline"
+					size="icon"
+					onclick={searchModeToggle}
+					title={isJumpMode ? "Switch to filtering" : "Switch to jumping"}
+					aria-pressed={isJumpMode}
+					class="on:border-accent on:text-accent"
+				>
+					{#if isJumpMode}
+						<SearchIcon />
+					{:else}
+						<FilterIcon />
+					{/if}
+				</Button>
+				<Button variant="outline" size="icon" onclick={scrollFromBottomToggle} title={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}>
+					{#if scrollFromBottom}
+						<ArrowUpNarrowWideIcon />
+					{:else}
+						<ArrowDownWideNarrowIcon />
+					{/if}
+				</Button>
+				<Button
+					variant="outline"
+					size="icon"
+					title="Open raw logs"
+					target="_blank"
+					href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent
+						? `${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ''}`
+						: `search?q=${encodeURIComponent(query)}`}"
+				>
+					<FileTextIcon />
+				</Button>
+			</div>
 		{/if}
 	</div>
 
-	<div class="my-2 flex min-h-0 min-w-64 flex-row justify-between gap-2">
-		<form class="relative flex w-full gap-2 align-middle" onsubmit={formSubmit}>
-			<div class="flex flex-1">
-				<div class="flex gap-2">
-					<div class="relative flex flex-col">
-						<Label for="input-channel" class="gap-0 text-base">
-							Channel<span class="text-red-500">*</span>
-						</Label>
-						<Input
-							id="input-channel"
-							maxlength={25}
-							bind:ref={channelInput}
-							bind:value={inputChannelName}
-							placeholder="Channel or id:123"
-							onkeydown={channelKeydown}
-							oninput={() => (channelTyped = true)}
-							autocomplete="off"
-							autofocus
-						/>
-
-						{#if showAutocomplete}
-							<div class="absolute top-full right-0 left-0 z-10 mt-1">
-								<ScrollArea class="flex-1 rounded-md">
-									<!-- svelte-ignore a11y_no_static_element_interactions -->
-									{#each foundChannels as c, index (c.name)}
-										<div
-											class="flex h-8 items-center text-sm hover:cursor-pointer
-                                        {index === selectedIndex ? 'bg-zinc-200 dark:bg-zinc-800' : 'bg-zinc-100 dark:bg-zinc-900'}"
-											onmouseenter={() => (selectedIndex = index)}
-											onmousedown={() => selectResult(index)}
-										>
-											<span class="mx-3">{c.name}</span>
-										</div>
-									{/each}
-								</ScrollArea>
-							</div>
-						{/if}
-					</div>
-
-					<div class="flex flex-col">
-						<Label for="input-user" class="gap-0 text-base">
-							User{#if inputQuery.trim()}<span class="text-red-500">*</span>{/if}
-						</Label>
-						<Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="Username or id:123" />
-					</div>
-
-					<div class="flex flex-col">
-						<Label for="input-query" class="text-base">Query</Label>
-						<Input id="input-query" maxlength={500} bind:value={inputQuery} placeholder="Global search" autocomplete="off" />
-					</div>
-
-					<div class="flex flex-row items-center gap-1 self-end">
-						<Button type="submit" id="load-btn" class="sticky" disabled={loading}>Load</Button>
-						{#if loading}
-							<LoaderCircleIcon class="size-8 animate-spin" />
-						{/if}
-					</div>
-				</div>
-			</div>
-		</form>
-
-		<div class="flex self-end">
-			<Popover.Root bind:open={statsPopoverOpen}>
-				<Popover.Trigger class={cn(buttonVariants({ variant: "secondary" }), [!chatLogs.length && "hidden"])} title="Channel Stats" aria-label="Channel Stats">
-					<ChartColumnIcon />
-					<span class="hidden md:block">Stats</span>
-				</Popover.Trigger>
-				<Popover.Content class="w-80 max-w-[90vw] rounded-md border-0 p-0" align="end" sideOffset={8}>
-					<Card.Root class="rounded-md">
-						<Card.Content>
-							{#if statsError}
-								<p class="text-red-500">{statsError}</p>
-							{:else}
-								<div class="space-y-4">
-									<div>
-										<h3 class="text-lg font-semibold">
-											Total Messages
-											{#if userName}
-												<span class="text-muted-foreground font-light">
-													by <span class="font-semibold">{channelStats?.userLogin || userName}</span>
-												</span>
-											{/if}
-										</h3>
-										{#if channelStats}
-											<p class="text-2xl font-bold">{channelStats.messageCount.toLocaleString()}</p>
-										{:else}
-											<Skeleton class="h-8 w-28" />
-										{/if}
-									</div>
-
-									{#if !userName}
-										<div>
-											<h3 class="mb-2 text-lg font-semibold">Top Chatters</h3>
-											<div class="space-y-2">
-												{#if channelStats?.topChatters}
-													{#each channelStats.topChatters as chatter, index (chatter.userId)}
-														<div class="flex items-center justify-between gap-2 border-b pb-2 text-nowrap last:border-0">
-															<div class="flex items-center gap-2 overflow-hidden">
-																<span class="text-muted-foreground ml-4 text-right tabular-nums">{index + 1}.</span>
-																<span class="overflow-hidden font-medium text-ellipsis" title={chatter.userLogin}>
-																	{chatter.userLogin || `id:${chatter.userId}`}
-																</span>
-															</div>
-															<span class="text-muted-foreground tabular-nums">{chatter.messageCount.toLocaleString()}</span>
-														</div>
-													{/each}
-												{:else}
-													<Skeleton class="h-8 w-full" />
-													<Skeleton class="h-8 w-full" />
-													<Skeleton class="h-8 w-full" />
-													<Skeleton class="h-8 w-full" />
-													<Skeleton class="h-8 w-full" />
-												{/if}
-											</div>
-										</div>
-									{/if}
-								</div>
-							{/if}
-						</Card.Content>
-					</Card.Root>
-				</Popover.Content>
-			</Popover.Root>
-		</div>
-	</div>
-
-	<div class="mb-1 flex flex-row flex-wrap-reverse justify-between gap-1">
-		<div class="flex flex-1 flex-wrap gap-1 md:flex-nowrap">
-			{#if dateContent}
-				{#if dateContent.day}
-					<Popover.Root bind:open={datePopoverOpen}>
-						<Popover.Trigger disabled={loading} class={buttonVariants({ variant: "outline", class: "h-8 w-36 justify-between font-normal tabular-nums" })}>
-							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
-							<CalendarIcon class="opacity-50" />
-						</Popover.Trigger>
-
-						<Popover.Content class="w-auto overflow-hidden p-0" align="start">
-							<Calendar
-								type="single"
-								captionLayout="dropdown"
-								months={monthOptions}
-								years={yearOptions}
-								class="tabular-nums"
-								isDateUnavailable={(date) => !isDateAvailable(date)}
-								onPlaceholderChange={adjustDate}
-								onValueChange={updateDateValue}
-								bind:value={calendarDate}
-							/>
-						</Popover.Content>
-					</Popover.Root>
-				{:else}
-					<div class="flex flex-row">
-						<Select.Root type="single" name="input-date" bind:open={datePopoverOpen} bind:value={dateValue} disabled={loading}>
-							<Select.Trigger class="h-8 w-32 tabular-nums">
-								{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Group>
-									{#each availableDates as date, index (index)}
-										{#if index > 0 && date.year !== availableDates[index - 1].year}
-											<Select.Separator class="mx-0 my-1" />
-										{/if}
-										{@const str = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`}
-										<Select.Item class="justify-center py-1 tabular-nums" value={str} label={str} />
-									{/each}
-								</Select.Group>
-							</Select.Content>
-						</Select.Root>
-					</div>
-				{/if}
-			{/if}
-			{#if chatLogs.length}
-				<div class="order-1 flex flex-1 basis-full gap-1 md:order-0 md:basis-auto">
-					<form class="flex-1">
-						<div class="relative flex items-center">
-							<Input id="input-search" maxlength={500} placeholder="Find..." class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
-							<span class="text-muted-foreground pointer-events-none absolute right-2 text-xs tabular-nums select-none">
-								{displayMessageCount}
-							</span>
-						</div>
-					</form>
-					{#if isJumpSearching}
-						{@const width = searchResults.length.toString().length + 5}
-						<div class="flex items-center gap-1">
-							<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
-							<span class="text-xs tabular-nums">/</span>
-							<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
-						</div>
-					{/if}
-				</div>
-				<div class="ml-auto flex gap-1">
-					<Button variant="outline" size="icon" class="size-8" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
-						{#if !isJumpMode}
-							<FilterIcon />
-						{:else}
-							<SearchIcon />
-						{/if}
-					</Button>
-					<Button variant="outline" size="icon" class="size-8" onclick={scrollFromBottomToggle} title="Toggle Sort Order" aria-label="Toggle Sort Order">
-						{#if scrollFromBottom}
-							<ArrowUpNarrowWideIcon />
-						{:else}
-							<ArrowDownWideNarrowIcon />
-						{/if}
-					</Button>
-					<Button
-						variant="outline"
-						size="icon"
-						class="size-8"
-						title="Open raw logs"
-						aria-label="Open raw logs"
-						target="_blank"
-						href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/
-							{dateContent ? `${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ''}` : `search?q=${encodeURIComponent(query)}`}"
-					>
-						<FileTextIcon />
-					</Button>
-				</div>
-			{/if}
-		</div>
-	</div>
-
 	{#if error}
-		<p class="text-red-500">{error}</p>
+		<p class="text-warn text-sm">{error}</p>
 	{:else if chatLogs.length}
-		<div class="flex min-h-0 w-full flex-1">
-			<Card.Root class="h-full w-full flex-col gap-0 overflow-hidden py-0 text-base leading-5">
-				<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll py-2">
-					{#snippet item(index, style)}
-						{@const msg = filteredChatLogs[index]}
-						{@const msgId = getMessageId(msg)}
-						{@const time = messageTime(msg)}
-						{@const isNewDay = index > 0 && messageTime(filteredChatLogs[index - 1]).day !== time.day}
-						{@const isHashMatch = msgId === page.url.hash.slice(1)}
-						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
-						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
-						<div class="group w-max min-w-full text-nowrap" {style}>
-							<div
-								class={[
-									"flex h-5 w-full items-center gap-x-1 px-3",
-									isNewDay && "-mt-px border-t border-dashed border-black/25 dark:border-white/10",
-									(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
-								]}
-							>
-								<span class="text-xs text-neutral-500 tabular-nums select-none">{time.at}</span>
-								<span class="h-5 w-max">
-									{#if msg.tags["target-msg-id"]}
-										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
-										<span class="text-neutral-500">
-											{#if msgDeleted}
-												<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
-													A message from {msgDeleted.displayName} was deleted
-												</span>
-											{:else}
-												A message was deleted
-											{/if}
-										</span>
-									{:else}
-										<MessageContent {chat} {msg} />
-									{/if}
-								</span>
-								{#if msgId !== page.url.hash.slice(1)}
-									<Button
-										variant="outline"
-										class="mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
-										href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
-										target="_blank"
-									>
-										<ExternalLinkIcon class="size-3!" />
-									</Button>
+		<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5">
+			<div class="bg-accent absolute inset-x-0 top-0 z-10 h-px"></div>
+			<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll py-2">
+				{#snippet item(index, style)}
+					{@const msg = filteredChatLogs[index]}
+					{@const msgId = getMessageId(msg)}
+					{@const time = messageTime(msg)}
+					{@const isNewDay = index > 0 && messageTime(filteredChatLogs[index - 1]).day !== time.day}
+					{@const isHashMatch = msgId === page.url.hash.slice(1)}
+					{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
+					{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
+					<div class="group w-max min-w-full text-nowrap" {style}>
+						<div
+							class={[
+								"flex h-5 w-full items-center gap-x-1.5 px-3",
+								isNewDay && "border-line -mt-px border-t border-dashed",
+								(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
+							]}
+						>
+							<span class="tnum text-dim/80 shrink-0 text-xs select-none">{time.at}</span>
+							<span class="h-5 w-max">
+								{#if msg.tags["target-msg-id"]}
+									{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
+									<span class="text-dim">
+										{#if msgDeleted}
+											<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
+												A message from {msgDeleted.displayName} was deleted
+											</span>
+										{:else}
+											A message was deleted
+										{/if}
+									</span>
+								{:else}
+									<MessageContent {chat} {msg} />
 								{/if}
-							</div>
+							</span>
+							{#if !isHashMatch}
+								<Button
+									variant="ghost"
+									size="icon-sm"
+									class="size-5 shrink-0 opacity-0 group-hover:opacity-100"
+									title="Permalink"
+									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
+									target="_blank"
+								>
+									<ExternalLinkIcon class="size-3!" />
+								</Button>
+							{/if}
 						</div>
-					{/snippet}
-				</VirtualList>
-			</Card.Root>
-		</div>
+					</div>
+				{/snippet}
+			</VirtualList>
+		</Panel>
 	{/if}
 </div>
-
-{#if datePopoverOpen || statsPopoverOpen}
-	<FocusTrap />
-{/if}

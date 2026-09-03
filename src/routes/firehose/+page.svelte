@@ -2,14 +2,7 @@
 	import dayjs from "dayjs";
 	import ReconnectingWebSocket from "reconnecting-websocket";
 
-	import { Input } from "$lib/components/ui/input/index.js";
-	import { Label } from "$lib/components/ui/label/index.js";
-	import { Button } from "$lib/components/ui/button/index.js";
-
-	import * as Select from "$lib/components/ui/select/index.js";
-	import * as Card from "$lib/components/ui/card/index.js";
-
-	import FocusTrap from "$lib/components/focus-trap.svelte";
+	import { Button, Input, Label, Panel, Select, type SelectOption } from "$lib/components/ui";
 
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
@@ -54,6 +47,8 @@
 	};
 
 	let searchInput: HTMLInputElement | null = $state(null);
+
+	const instanceOptions: SelectOption[] = Object.entries(instances).map(([value, label]) => ({ value, label }));
 
 	let instanceValue = $state("");
 	let searchValue = $state("");
@@ -164,74 +159,65 @@
 
 <div id="main-fit-screen" class="hidden"></div>
 
-<div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
-	<h1 class="text-4xl font-bold">Twitch Firehose</h1>
-	<p class="mb-2 text-xs font-light">
-		Real-time stream of logged Twitch chats.
-		<span class="font-normal tabular-nums">{messagesPerSecond}</span> messages per second...
-	</p>
+<div class="flex min-h-0 flex-1 flex-col gap-3 p-4">
+	<header class="flex flex-wrap items-baseline gap-x-3">
+		<h1 class="font-display text-2xl font-bold tracking-tight">Firehose</h1>
+		<p class="text-dim text-sm">
+			<span class="tnum font-display text-accent font-semibold">{messagesPerSecond.toLocaleString()}</span> messages per second, live from every logged channel
+		</p>
+	</header>
 
 	{#if error}
-		<p class="text-red-500">{error}</p>
+		<p class="text-warn text-sm">{error}</p>
 	{:else}
-		<div class="mb-1 flex flex-row gap-1">
-			<div class="flex w-48 flex-col">
-				<Label for="select-instance" class="text-base">Instance</Label>
-
-				<Select.Root type="single" bind:open={isPopoverOpen} bind:value={instanceValue}>
-					<Select.Trigger id="select-instance" class="h-8">
-						{instanceValue}
-					</Select.Trigger>
-					<Select.Content>
-						{#each Object.entries(instances) as [instance, display] (instance)}
-							<Select.Item value={instance}>{display}</Select.Item>
-						{/each}
-					</Select.Content>
-				</Select.Root>
+		<div class="flex flex-wrap items-end gap-2">
+			<div class="flex flex-col gap-1">
+				<Label for="select-instance">Instance</Label>
+				<Select id="select-instance" bind:open={isPopoverOpen} bind:value={instanceValue} options={instanceOptions} class="h-8 w-52" />
 			</div>
 
-			<div class="w-full self-end">
-				<Input id="input-search" maxlength={500} placeholder="Filter..." class="h-8" bind:ref={searchInput} bind:value={searchValue} />
+			<div class="flex min-w-52 flex-1 flex-col gap-1">
+				<Label for="input-search">Filter</Label>
+				<Input id="input-search" class="h-8" maxlength={500} placeholder="Match channel, user or message" bind:ref={searchInput} bind:value={searchValue} />
 			</div>
 		</div>
 
-		<div class="flex min-h-0 w-full flex-1">
-			<Card.Root class="relative h-full w-full flex-col gap-0 overflow-hidden py-0 text-base leading-5">
-				<VirtualList
-					bind:this={logsList}
-					itemCount={filteredChatLogs.length}
-					itemSize={lineHeight}
-					class="overflow-scroll py-2"
-					onscroll={({ distanceFromBottom }) => (scrollPaused = distanceFromBottom > lineHeight)}
-				>
-					{#snippet item(index, style)}
-						{@const msg = filteredChatLogs[index]}
-						<div class="flex h-5 w-max min-w-full flex-row items-center gap-x-1 px-3 text-nowrap" {style}>
-							<span class="inline-block max-w-48 min-w-48 overflow-hidden">
-								<a href="https://www.twitch.tv/{msg.channel}" target="_blank" title={msg.channel} class="font-bold text-neutral-500">
-									#{msg.channel}
-								</a>
-							</span>
-							<span class="text-xs text-neutral-500 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
-							<span class="h-5 w-max">
-								<MessageContent {chat} {msg} />
-							</span>
-						</div>
-					{/snippet}
-				</VirtualList>
-				{#if scrollPaused}
-					<div class="pointer-events-none absolute right-0 bottom-2 left-0 flex h-8 items-center justify-center">
-						<Button variant="secondary" class="pointer-events-auto px-8" onclick={resumeScroll}>
-							<ChevronsDownIcon class="size-4" />
-							More messages below
-						</Button>
+		<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5">
+			<div class="bg-accent absolute inset-x-0 top-0 z-10 h-px"></div>
+			<VirtualList
+				bind:this={logsList}
+				itemCount={filteredChatLogs.length}
+				itemSize={lineHeight}
+				class="overflow-scroll py-2"
+				onscroll={({ distanceFromBottom }) => (scrollPaused = distanceFromBottom > lineHeight)}
+			>
+				{#snippet item(index, style)}
+					{@const msg = filteredChatLogs[index]}
+					<div class="flex h-5 w-max min-w-full flex-row items-center gap-x-1.5 px-3 text-nowrap" {style}>
+						<a
+							href="https://www.twitch.tv/{msg.channel}"
+							target="_blank"
+							title={msg.channel}
+							class="text-dim hover:text-accent inline-block max-w-44 min-w-44 shrink-0 truncate text-xs font-semibold transition-colors"
+						>
+							{msg.channel}
+						</a>
+						<span class="tnum text-dim/80 shrink-0 text-xs select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="h-5 w-max">
+							<MessageContent {chat} {msg} />
+						</span>
 					</div>
-				{/if}
-			</Card.Root>
-		</div>
+				{/snippet}
+			</VirtualList>
+
+			{#if scrollPaused}
+				<div class="pointer-events-none absolute inset-x-0 bottom-3 flex justify-center">
+					<Button variant="accent" size="sm" class="pointer-events-auto shadow-lg" onclick={resumeScroll}>
+						<ChevronsDownIcon />
+						Jump to newest
+					</Button>
+				</div>
+			{/if}
+		</Panel>
 	{/if}
 </div>
-
-{#if isPopoverOpen}
-	<FocusTrap />
-{/if}

@@ -9,11 +9,11 @@
 	const onComplete = (event: Event) => {
 		if (!ref) return;
 		ref.classList.remove("animate-pulse");
-		if (event.type !== "error") ref.classList.remove("bg-muted");
+		if (event.type !== "error") ref.classList.remove("bg-raised");
 	};
 
 	onMount(() => {
-		if (!ref.complete) ref.classList.add("bg-muted", "animate-pulse");
+		if (!ref.complete) ref.classList.add("bg-raised", "animate-pulse");
 	});
 </script>
 

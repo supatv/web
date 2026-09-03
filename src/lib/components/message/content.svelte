@@ -29,7 +29,7 @@
 	<span class="font-bold" style="color: {nameColor}">{msg.displayName}:</span>
 {/if}
 
-<span class={[isNotice && "text-muted-foreground"]}>
+<span class={[isNotice && "text-dim"]}>
 	{#key chat.emoteVersion}
 		{#each chat.parse(msg) as { type: Component, props }, index (index)}
 			<Component {...props} />

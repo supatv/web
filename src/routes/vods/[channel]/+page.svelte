@@ -4,7 +4,7 @@
 
 	import Image from "$lib/components/image.svelte";
 
-	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
+	import { Skeleton } from "$lib/components/ui";
 	import { EyeOffIcon } from "@lucide/svelte";
 
 	import type { PageProps } from "./$types";
