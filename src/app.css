@@ -3,67 +3,88 @@
 
 @custom-variant dark (&:is(.dark *));
 
+/*
+ * bits-ui 2 still reports component state as `data-state="open"` / `data-orientation="…"`,
+ * while the shadcn-svelte registry has moved on to bare `data-open` / `data-vertical`
+ * attributes. Tailwind would compile `data-open:` to a plain `[data-open]` selector, which
+ * both misses `data-state` and matches attributes explicitly set to "false" — that is what
+ * left every sidebar item looking active and every overlay un-animated. These accept either
+ * spelling, so they keep working once bits-ui catches up.
+ */
+@custom-variant data-open (&[data-state="open"], &[data-open="true"], &[data-open=""]);
+@custom-variant data-closed (&[data-state="closed"], &[data-closed="true"], &[data-closed=""]);
+@custom-variant data-active (&[data-state="active"], &[data-active="true"], &[data-active=""]);
+@custom-variant data-checked (&[data-state="checked"], &[data-checked="true"], &[data-checked=""]);
+@custom-variant data-selected (&[data-state="selected"], &[data-selected="true"], &[data-selected=""]);
+@custom-variant data-disabled (&[data-state="disabled"], &[data-disabled="true"], &[data-disabled=""]);
+@custom-variant data-highlighted (&[data-highlighted="true"], &[data-highlighted=""]);
+@custom-variant data-placeholder (&[data-placeholder="true"], &[data-placeholder=""]);
+@custom-variant data-inset (&[data-inset="true"], &[data-inset=""]);
+@custom-variant data-vertical (&[data-orientation="vertical"], &[data-vertical="true"], &[data-vertical=""]);
+@custom-variant data-horizontal (&[data-orientation="horizontal"], &[data-horizontal="true"], &[data-horizontal=""]);
+
 :root {
-	--background: hsl(0 0% 100%);
-	--foreground: hsl(0 0% 3.9%);
-	--card: hsl(0 0% 100%);
-	--card-foreground: hsl(0 0% 3.9%);
-	--popover: hsl(0 0% 100%);
-	--popover-foreground: hsl(0 0% 3.9%);
+	--radius: 0.625rem;
+
+	--background: oklch(1 0 0);
+	--foreground: oklch(0.145 0 0);
+	--card: oklch(1 0 0);
+	--card-foreground: oklch(0.145 0 0);
+	--popover: oklch(1 0 0);
+	--popover-foreground: oklch(0.145 0 0);
 	--primary: hsl(267 84% 81%);
 	--primary-foreground: hsl(267 100% 9%);
-	--secondary: hsl(0 0% 96.1%);
-	--secondary-foreground: hsl(0 0% 9%);
-	--muted: hsl(0 0% 96.1%);
-	--muted-foreground: hsl(0 0% 45.1%);
-	--accent: hsl(0 0% 96.1%);
-	--accent-foreground: hsl(0 0% 9%);
-	--destructive: hsl(0 72.22% 50.59%);
-	--destructive-foreground: hsl(0 0% 98%);
-	--border: hsl(0 0% 89.8%);
-	--input: hsl(0 0% 89.8%);
+	--secondary: oklch(0.97 0 0);
+	--secondary-foreground: oklch(0.205 0 0);
+	--muted: oklch(0.97 0 0);
+	--muted-foreground: oklch(0.556 0 0);
+	--accent: oklch(0.97 0 0);
+	--accent-foreground: oklch(0.205 0 0);
+	--destructive: oklch(0.577 0.245 27.325);
+	--destructive-foreground: oklch(0.985 0 0);
+	--border: oklch(0.922 0 0);
+	--input: oklch(0.922 0 0);
 	--ring: hsl(267 84% 81%);
-	--radius: 0.5rem;
 
-	--sidebar: hsl(0 0% 98%);
-	--sidebar-foreground: hsl(240 5.3% 26.1%);
-	--sidebar-primary: hsl(240 5.9% 10%);
-	--sidebar-primary-foreground: hsl(0 0% 98%);
-	--sidebar-accent: hsl(240 4.8% 95.9%);
-	--sidebar-accent-foreground: hsl(240 5.9% 10%);
-	--sidebar-border: hsl(220 13% 91%);
-	--sidebar-ring: hsl(217.2 91.2% 59.8%);
+	--sidebar: oklch(0.985 0 0);
+	--sidebar-foreground: oklch(0.145 0 0);
+	--sidebar-primary: hsl(267 84% 81%);
+	--sidebar-primary-foreground: hsl(267 100% 9%);
+	--sidebar-accent: oklch(0.94 0 0);
+	--sidebar-accent-foreground: oklch(0.205 0 0);
+	--sidebar-border: oklch(0.922 0 0);
+	--sidebar-ring: hsl(267 84% 81%);
 }
 
 .dark {
-	--background: hsl(0 0% 3.9%);
-	--foreground: hsl(0 0% 98%);
-	--card: hsl(0 0% 3.9%);
-	--card-foreground: hsl(0 0% 98%);
-	--popover: hsl(0 0% 3.9%);
-	--popover-foreground: hsl(0 0% 98%);
+	--background: oklch(0.145 0 0);
+	--foreground: oklch(0.985 0 0);
+	--card: oklch(0.205 0 0);
+	--card-foreground: oklch(0.985 0 0);
+	--popover: oklch(0.269 0 0);
+	--popover-foreground: oklch(0.985 0 0);
 	--primary: hsl(267 84% 81%);
 	--primary-foreground: hsl(267 100% 9%);
-	--secondary: hsl(0 0% 14.9%);
-	--secondary-foreground: hsl(0 0% 98%);
-	--muted: hsl(0 0% 14.9%);
-	--muted-foreground: hsl(0 0% 63.9%);
-	--accent: hsl(0 0% 14.9%);
-	--accent-foreground: hsl(0 0% 98%);
-	--destructive: hsl(0 62.8% 30.6%);
-	--destructive-foreground: hsl(0 0% 98%);
-	--border: hsl(0 0% 14.9%);
-	--input: hsl(0 0% 14.9%);
+	--secondary: oklch(0.269 0 0);
+	--secondary-foreground: oklch(0.985 0 0);
+	--muted: oklch(0.269 0 0);
+	--muted-foreground: oklch(0.708 0 0);
+	--accent: oklch(0.371 0 0);
+	--accent-foreground: oklch(0.985 0 0);
+	--destructive: oklch(0.704 0.191 22.216);
+	--destructive-foreground: oklch(0.985 0 0);
+	--border: oklch(1 0 0 / 10%);
+	--input: oklch(1 0 0 / 15%);
 	--ring: hsl(267 84% 81%);
 
-	--sidebar: hsl(240 5.9% 10%);
-	--sidebar-foreground: hsl(240 4.8% 95.9%);
-	--sidebar-primary: hsl(224.3 76.3% 48%);
-	--sidebar-primary-foreground: hsl(0 0% 100%);
-	--sidebar-accent: hsl(240 3.7% 15.9%);
-	--sidebar-accent-foreground: hsl(240 4.8% 95.9%);
-	--sidebar-border: hsl(240 3.7% 15.9%);
-	--sidebar-ring: hsl(217.2 91.2% 59.8%);
+	--sidebar: oklch(0.205 0 0);
+	--sidebar-foreground: oklch(0.985 0 0);
+	--sidebar-primary: hsl(267 84% 81%);
+	--sidebar-primary-foreground: hsl(267 100% 9%);
+	--sidebar-accent: oklch(0.309 0 0);
+	--sidebar-accent-foreground: oklch(0.985 0 0);
+	--sidebar-border: oklch(1 0 0 / 10%);
+	--sidebar-ring: hsl(267 84% 81%);
 }
 
 @theme inline {
