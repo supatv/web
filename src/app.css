@@ -4,133 +4,125 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * bits-ui 2 still reports component state as `data-state="open"` / `data-orientation="…"`,
- * while the shadcn-svelte registry has moved on to bare `data-open` / `data-vertical`
- * attributes. Tailwind would compile `data-open:` to a plain `[data-open]` selector, which
- * both misses `data-state` and matches attributes explicitly set to "false" — that is what
- * left every sidebar item looking active and every overlay un-animated. These accept either
- * spelling, so they keep working once bits-ui catches up.
+ * bits-ui reports component state as `data-state="open"` / `data-orientation="…"`, and sets
+ * booleans as `data-active="false"` rather than omitting them. Tailwind's bare `data-open:`
+ * shorthand compiles to `[data-open]`, which misses the first and wrongly matches the second.
  */
-@custom-variant data-open (&[data-state="open"], &[data-open="true"], &[data-open=""]);
-@custom-variant data-closed (&[data-state="closed"], &[data-closed="true"], &[data-closed=""]);
-@custom-variant data-active (&[data-state="active"], &[data-active="true"], &[data-active=""]);
-@custom-variant data-checked (&[data-state="checked"], &[data-checked="true"], &[data-checked=""]);
-@custom-variant data-selected (&[data-state="selected"], &[data-selected="true"], &[data-selected=""]);
-@custom-variant data-disabled (&[data-state="disabled"], &[data-disabled="true"], &[data-disabled=""]);
-@custom-variant data-highlighted (&[data-highlighted="true"], &[data-highlighted=""]);
-@custom-variant data-placeholder (&[data-placeholder="true"], &[data-placeholder=""]);
-@custom-variant data-inset (&[data-inset="true"], &[data-inset=""]);
-@custom-variant data-vertical (&[data-orientation="vertical"], &[data-vertical="true"], &[data-vertical=""]);
-@custom-variant data-horizontal (&[data-orientation="horizontal"], &[data-horizontal="true"], &[data-horizontal=""]);
+@custom-variant open (&[data-state="open"]);
+@custom-variant closed (&[data-state="closed"]);
+@custom-variant checked (&[data-state="checked"]);
+@custom-variant on (&[data-active="true"], &[aria-pressed="true"], &[aria-current="page"]);
 
 :root {
-	--radius: 0.625rem;
+	--ground: #faf8ff;
+	--surface: #ffffff;
+	--raised: #f1ecfb;
+	--line: #e3dbf3;
+	--text: #171226;
+	--dim: #6b6285;
 
-	--background: oklch(1 0 0);
-	--foreground: oklch(0.145 0 0);
-	--card: oklch(1 0 0);
-	--card-foreground: oklch(0.145 0 0);
-	--popover: oklch(1 0 0);
-	--popover-foreground: oklch(0.145 0 0);
-	--primary: hsl(267 84% 81%);
-	--primary-foreground: hsl(267 100% 9%);
-	--secondary: oklch(0.97 0 0);
-	--secondary-foreground: oklch(0.205 0 0);
-	--muted: oklch(0.97 0 0);
-	--muted-foreground: oklch(0.556 0 0);
-	--accent: oklch(0.97 0 0);
-	--accent-foreground: oklch(0.205 0 0);
-	--destructive: oklch(0.577 0.245 27.325);
-	--destructive-foreground: oklch(0.985 0 0);
-	--border: oklch(0.922 0 0);
-	--input: oklch(0.922 0 0);
-	--ring: hsl(267 84% 81%);
+	--accent: #7c3fe4;
+	--accent-ink: #ffffff;
+	--signal: #12854a;
+	--warn: #c2410c;
 
-	--sidebar: oklch(0.985 0 0);
-	--sidebar-foreground: oklch(0.145 0 0);
-	--sidebar-primary: hsl(267 84% 81%);
-	--sidebar-primary-foreground: hsl(267 100% 9%);
-	--sidebar-accent: oklch(0.94 0 0);
-	--sidebar-accent-foreground: oklch(0.205 0 0);
-	--sidebar-border: oklch(0.922 0 0);
-	--sidebar-ring: hsl(267 84% 81%);
+	--radius: 0.5rem;
 }
 
 .dark {
-	--background: oklch(0.145 0 0);
-	--foreground: oklch(0.985 0 0);
-	--card: oklch(0.205 0 0);
-	--card-foreground: oklch(0.985 0 0);
-	--popover: oklch(0.269 0 0);
-	--popover-foreground: oklch(0.985 0 0);
-	--primary: hsl(267 84% 81%);
-	--primary-foreground: hsl(267 100% 9%);
-	--secondary: oklch(0.269 0 0);
-	--secondary-foreground: oklch(0.985 0 0);
-	--muted: oklch(0.269 0 0);
-	--muted-foreground: oklch(0.708 0 0);
-	--accent: oklch(0.371 0 0);
-	--accent-foreground: oklch(0.985 0 0);
-	--destructive: oklch(0.704 0.191 22.216);
-	--destructive-foreground: oklch(0.985 0 0);
-	--border: oklch(1 0 0 / 10%);
-	--input: oklch(1 0 0 / 15%);
-	--ring: hsl(267 84% 81%);
+	--ground: #0b0912;
+	--surface: #14111e;
+	--raised: #1c1730;
+	--line: #2a2340;
+	--text: #ede9f7;
+	--dim: #9a91b4;
 
-	--sidebar: oklch(0.205 0 0);
-	--sidebar-foreground: oklch(0.985 0 0);
-	--sidebar-primary: hsl(267 84% 81%);
-	--sidebar-primary-foreground: hsl(267 100% 9%);
-	--sidebar-accent: oklch(0.309 0 0);
-	--sidebar-accent-foreground: oklch(0.985 0 0);
-	--sidebar-border: oklch(1 0 0 / 10%);
-	--sidebar-ring: hsl(267 84% 81%);
+	--accent: #a87bff;
+	--accent-ink: #14061f;
+	--signal: #58e08b;
+	--warn: #fb923c;
+}
+
+/*
+ * Each tool owns an accent, so colour says which one you are looking at: it drives the active
+ * nav item, focus rings and primary buttons. Set on the shell, read by every component.
+ */
+[data-tool="live"] {
+	--accent: #db2777;
+	--accent-ink: #ffffff;
+}
+
+[data-tool="firehose"] {
+	--accent: #0e7f96;
+	--accent-ink: #ffffff;
+}
+
+.dark [data-tool="live"],
+.dark[data-tool="live"] {
+	--accent: #ff4d8f;
+	--accent-ink: #2b0413;
+}
+
+.dark [data-tool="firehose"],
+.dark[data-tool="firehose"] {
+	--accent: #35ddf5;
+	--accent-ink: #04222a;
 }
 
 @theme inline {
-	--color-background: var(--background);
-	--color-foreground: var(--foreground);
-	--color-card: var(--card);
-	--color-card-foreground: var(--card-foreground);
-	--color-popover: var(--popover);
-	--color-popover-foreground: var(--popover-foreground);
-	--color-primary: var(--primary);
-	--color-primary-foreground: var(--primary-foreground);
-	--color-secondary: var(--secondary);
-	--color-secondary-foreground: var(--secondary-foreground);
-	--color-muted: var(--muted);
-	--color-muted-foreground: var(--muted-foreground);
+	--color-ground: var(--ground);
+	--color-surface: var(--surface);
+	--color-raised: var(--raised);
+	--color-line: var(--line);
+	--color-text: var(--text);
+	--color-dim: var(--dim);
 	--color-accent: var(--accent);
-	--color-accent-foreground: var(--accent-foreground);
-	--color-destructive: var(--destructive);
-	--color-destructive-foreground: var(--destructive-foreground);
-	--color-border: var(--border);
-	--color-input: var(--input);
-	--color-ring: var(--ring);
+	--color-accent-ink: var(--accent-ink);
+	--color-signal: var(--signal);
+	--color-warn: var(--warn);
 
-	--color-sidebar: var(--sidebar);
-	--color-sidebar-foreground: var(--sidebar-foreground);
-	--color-sidebar-primary: var(--sidebar-primary);
-	--color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-	--color-sidebar-accent: var(--sidebar-accent);
-	--color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-	--color-sidebar-border: var(--sidebar-border);
-	--color-sidebar-ring: var(--sidebar-ring);
-
-	--radius-sm: calc(var(--radius) - 4px);
-	--radius-md: calc(var(--radius) - 2px);
-	--radius-lg: var(--radius);
-	--radius-xl: calc(var(--radius) + 4px);
+	--radius-sm: calc(var(--radius) - 3px);
+	--radius-md: var(--radius);
+	--radius-lg: calc(var(--radius) + 3px);
 
 	--font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+	--font-display: "Space Grotesk Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
 	* {
-		@apply border-border;
+		border-color: var(--line);
 	}
 
 	body {
-		@apply bg-background text-foreground;
+		background: var(--ground);
+		color: var(--text);
+	}
+
+	/* the interface is mostly counts and timestamps; keep them from shifting as they tick */
+	.tnum {
+		font-variant-numeric: tabular-nums;
+	}
+}
+
+@layer components {
+	/* one focus treatment everywhere, in the current tool's accent */
+	.ring-focus {
+		outline: 2px solid transparent;
+		outline-offset: 2px;
+	}
+
+	.ring-focus:focus-visible {
+		outline-color: var(--accent);
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
 	}
 }
