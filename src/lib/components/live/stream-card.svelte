@@ -82,7 +82,7 @@
 					<span class="overflow-hidden" title={stream.name}>{stream.name}</span>
 					{#if stream.type === "partner"}
 						<span title="Partner">
-							<BadgeCheckIcon class="text-surface fill-accent size-5 min-w-5" />
+							<BadgeCheckIcon class="text-ground fill-accent size-5 min-w-5" />
 						</span>
 					{:else if stream.type === "affiliate"}
 						<span title="Affiliate">
