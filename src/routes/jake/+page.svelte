@@ -128,7 +128,7 @@
 	};
 
 	const isNewMessageDivider = (msg: Message, index: number) => {
-		const file = files?.[selectedFile || -1];
+		const file = files?.[selectedFile ?? -1];
 		if (!file) return false;
 
 		const clipStart = file.created_at - file.duration;
@@ -147,7 +147,7 @@
 	});
 
 	let chatRenderInterval: NodeJS.Timeout | null = setInterval(async () => {
-		if (!selectedFile) return;
+		if (selectedFile === null) return;
 		const file = files?.[selectedFile];
 		if (!file) return;
 
