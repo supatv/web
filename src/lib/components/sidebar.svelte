@@ -32,9 +32,9 @@
 
 <nav
 	class={[
-		"border-line bg-surface z-40 flex shrink-0 flex-col overflow-hidden border-r transition-[width] duration-200",
+		"border-line bg-surface z-40 flex h-svh shrink-0 flex-col overflow-hidden border-r transition-[width] duration-200",
 		shell.sidebarOpen ? "w-60" : "w-0 border-r-0",
-		shell.mobileNavOpen && "max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:w-60 max-md:shadow-2xl",
+		shell.mobileNavOpen ? "max-md:fixed max-md:top-0 max-md:left-0 max-md:w-60 max-md:shadow-2xl md:sticky md:top-0" : "sticky top-0",
 	]}
 	aria-label="Main"
 >

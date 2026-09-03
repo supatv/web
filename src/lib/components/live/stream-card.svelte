@@ -49,7 +49,7 @@
 		oncontextmenu={(e) => e.preventDefault()}
 	>
 		{#if showKick}
-			<div class="absolute z-30 m-1 h-5 rounded-sm bg-black/60 p-1">
+			<div class="absolute z-20 m-1 h-5 rounded-sm bg-black/60 p-1">
 				{#if stream.platform === "kick"}
 					<img src={KickWordmark} alt="Kick" class="h-full" />
 				{:else}
@@ -58,7 +58,7 @@
 			</div>
 		{/if}
 
-		<span class="tnum absolute top-0 right-0 z-30 m-1 rounded bg-black/70 px-1.5 py-0.5 text-xs font-medium text-white">
+		<span class="tnum absolute top-0 right-0 z-20 m-1 rounded bg-black/70 px-1.5 py-0.5 text-xs font-medium text-white">
 			{formatUptime(stream.started)}
 		</span>
 

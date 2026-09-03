@@ -78,10 +78,10 @@
 <ModeWatcher />
 <Toaster />
 
-<div class="flex h-svh w-full">
+<div class="flex min-h-svh w-full">
 	<AppSidebar />
 
-	<main class="flex min-w-0 flex-1 flex-col overflow-y-auto">
+	<main class="flex min-w-0 flex-1 flex-col">
 		<div class="border-line bg-surface/80 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-1 border-b px-2 backdrop-blur">
 			<Button
 				variant="ghost"

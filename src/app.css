@@ -100,3 +100,7 @@
 		transition-duration: 0.01ms !important;
 	}
 }
+
+main:has(#main-fit-screen) {
+	max-height: 100vh;
+}
