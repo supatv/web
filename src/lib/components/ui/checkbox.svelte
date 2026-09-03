@@ -13,17 +13,17 @@
 	bind:checked
 	bind:indeterminate
 	class={cn(
-		"ring-focus border-line bg-raised grid size-4 shrink-0 place-items-center rounded-[4px] border transition-colors",
-		"hover:border-accent checked:bg-accent checked:border-accent checked:text-accent-ink disabled:opacity-40",
+		"ring-focus border-line bg-raised grid size-6 shrink-0 place-items-center rounded-[5px] border transition-colors",
+		"hover:border-accent checked:bg-accent checked:border-accent checked:text-accent-ink disabled:opacity-50",
 		className
 	)}
 	{...rest}
 >
 	{#snippet children({ checked, indeterminate })}
 		{#if indeterminate}
-			<MinusIcon class="size-3" />
+			<MinusIcon class="size-4" />
 		{:else if checked}
-			<CheckIcon class="size-3" strokeWidth={3} />
+			<CheckIcon class="size-4" strokeWidth={3} />
 		{/if}
 	{/snippet}
 </CheckboxPrimitive.Root>

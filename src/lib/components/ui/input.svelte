@@ -12,8 +12,8 @@
 	bind:this={ref}
 	bind:value
 	class={cn(
-		"ring-focus border-line bg-raised text-text placeholder:text-dim/70 h-9 w-full rounded-md border px-2.5 text-sm transition-colors",
-		"hover:border-line/80 focus:border-accent disabled:opacity-40",
+		"ring-focus border-line bg-raised text-text placeholder:text-dim/70 h-11 w-full rounded-md border px-3 text-base transition-colors",
+		"hover:border-line/80 focus:border-accent disabled:opacity-50",
 		className
 	)}
 	{...rest}

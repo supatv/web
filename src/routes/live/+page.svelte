@@ -65,22 +65,24 @@
 <svelte:window on:keydown={windowKeydown} bind:scrollY={windowScrollY} />
 
 <button
-	class="border-line bg-surface text-dim hover:text-accent hover:border-accent ring-focus fixed right-5 bottom-5 z-50 grid size-10 place-items-center rounded-full border shadow-lg transition-colors"
+	class="border-line bg-surface text-dim hover:text-accent hover:border-accent ring-focus fixed right-5 bottom-5 z-50 grid size-12 place-items-center rounded-full border shadow-lg transition-colors"
 	aria-disabled={loading}
 	title={loading ? "Refreshing" : "Scroll, or right-click to refresh"}
 	oncontextmenu={(e) => e.preventDefault()}
 	onmouseup={(e) => {
 		if (loading) return;
-		if (e.button === 2) return fetchStreams();
-		if (e.button !== 0) return;
+		if (e.button === 2) fetchStreams();
+	}}
+	onclick={() => {
+		if (loading) return;
 
 		window.scrollTo({ top: windowScrollY > 100 ? 0 : document.body.scrollHeight, behavior: "smooth" });
 	}}
 >
 	{#if loading}
-		<RefreshCwIcon class="size-5 animate-spin" />
+		<RefreshCwIcon class="size-5.5 animate-spin" />
 	{:else}
-		<ChevronsDownIcon class={["size-5 transition-transform", windowScrollY > 100 && "rotate-180"]} />
+		<ChevronsDownIcon class={["size-5.5 transition-transform", windowScrollY > 100 && "rotate-180"]} />
 	{/if}
 </button>
 
@@ -108,11 +110,11 @@
 
 <div class="flex w-full max-w-[2500px] flex-col gap-3 self-center p-4">
 	<header class="flex flex-wrap items-baseline gap-x-3">
-		<h1 class="font-display text-2xl font-bold tracking-tight">
+		<h1 class="font-display text-3xl font-bold tracking-tight">
 			<span class="bg-linear-to-r from-[#0057b8] via-[#ffd200] to-[#e4002b] bg-clip-text text-transparent">Romanian</span> livestreams
 		</h1>
 		{#if streams.length}
-			<p class="text-dim text-sm">
+			<p class="text-dim text-base">
 				<span class="tnum font-display text-text font-semibold">{streams.length.toLocaleString()}</span> channels,
 				<span class="tnum font-display text-signal font-semibold">{streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()}</span> watching
 			</p>
@@ -130,7 +132,7 @@
 				}
 			}}
 		/>
-		<Label for="show-kick-checkbox" class="cursor-pointer text-sm normal-case">Show Kick streams</Label>
+		<Label for="show-kick-checkbox" class="cursor-pointer normal-case">Show Kick streams</Label>
 	</div>
 
 	<div
@@ -146,7 +148,7 @@
 		{:else}
 			{#each { length: 30 }}
 				<div>
-					<Skeleton class="aspect-video w-full rounded" />
+					<Skeleton class="aspect-video w-full rounded-md" />
 					<div class="mt-1 flex flex-row">
 						<Skeleton class="mr-1 size-12 rounded-full" />
 						<div class="flex h-full flex-1 flex-col gap-0.5">

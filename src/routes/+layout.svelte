@@ -78,11 +78,11 @@
 <ModeWatcher />
 <Toaster />
 
-<div class="flex h-svh w-full" data-tool={tool}>
+<div class="flex h-svh w-full">
 	<AppSidebar />
 
 	<main class="flex min-w-0 flex-1 flex-col overflow-y-auto">
-		<div class="border-line bg-surface/80 sticky top-0 z-30 flex h-10 shrink-0 items-center gap-1 border-b px-2 backdrop-blur">
+		<div class="border-line bg-surface/80 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-1 border-b px-2 backdrop-blur">
 			<Button
 				variant="ghost"
 				size="icon-sm"
@@ -105,14 +105,14 @@
 				<span class="sr-only">Toggle theme</span>
 			</Button>
 
-			<div class="bg-line mx-1 h-4 w-px"></div>
+			<div class="bg-line mx-1.5 h-6 w-px"></div>
 
 			{#if tool === "live"}
 				<Button variant="ghost" size="icon-sm" onclick={cycleGridCols} title="Change number of grid columns">
 					{#if $gridCols === null}
 						<Grid2X2Icon />
 					{:else}
-						<span class="tnum font-display text-xs font-semibold">{$gridCols}</span>
+						<span class="tnum font-display text-sm font-semibold">{$gridCols}</span>
 					{/if}
 					<span class="sr-only">Change number of grid columns</span>
 				</Button>

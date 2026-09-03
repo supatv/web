@@ -34,7 +34,7 @@
 
 <div onmouseenter={() => (focused = true)} onmouseleave={() => (focused = false)} role="link" tabindex="-1" class="transition-transform hover:-translate-y-1">
 	<div
-		class={["border-line relative aspect-video size-full overflow-hidden rounded-md border transition", active && "ring-accent border-accent ring-2"]}
+		class={["relative aspect-video size-full overflow-hidden rounded-md transition", active && "ring-accent ring-2"]}
 		role="button"
 		tabindex="-1"
 		onmouseup={(e) => {

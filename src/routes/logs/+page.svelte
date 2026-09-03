@@ -582,9 +582,9 @@
 
 <div class="flex min-h-0 flex-1 flex-col gap-3 p-4">
 	<header class="flex flex-wrap items-baseline gap-x-3">
-		<h1 class="font-display text-2xl font-bold tracking-tight">Logs</h1>
+		<h1 class="font-display text-3xl font-bold tracking-tight">Logs</h1>
 		{#if channelsCount}
-			<p class="text-dim text-sm">
+			<p class="text-dim text-base">
 				<span class="tnum font-display text-text font-semibold">{compactNumber(channelsCount)}</span> channels indexed
 			</p>
 		{/if}
@@ -611,7 +611,7 @@
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					{#each foundChannels as c, index (c.name)}
 						<div
-							class={["flex h-7 cursor-pointer items-center rounded-[5px] px-2 text-sm transition-colors", index === selectedIndex ? "bg-raised text-text" : "text-dim"]}
+							class={["flex h-9 cursor-pointer items-center rounded-[5px] px-2.5 text-base transition-colors", index === selectedIndex ? "bg-raised text-text" : "text-dim"]}
 							onmouseenter={() => (selectedIndex = index)}
 							onmousedown={() => selectResult(index)}
 						>
@@ -631,7 +631,7 @@
 
 		<div class="flex flex-col gap-1">
 			<Label for="input-query">Query</Label>
-			<Input id="input-query" class="w-44" maxlength={500} bind:value={inputQuery} placeholder="Search every channel" autocomplete="off" />
+			<Input id="input-query" class="w-44" maxlength={500} bind:value={inputQuery} placeholder="Search messages" autocomplete="off" />
 		</div>
 
 		<Button type="submit" variant="accent" disabled={loading}>
@@ -655,7 +655,7 @@
 				{:else}
 					<div class="space-y-4">
 						<div>
-							<h3 class="font-display text-dim text-xs font-medium tracking-wide">
+							<h3 class="font-display text-dim text-sm font-medium tracking-wide">
 								Messages{#if userName}&nbsp;by {channelStats?.userLogin || userName}{/if}
 							</h3>
 							{#if channelStats}
@@ -667,13 +667,13 @@
 
 						{#if !userName}
 							<div>
-								<h3 class="font-display text-dim mb-1.5 text-xs font-medium tracking-wide">Top chatters</h3>
+								<h3 class="font-display text-dim mb-1.5 text-sm font-medium tracking-wide">Top chatters</h3>
 								<ol class="space-y-1">
 									{#if channelStats?.topChatters}
 										{#each channelStats.topChatters as chatter, index (chatter.userId)}
 											<li class="border-line flex items-center justify-between gap-2 border-b pb-1 text-sm text-nowrap last:border-0">
 												<span class="flex min-w-0 items-center gap-2">
-													<span class="tnum text-dim w-4 text-right text-xs">{index + 1}</span>
+													<span class="tnum text-dim w-5 text-right text-sm">{index + 1}</span>
 													<span class="truncate" title={chatter.userLogin}>{chatter.userLogin || `id:${chatter.userId}`}</span>
 												</span>
 												<span class="tnum text-dim">{chatter.messageCount.toLocaleString()}</span>
@@ -698,7 +698,7 @@
 			{#if dateContent.day}
 				<Popover bind:open={datePopoverOpen}>
 					{#snippet trigger({ props })}
-						<Button {...props} variant="outline" size="sm" class="tnum h-8 w-36 justify-between" disabled={loading}>
+						<Button {...props} variant="outline" class="tnum w-44 justify-between" disabled={loading}>
 							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
 							<CalendarIcon class="text-dim" />
 						</Button>
@@ -715,22 +715,22 @@
 					/>
 				</Popover>
 			{:else}
-				<Select bind:open={datePopoverOpen} bind:value={dateValue} options={dateOptions} disabled={loading} aria-label="Date" class="tnum h-8 w-36" contentClass="tnum" />
+				<Select bind:open={datePopoverOpen} bind:value={dateValue} options={dateOptions} disabled={loading} aria-label="Date" class="tnum w-44" contentClass="tnum" />
 			{/if}
 		{/if}
 
 		{#if chatLogs.length}
 			<div class="relative flex min-w-52 flex-1 items-center">
-				<Input id="input-search" class="h-8 pr-24" maxlength={500} placeholder={isJumpMode ? "Jump to..." : "Filter..."} autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
-				<span class="tnum text-dim pointer-events-none absolute right-2.5 text-xs select-none">{displayMessageCount}</span>
+				<Input id="input-search" class="pr-24" maxlength={500} placeholder={isJumpMode ? "Find..." : "Filter..."} autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+				<span class="tnum text-dim pointer-events-none absolute right-3 text-sm select-none">{displayMessageCount}</span>
 			</div>
 
 			{#if isJumpSearching}
 				{@const width = searchResults.length.toString().length + 4}
 				<div class="flex items-center gap-1">
-					<Input type="number" class="tnum h-8" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
-					<span class="text-dim text-xs">of</span>
-					<span class="tnum text-dim text-xs">{searchResults.length.toLocaleString()}</span>
+					<Input type="number" class="tnum" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+					<span class="text-dim text-sm">of</span>
+					<span class="tnum text-dim text-sm">{searchResults.length.toLocaleString()}</span>
 				</div>
 			{/if}
 
@@ -740,6 +740,7 @@
 					size="icon"
 					onclick={searchModeToggle}
 					title={isJumpMode ? "Switch to filtering" : "Switch to jumping"}
+					aria-label={isJumpMode ? "Switch to filtering" : "Switch to jumping"}
 					aria-pressed={isJumpMode}
 					class="on:border-accent on:text-accent"
 				>
@@ -749,7 +750,13 @@
 						<FilterIcon />
 					{/if}
 				</Button>
-				<Button variant="outline" size="icon" onclick={scrollFromBottomToggle} title={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}>
+				<Button
+					variant="outline"
+					size="icon"
+					onclick={scrollFromBottomToggle}
+					title={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
+					aria-label={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
+				>
 					{#if scrollFromBottom}
 						<ArrowUpNarrowWideIcon />
 					{:else}
@@ -760,6 +767,7 @@
 					variant="outline"
 					size="icon"
 					title="Open raw logs"
+					aria-label="Open raw logs"
 					target="_blank"
 					href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent
 						? `${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ''}`
@@ -775,7 +783,6 @@
 		<p class="text-warn text-sm">{error}</p>
 	{:else if chatLogs.length}
 		<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5">
-			<div class="bg-accent absolute inset-x-0 top-0 z-10 h-px"></div>
 			<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll py-2">
 				{#snippet item(index, style)}
 					{@const msg = filteredChatLogs[index]}
@@ -814,7 +821,7 @@
 								<Button
 									variant="ghost"
 									size="icon-sm"
-									class="size-5 shrink-0 opacity-0 group-hover:opacity-100"
+									class="size-5 shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
 									title="Permalink"
 									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
 									target="_blank"

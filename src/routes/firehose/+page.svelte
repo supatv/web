@@ -161,9 +161,9 @@
 
 <div class="flex min-h-0 flex-1 flex-col gap-3 p-4">
 	<header class="flex flex-wrap items-baseline gap-x-3">
-		<h1 class="font-display text-2xl font-bold tracking-tight">Firehose</h1>
-		<p class="text-dim text-sm">
-			<span class="tnum font-display text-accent font-semibold">{messagesPerSecond.toLocaleString()}</span> messages per second, live from every logged channel
+		<h1 class="font-display text-3xl font-bold tracking-tight">Firehose</h1>
+		<p class="text-dim text-base">
+			<span class="tnum font-display text-accent font-semibold">{messagesPerSecond.toLocaleString()}</span> messages per second
 		</p>
 	</header>
 
@@ -173,17 +173,16 @@
 		<div class="flex flex-wrap items-end gap-2">
 			<div class="flex flex-col gap-1">
 				<Label for="select-instance">Instance</Label>
-				<Select id="select-instance" bind:open={isPopoverOpen} bind:value={instanceValue} options={instanceOptions} class="h-8 w-52" />
+				<Select id="select-instance" bind:open={isPopoverOpen} bind:value={instanceValue} options={instanceOptions} class="w-52" />
 			</div>
 
 			<div class="flex min-w-52 flex-1 flex-col gap-1">
 				<Label for="input-search">Filter</Label>
-				<Input id="input-search" class="h-8" maxlength={500} placeholder="Match channel, user or message" bind:ref={searchInput} bind:value={searchValue} />
+				<Input id="input-search" maxlength={500} placeholder="Match channel, user or message..." bind:ref={searchInput} bind:value={searchValue} />
 			</div>
 		</div>
 
 		<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5">
-			<div class="bg-accent absolute inset-x-0 top-0 z-10 h-px"></div>
 			<VirtualList
 				bind:this={logsList}
 				itemCount={filteredChatLogs.length}

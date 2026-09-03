@@ -14,59 +14,33 @@
 @custom-variant on (&[data-active="true"], &[aria-pressed="true"], &[aria-current="page"]);
 
 :root {
-	--ground: #faf8ff;
+	--ground: #fafafa;
 	--surface: #ffffff;
-	--raised: #f1ecfb;
-	--line: #e3dbf3;
-	--text: #171226;
-	--dim: #6b6285;
+	--raised: #f0f0f0;
+	--line: #e3e3e3;
+	--text: #1a1a1a;
+	--dim: #6b6b6b;
 
-	--accent: #7c3fe4;
+	--accent: #6d28d9;
 	--accent-ink: #ffffff;
-	--signal: #12854a;
+	--signal: #4d7c0f;
 	--warn: #c2410c;
 
 	--radius: 0.5rem;
 }
 
 .dark {
-	--ground: #0b0912;
-	--surface: #14111e;
-	--raised: #1c1730;
-	--line: #2a2340;
-	--text: #ede9f7;
-	--dim: #9a91b4;
+	--ground: #0c0c0c;
+	--surface: #151515;
+	--raised: #1f1f1f;
+	--line: #2c2c2c;
+	--text: #ececec;
+	--dim: #9a9a9a;
 
-	--accent: #a87bff;
-	--accent-ink: #14061f;
-	--signal: #58e08b;
+	--accent: #a78bfa;
+	--accent-ink: #1b0c3a;
+	--signal: #a3d949;
 	--warn: #fb923c;
-}
-
-/*
- * Each tool owns an accent, so colour says which one you are looking at: it drives the active
- * nav item, focus rings and primary buttons. Set on the shell, read by every component.
- */
-[data-tool="live"] {
-	--accent: #db2777;
-	--accent-ink: #ffffff;
-}
-
-[data-tool="firehose"] {
-	--accent: #0e7f96;
-	--accent-ink: #ffffff;
-}
-
-.dark [data-tool="live"],
-.dark[data-tool="live"] {
-	--accent: #ff4d8f;
-	--accent-ink: #2b0413;
-}
-
-.dark [data-tool="firehose"],
-.dark[data-tool="firehose"] {
-	--accent: #35ddf5;
-	--accent-ink: #04222a;
 }
 
 @theme inline {

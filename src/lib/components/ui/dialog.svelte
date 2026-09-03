@@ -10,7 +10,7 @@
 		title: string;
 		description?: string;
 		class?: string;
-		trigger?: Snippet<[{ props: Record<string, unknown> }]>;
+		trigger?: Snippet;
 		children?: Snippet;
 		footer?: Snippet;
 	};
@@ -35,19 +35,18 @@
 			class={cn(
 				"border-line bg-surface fixed top-1/2 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col gap-3 rounded-lg border p-5 shadow-2xl duration-150",
 				"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
-				"before:bg-accent before:absolute before:inset-x-5 before:top-0 before:h-0.5 before:rounded-full",
 				className
 			)}
 		>
 			<div class="flex items-start justify-between gap-4">
 				<div class="space-y-1">
-					<DialogPrimitive.Title class="font-display text-lg leading-tight font-semibold tracking-tight">{title}</DialogPrimitive.Title>
+					<DialogPrimitive.Title class="font-display text-xl leading-tight font-semibold tracking-tight">{title}</DialogPrimitive.Title>
 					{#if description}
-						<DialogPrimitive.Description class="text-dim text-sm">{description}</DialogPrimitive.Description>
+						<DialogPrimitive.Description class="text-dim text-base">{description}</DialogPrimitive.Description>
 					{/if}
 				</div>
-				<DialogPrimitive.Close class="ring-focus text-dim hover:bg-raised hover:text-text -mt-1 -mr-1 rounded-md p-1 transition-colors">
-					<XIcon class="size-4" />
+				<DialogPrimitive.Close class="ring-focus text-dim hover:bg-raised hover:text-text -mt-2 -mr-2 grid size-9 shrink-0 place-items-center rounded-md transition-colors">
+					<XIcon class="size-4.5" />
 					<span class="sr-only">Close</span>
 				</DialogPrimitive.Close>
 			</div>

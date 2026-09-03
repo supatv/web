@@ -30,13 +30,13 @@
 		{id}
 		aria-label={ariaLabel}
 		class={cn(
-			"ring-focus border-line bg-raised text-text flex h-9 items-center justify-between gap-2 rounded-md border px-2.5 text-sm transition-colors",
-			"hover:border-accent open:border-accent disabled:opacity-40",
+			"ring-focus border-line bg-raised text-text flex h-11 items-center justify-between gap-2 rounded-md border px-3 text-base transition-colors",
+			"hover:border-accent open:border-accent disabled:opacity-50",
 			className
 		)}
 	>
 		<span class="truncate">{label}</span>
-		<ChevronDownIcon class="text-dim size-3.5 shrink-0" />
+		<ChevronDownIcon class="text-dim size-4 shrink-0" />
 	</SelectPrimitive.Trigger>
 
 	<SelectPrimitive.Portal>
@@ -58,14 +58,14 @@
 							<div
 								{...props}
 								class={cn(
-									"flex h-7 cursor-pointer items-center justify-between gap-2 rounded-[5px] px-2 text-sm transition-colors outline-none",
+									"flex h-9 cursor-pointer items-center justify-between gap-2 rounded-[5px] px-2.5 text-base transition-colors outline-none",
 									"data-highlighted:bg-raised data-highlighted:text-text",
 									selected && "text-accent font-medium"
 								)}
 							>
 								<span class="truncate">{option.label}</span>
 								{#if selected}
-									<CheckIcon class="size-3.5 shrink-0" />
+									<CheckIcon class="size-4 shrink-0" />
 								{/if}
 							</div>
 						{/snippet}

@@ -12,8 +12,8 @@
 
 	let { class: className, months: monthList, years: yearList, value = $bindable(), placeholder = $bindable(), ...rest }: Props = $props();
 
-	const nav = "ring-focus text-dim hover:bg-raised hover:text-text grid size-7 place-items-center rounded-md transition-colors disabled:opacity-30";
-	const dropdown = "ring-focus border-line bg-raised hover:border-accent relative flex h-7 items-center gap-1 rounded-md border pr-1 pl-2 text-xs font-medium transition-colors";
+	const nav = "ring-focus text-dim hover:bg-raised hover:text-text grid size-9 place-items-center rounded-md transition-colors disabled:opacity-40";
+	const dropdown = "ring-focus border-line bg-raised hover:border-accent relative flex h-9 items-center gap-1 rounded-md border pr-2 pl-2.5 text-sm font-medium transition-colors";
 </script>
 
 <CalendarPrimitive.Root bind:value={value as never} bind:placeholder weekdayFormat="short" class={cn("tnum w-fit p-3", className)} monthFormat="short" yearFormat="numeric" {...rest}>
@@ -63,7 +63,7 @@
 				<CalendarPrimitive.GridHead>
 					<CalendarPrimitive.GridRow class="flex">
 						{#each weekdays as weekday (weekday)}
-							<CalendarPrimitive.HeadCell class="text-dim size-8 text-[0.65rem] font-medium">
+							<CalendarPrimitive.HeadCell class="text-dim size-9 text-xs font-medium">
 								{weekday.slice(0, 2)}
 							</CalendarPrimitive.HeadCell>
 						{/each}
@@ -76,7 +76,7 @@
 								<CalendarPrimitive.Cell {date} month={month.value} class="p-0">
 									<CalendarPrimitive.Day
 										class={cn(
-											"ring-focus grid size-8 place-items-center rounded-md text-xs transition-colors",
+											"ring-focus grid size-9 place-items-center rounded-md text-sm transition-colors",
 											"hover:bg-raised data-selected:bg-accent data-selected:text-accent-ink data-selected:font-semibold",
 											"data-outside-month:opacity-30 data-unavailable:pointer-events-none data-unavailable:opacity-25",
 											"data-today:text-accent data-selected:data-today:text-accent-ink data-today:font-semibold"
