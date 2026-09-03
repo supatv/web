@@ -19,7 +19,6 @@ export default ts.config(
 				NodeJS: "readonly",
 				__BUILD_DATE: "readonly",
 				__COMMIT_HASH: "readonly",
-				Fuzzysort: "readonly",
 			},
 		},
 		rules: {

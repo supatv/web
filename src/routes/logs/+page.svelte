@@ -357,7 +357,6 @@
 		});
 	});
 
-	// const dateContent = $derived(availableDates[Number(dateValue) ?? 0]);
 	const dateContent = $derived.by(() => {
 		const [year, month, day] = String(dateValue).split("-");
 		if (!year || !month) {
@@ -952,7 +951,7 @@
 								{#if msgId !== page.url.hash.slice(1)}
 									<Button
 										variant="outline"
-										class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
+										class="mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
 										href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
 										target="_blank"
 									>

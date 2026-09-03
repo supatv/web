@@ -39,7 +39,6 @@
 	let logsList: ReturnType<typeof VirtualList> | undefined = $state();
 
 	let error: string | null = $state(null);
-	// let loading = $state(false);
 
 	let isPopoverOpen = $state(false);
 
@@ -54,7 +53,6 @@
 		}
 	};
 
-	// let logsBox: HTMLDivElement | null = $state(null);
 	let searchInput: HTMLInputElement | null = $state(null);
 
 	let instanceValue = $state("");
