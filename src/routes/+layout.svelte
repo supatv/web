@@ -83,15 +83,7 @@
 
 	<main class="flex min-w-0 flex-1 flex-col">
 		<div class="border-line bg-surface/80 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-1 border-b px-2 backdrop-blur">
-			<Button
-				variant="ghost"
-				size="icon-sm"
-				onclick={() => {
-					shell.toggleSidebar();
-					shell.mobileNavOpen = !shell.mobileNavOpen;
-				}}
-				title="Toggle sidebar"
-			>
+			<Button variant="ghost" size="icon-sm" onclick={() => shell.toggleSidebar()} title="Toggle sidebar" aria-controls="app-sidebar" aria-expanded={shell.navOpen}>
 				<PanelLeftIcon />
 				<span class="sr-only">Toggle sidebar</span>
 			</Button>
@@ -132,7 +124,7 @@
 						type="single"
 						max={1}
 						step={0.01}
-						class="w-20 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100"
+						class="w-20 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
 						onValueCommit={(v) => {
 							if (v !== 0) prevVolume = v;
 						}}

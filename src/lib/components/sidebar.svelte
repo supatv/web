@@ -2,6 +2,7 @@
 	import { TvIcon, ScrollIcon, HeartIcon, ExternalLinkIcon, FlameIcon } from "@lucide/svelte";
 	import dayjs from "dayjs";
 
+	import { afterNavigate } from "$app/navigation";
 	import { page } from "$app/state";
 
 	import potatLogo from "$lib/assets/logos/potat.png";
@@ -28,15 +29,48 @@
 		{ href: "https://logs.zonian.dev/status", logo: bestlogsLogo, name: "Best Logs", event: "link-BestLogs" },
 		{ href: "https://potat.app", logo: potatLogo, name: "PotatBotat", event: "link-PotatBotat" },
 	];
+
+	// gating the drawer on the media query as well as the flag means growing past `md` puts the
+	// sidebar back in the flow without leaving a stale open drawer behind
+	const drawerOpen = $derived(shell.isMobile && shell.mobileNavOpen);
+
+	afterNavigate(() => (shell.mobileNavOpen = false));
+
+	$effect(() => {
+		if (!drawerOpen) return;
+
+		const { overflow } = document.body.style;
+		document.body.style.overflow = "hidden";
+		return () => {
+			document.body.style.overflow = overflow;
+		};
+	});
 </script>
 
+<svelte:window
+	onkeydown={(e) => {
+		if (e.key === "Escape" && drawerOpen) shell.mobileNavOpen = false;
+	}}
+/>
+
+{#if drawerOpen}
+	<button type="button" aria-label="Close navigation" class="fixed inset-0 z-40 bg-black/60 md:hidden" onclick={() => (shell.mobileNavOpen = false)}></button>
+{/if}
+
 <nav
-	class={[
-		"border-line bg-surface z-40 flex h-svh shrink-0 flex-col overflow-hidden border-r transition-[width] duration-200",
-		shell.sidebarOpen ? "w-60" : "w-0 border-r-0",
-		shell.mobileNavOpen ? "max-md:fixed max-md:top-0 max-md:left-0 max-md:w-60 max-md:shadow-2xl md:sticky md:top-0" : "sticky top-0",
-	]}
+	id="app-sidebar"
 	aria-label="Main"
+	inert={!shell.navOpen}
+	class={[
+		"border-line bg-surface flex h-svh shrink-0 flex-col overflow-hidden border-r",
+		// mobile: an overlay drawer that never takes up flow width, so a collapsed sidebar cannot
+		// push the page off screen
+		"max-md:fixed max-md:top-0 max-md:left-0 max-md:z-50 max-md:w-60 max-md:shadow-2xl max-md:transition-transform max-md:duration-200",
+		drawerOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
+		// desktop: in the flow, collapsing by width
+		"md:sticky md:top-0 md:transition-[width] md:duration-200",
+		shell.sidebarOpen ? "md:w-60" : "md:w-0 md:border-r-0",
+	]}
 >
 	<div class="flex w-60 min-w-60 flex-1 flex-col">
 		<a href="/live" class="ring-focus border-line flex h-14 shrink-0 items-center gap-2.5 border-b px-4">
@@ -47,7 +81,7 @@
 			</span>
 		</a>
 
-		<div class="flex flex-1 flex-col gap-5 overflow-y-auto p-3">
+		<div class="flex flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-3">
 			{#each sections as section (section.label)}
 				<div class="flex flex-col gap-0.5">
 					<h2 class="font-display text-dim mb-1 px-2 text-xs font-semibold tracking-wide">{section.label}</h2>
@@ -59,7 +93,7 @@
 							class={[
 								"ring-focus relative flex h-10 items-center gap-2.5 rounded-md pr-2 pl-3 text-[0.9375rem] transition-colors",
 								"before:absolute before:top-1.5 before:bottom-1.5 before:left-0 before:w-0.5 before:rounded-full before:transition-colors",
-								active ? "bg-raised text-text font-medium" : "text-dim hover:bg-raised/60 hover:text-text",
+								active ? "bg-raised text-text before:bg-accent font-medium" : "text-dim hover:bg-raised/60 hover:text-text",
 							]}
 						>
 							<item.icon class={["size-4 shrink-0", active && "text-accent"]} />
@@ -99,9 +133,3 @@
 		</div>
 	</div>
 </nav>
-
-{#if shell.mobileNavOpen}
-	<!-- svelte-ignore a11y_click_events_have_key_events -->
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="fixed inset-0 z-30 bg-black/60 md:hidden" onclick={() => (shell.mobileNavOpen = false)}></div>
-{/if}

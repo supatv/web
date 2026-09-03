@@ -159,7 +159,7 @@
 
 <div id="main-fit-screen" class="hidden"></div>
 
-<div class="flex min-h-0 flex-1 flex-col gap-3 p-4">
+<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 md:overflow-y-visible">
 	<header class="flex flex-wrap items-baseline gap-x-3">
 		<h1 class="font-display text-3xl font-bold tracking-tight">Firehose</h1>
 		<p class="text-dim text-base">
@@ -182,12 +182,12 @@
 			</div>
 		</div>
 
-		<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5">
+		<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5 max-md:min-h-[60svh]">
 			<VirtualList
 				bind:this={logsList}
 				itemCount={filteredChatLogs.length}
 				itemSize={lineHeight}
-				class="overflow-scroll py-2"
+				class="overflow-scroll overscroll-contain py-2"
 				onscroll={({ distanceFromBottom }) => (scrollPaused = distanceFromBottom > lineHeight)}
 			>
 				{#snippet item(index, style)}

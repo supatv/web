@@ -65,7 +65,7 @@
 <svelte:window on:keydown={windowKeydown} bind:scrollY={windowScrollY} />
 
 <button
-	class="border-line bg-surface text-dim hover:text-accent hover:border-accent ring-focus fixed right-5 bottom-5 z-50 grid size-12 place-items-center rounded-full border shadow-lg transition-colors"
+	class="border-line bg-surface text-dim hover:text-accent hover:border-accent ring-focus fixed right-5 bottom-5 z-30 grid size-12 place-items-center rounded-full border shadow-lg transition-colors"
 	aria-disabled={loading}
 	title={loading ? "Refreshing" : "Scroll, or right-click to refresh"}
 	oncontextmenu={(e) => e.preventDefault()}

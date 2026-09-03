@@ -216,7 +216,7 @@
 		{#if files}
 			<div class="flex h-full w-full flex-col md:flex-row">
 				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="bg-surface border-line block border-b py-2 text-center text-sm font-medium md:hidden">Close</div>
-				<div class="bg-surface border-line order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain border-r md:order-0 md:h-full md:max-w-80 md:min-w-80">
+				<div class="bg-surface border-line order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain md:order-0 md:h-full md:border-r md:max-w-80 md:min-w-80">
 					<VirtualList bind:this={fileList} itemCount={fileEntries.length} {itemSize} class="overflow-x-hidden">
 						{#snippet item(index, style)}
 							{@const file = fileEntries[index]}
@@ -269,7 +269,7 @@
 						onclick={(e) => e.stopPropagation()}
 					></video>
 				</div>
-				<div class="bg-surface border-line flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain border-l md:max-w-80 md:min-w-80">
+				<div class="bg-surface border-line flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain md:max-w-80 md:min-w-80 md:border-l">
 					<div class="hidden justify-center border-b py-2 md:flex">
 						<p class="text-lg font-semibold">Chat Replay</p>
 					</div>

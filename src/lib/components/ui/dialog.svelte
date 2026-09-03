@@ -10,7 +10,7 @@
 		title: string;
 		description?: string;
 		class?: string;
-		trigger?: Snippet;
+		trigger?: Snippet<[{ props: Record<string, unknown> }]>;
 		children?: Snippet;
 		footer?: Snippet;
 	};
