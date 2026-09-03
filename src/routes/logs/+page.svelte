@@ -693,146 +693,148 @@
 		{/if}
 	</form>
 
-	<div class="flex flex-wrap items-center gap-1.5">
-		{#if dateContent}
-			{#if dateContent.day}
-				<Popover bind:open={datePopoverOpen}>
-					{#snippet trigger({ props })}
-						<Button {...props} variant="outline" class="tnum w-44 justify-between" disabled={loading}>
-							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
-							<CalendarIcon class="text-dim" />
-						</Button>
-					{/snippet}
+	<div class="flex min-h-0 flex-1 flex-col gap-1.5">
+		<div class="flex flex-wrap items-center gap-1.5">
+			{#if dateContent}
+				{#if dateContent.day}
+					<Popover bind:open={datePopoverOpen}>
+						{#snippet trigger({ props })}
+							<Button {...props} variant="outline" size="sm" class="tnum w-36 justify-between" disabled={loading}>
+								{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
+								<CalendarIcon class="text-dim" />
+							</Button>
+						{/snippet}
 
-					<Calendar
-						type="single"
-						months={monthOptions}
-						years={yearOptions}
-						isDateUnavailable={(date) => !isDateAvailable(date)}
-						onPlaceholderChange={adjustDate}
-						onValueChange={updateDateValue}
-						bind:value={calendarDate}
-					/>
-				</Popover>
-			{:else}
-				<Select bind:open={datePopoverOpen} bind:value={dateValue} options={dateOptions} disabled={loading} aria-label="Date" class="tnum w-44" contentClass="tnum" />
+						<Calendar
+							type="single"
+							months={monthOptions}
+							years={yearOptions}
+							isDateUnavailable={(date) => !isDateAvailable(date)}
+							onPlaceholderChange={adjustDate}
+							onValueChange={updateDateValue}
+							bind:value={calendarDate}
+						/>
+					</Popover>
+				{:else}
+					<Select bind:open={datePopoverOpen} bind:value={dateValue} options={dateOptions} size="sm" disabled={loading} aria-label="Date" class="tnum w-36" contentClass="tnum" />
+				{/if}
 			{/if}
-		{/if}
 
-		{#if chatLogs.length}
-			<div class="relative flex min-w-52 flex-1 items-center">
-				<Input id="input-search" class="pr-24" maxlength={500} placeholder={isJumpMode ? "Find..." : "Filter..."} autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
-				<span class="tnum text-dim pointer-events-none absolute right-3 text-sm select-none">{displayMessageCount}</span>
-			</div>
+			{#if chatLogs.length}
+				<div class="relative flex min-w-44 flex-1 items-center">
+					<Input id="input-search" size="sm" class="pr-20" maxlength={500} placeholder={isJumpMode ? "Find..." : "Filter..."} autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+					<span class="tnum text-dim pointer-events-none absolute right-2.5 text-xs select-none">{displayMessageCount}</span>
+				</div>
 
-			{#if isJumpSearching}
-				{@const width = searchResults.length.toString().length + 4}
-				<div class="flex items-center gap-1">
-					<Input type="number" class="tnum" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
-					<span class="text-dim text-sm">of</span>
-					<span class="tnum text-dim text-sm">{searchResults.length.toLocaleString()}</span>
+				{#if isJumpSearching}
+					{@const width = searchResults.length.toString().length + 4}
+					<div class="flex items-center gap-1">
+						<Input type="number" size="sm" class="tnum" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+						<span class="text-dim text-sm">of</span>
+						<span class="tnum text-dim text-sm">{searchResults.length.toLocaleString()}</span>
+					</div>
+				{/if}
+
+				<div class="ml-auto flex gap-1">
+					<Button
+						variant="outline"
+						size="icon-sm"
+						onclick={searchModeToggle}
+						title={isJumpMode ? "Switch to filtering" : "Switch to jumping"}
+						aria-label={isJumpMode ? "Switch to filtering" : "Switch to jumping"}
+						aria-pressed={isJumpMode}
+						class="on:border-accent on:text-accent"
+					>
+						{#if isJumpMode}
+							<SearchIcon />
+						{:else}
+							<FilterIcon />
+						{/if}
+					</Button>
+					<Button
+						variant="outline"
+						size="icon-sm"
+						onclick={scrollFromBottomToggle}
+						title={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
+						aria-label={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
+					>
+						{#if scrollFromBottom}
+							<ArrowUpNarrowWideIcon />
+						{:else}
+							<ArrowDownWideNarrowIcon />
+						{/if}
+					</Button>
+					<Button
+						variant="outline"
+						size="icon-sm"
+						title="Open raw logs"
+						aria-label="Open raw logs"
+						target="_blank"
+						href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent
+							? `${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ''}`
+							: `search?q=${encodeURIComponent(query)}`}"
+					>
+						<FileTextIcon />
+					</Button>
 				</div>
 			{/if}
+		</div>
 
-			<div class="ml-auto flex gap-1">
-				<Button
-					variant="outline"
-					size="icon"
-					onclick={searchModeToggle}
-					title={isJumpMode ? "Switch to filtering" : "Switch to jumping"}
-					aria-label={isJumpMode ? "Switch to filtering" : "Switch to jumping"}
-					aria-pressed={isJumpMode}
-					class="on:border-accent on:text-accent"
-				>
-					{#if isJumpMode}
-						<SearchIcon />
-					{:else}
-						<FilterIcon />
-					{/if}
-				</Button>
-				<Button
-					variant="outline"
-					size="icon"
-					onclick={scrollFromBottomToggle}
-					title={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
-					aria-label={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
-				>
-					{#if scrollFromBottom}
-						<ArrowUpNarrowWideIcon />
-					{:else}
-						<ArrowDownWideNarrowIcon />
-					{/if}
-				</Button>
-				<Button
-					variant="outline"
-					size="icon"
-					title="Open raw logs"
-					aria-label="Open raw logs"
-					target="_blank"
-					href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent
-						? `${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ''}`
-						: `search?q=${encodeURIComponent(query)}`}"
-				>
-					<FileTextIcon />
-				</Button>
-			</div>
+		{#if error}
+			<p class="text-warn text-sm">{error}</p>
+		{:else if chatLogs.length}
+			<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5 max-md:min-h-[60svh]">
+				<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll overscroll-contain py-2">
+					{#snippet item(index, style)}
+						{@const msg = filteredChatLogs[index]}
+						{@const msgId = getMessageId(msg)}
+						{@const time = messageTime(msg)}
+						{@const isNewDay = index > 0 && messageTime(filteredChatLogs[index - 1]).day !== time.day}
+						{@const isHashMatch = msgId === page.url.hash.slice(1)}
+						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
+						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
+						<div class="group w-max min-w-full text-nowrap" {style}>
+							<div
+								class={[
+									"flex h-5 w-full items-center gap-x-1.5 px-3",
+									isNewDay && "border-line -mt-px border-t border-dashed",
+									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
+								]}
+							>
+								<span class="tnum text-dim/80 shrink-0 text-xs select-none">{time.at}</span>
+								<span class="h-5 w-max">
+									{#if msg.tags["target-msg-id"]}
+										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
+										<span class="text-dim">
+											{#if msgDeleted}
+												<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
+													A message from {msgDeleted.displayName} was deleted
+												</span>
+											{:else}
+												A message was deleted
+											{/if}
+										</span>
+									{:else}
+										<MessageContent {chat} {msg} />
+									{/if}
+								</span>
+								{#if !isHashMatch}
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										class="size-5 shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+										title="Permalink"
+										href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
+										target="_blank"
+									>
+										<ExternalLinkIcon class="size-3!" />
+									</Button>
+								{/if}
+							</div>
+						</div>
+					{/snippet}
+				</VirtualList>
+			</Panel>
 		{/if}
 	</div>
-
-	{#if error}
-		<p class="text-warn text-sm">{error}</p>
-	{:else if chatLogs.length}
-		<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5 max-md:min-h-[60svh]">
-			<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll overscroll-contain py-2">
-				{#snippet item(index, style)}
-					{@const msg = filteredChatLogs[index]}
-					{@const msgId = getMessageId(msg)}
-					{@const time = messageTime(msg)}
-					{@const isNewDay = index > 0 && messageTime(filteredChatLogs[index - 1]).day !== time.day}
-					{@const isHashMatch = msgId === page.url.hash.slice(1)}
-					{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
-					{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
-					<div class="group w-max min-w-full text-nowrap" {style}>
-						<div
-							class={[
-								"flex h-5 w-full items-center gap-x-1.5 px-3",
-								isNewDay && "border-line -mt-px border-t border-dashed",
-								(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
-							]}
-						>
-							<span class="tnum text-dim/80 shrink-0 text-xs select-none">{time.at}</span>
-							<span class="h-5 w-max">
-								{#if msg.tags["target-msg-id"]}
-									{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
-									<span class="text-dim">
-										{#if msgDeleted}
-											<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
-												A message from {msgDeleted.displayName} was deleted
-											</span>
-										{:else}
-											A message was deleted
-										{/if}
-									</span>
-								{:else}
-									<MessageContent {chat} {msg} />
-								{/if}
-							</span>
-							{#if !isHashMatch}
-								<Button
-									variant="ghost"
-									size="icon-sm"
-									class="size-5 shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-									title="Permalink"
-									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
-									target="_blank"
-								>
-									<ExternalLinkIcon class="size-3!" />
-								</Button>
-							{/if}
-						</div>
-					</div>
-				{/snippet}
-			</VirtualList>
-		</Panel>
-	{/if}
 </div>

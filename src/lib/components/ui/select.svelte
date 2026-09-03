@@ -1,5 +1,20 @@
 <script lang="ts" module>
+	import { tv, type VariantProps } from "tailwind-variants";
+
 	export type SelectOption = { value: string; label: string; separatorBefore?: boolean };
+
+	export const selectTrigger = tv({
+		base: "ring-focus border-line bg-raised text-text flex items-center justify-between gap-2 rounded-md border transition-colors hover:border-accent open:border-accent disabled:opacity-50",
+		variants: {
+			size: {
+				sm: "h-9 px-2.5 text-sm",
+				md: "h-11 px-3 text-base",
+			},
+		},
+		defaultVariants: { size: "md" },
+	});
+
+	export type SelectSize = VariantProps<typeof selectTrigger>["size"];
 </script>
 
 <script lang="ts">
@@ -12,6 +27,7 @@
 		value?: string;
 		open?: boolean;
 		options: SelectOption[];
+		size?: SelectSize;
 		placeholder?: string;
 		disabled?: boolean;
 		id?: string;
@@ -20,21 +36,13 @@
 		"aria-label"?: string;
 	};
 
-	let { value = $bindable(""), open = $bindable(false), options, placeholder = "Select", disabled = false, id, class: className, contentClass, "aria-label": ariaLabel }: Props = $props();
+	let { value = $bindable(""), open = $bindable(false), options, size, placeholder = "Select", disabled = false, id, class: className, contentClass, "aria-label": ariaLabel }: Props = $props();
 
 	const label = $derived(options.find((o) => o.value === value)?.label ?? placeholder);
 </script>
 
 <SelectPrimitive.Root type="single" bind:value bind:open {disabled}>
-	<SelectPrimitive.Trigger
-		{id}
-		aria-label={ariaLabel}
-		class={cn(
-			"ring-focus border-line bg-raised text-text flex h-11 items-center justify-between gap-2 rounded-md border px-3 text-base transition-colors",
-			"hover:border-accent open:border-accent disabled:opacity-50",
-			className
-		)}
-	>
+	<SelectPrimitive.Trigger {id} aria-label={ariaLabel} class={cn(selectTrigger({ size }), className)}>
 		<span class="truncate">{label}</span>
 		<ChevronDownIcon class="text-dim size-4 shrink-0" />
 	</SelectPrimitive.Trigger>
@@ -58,7 +66,8 @@
 							<div
 								{...props}
 								class={cn(
-									"flex h-9 cursor-pointer items-center justify-between gap-2 rounded-[5px] px-2.5 text-base transition-colors outline-none",
+									"flex h-9 cursor-pointer items-center justify-between gap-2 rounded-[5px] px-2.5 transition-colors outline-none",
+									size === "sm" ? "text-sm" : "text-base",
 									"data-highlighted:bg-raised data-highlighted:text-text",
 									selected && "text-accent font-medium"
 								)}
