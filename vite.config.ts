@@ -9,6 +9,6 @@ export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
 	define: {
 		__COMMIT_HASH: JSON.stringify(commitHash),
-		__BUILD_DATE: new Date(),
+		__BUILD_DATE: JSON.stringify(new Date()),
 	},
 });
