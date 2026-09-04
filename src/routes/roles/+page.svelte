@@ -404,7 +404,7 @@
 								<div class="flex min-w-0 items-center gap-1">
 									<RoleIcon class="size-4 shrink-0 text-base" />
 									<h2 class="font-display truncate text-base font-bold tracking-tight">{roleTitle(section.role)}</h2>
-									<span class="font-display text-dim text-sm font-semibold tabular-nums">{section.total.toLocaleString()}</span>
+									<span class="font-display text-dim text-sm font-semibold tabular-nums">{view === "user" ? "in " : ""}{section.total.toLocaleString()}</span>
 								</div>
 
 								{#if section.rank?.total_channels}
