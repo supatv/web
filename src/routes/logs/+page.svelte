@@ -707,7 +707,7 @@
 						/>
 					</Popover>
 				{:else}
-					<Select bind:value={dateValue} options={dateOptions} size="sm" disabled={loading} aria-label="Date" class="tnum w-36" contentClass="tnum" />
+					<Select bind:value={dateValue} options={dateOptions} size="sm" disabled={loading} aria-label="Date" placeholder={dateValue || "Select"} class="tnum w-36" contentClass="tnum" />
 				{/if}
 			{/if}
 
