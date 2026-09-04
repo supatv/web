@@ -22,6 +22,7 @@
 	import { CheckIcon, ChevronDownIcon } from "@lucide/svelte";
 
 	import { cn } from "$lib/utils";
+	import FocusTrap from "./focus-trap.svelte";
 
 	type Props = {
 		value?: string;
@@ -61,6 +62,10 @@
 	</SelectPrimitive.Trigger>
 
 	<SelectPrimitive.Portal>
+		{#if open}
+			<FocusTrap />
+		{/if}
+
 		<SelectPrimitive.Content
 			sideOffset={6}
 			class={cn(

@@ -33,8 +33,6 @@
 
 	let error: string | null = $state(null);
 
-	let isPopoverOpen = $state(false);
-
 	let messagesPerSecond = $state(0);
 
 	let socket: ReconnectingWebSocket | null = $state(null);
@@ -173,7 +171,7 @@
 		<div class="flex flex-wrap items-end gap-2">
 			<div class="flex flex-col gap-1">
 				<Label for="select-instance">Instance</Label>
-				<Select id="select-instance" bind:open={isPopoverOpen} bind:value={instanceValue} options={instanceOptions} class="w-52" />
+				<Select id="select-instance" bind:value={instanceValue} options={instanceOptions} class="w-52" />
 			</div>
 
 			<div class="flex min-w-52 flex-1 flex-col gap-1">

@@ -41,8 +41,6 @@
 	let error: string | null = $state(null);
 	let loading = $state(false);
 
-	let datePopoverOpen = $state(false);
-
 	let selectedIndex = $state(0); // Track selected item
 
 	let availableDates: LogsDate[] = $state([]);
@@ -690,7 +688,7 @@
 		<div class="flex flex-wrap items-center gap-1.5">
 			{#if dateContent}
 				{#if dateContent.day}
-					<Popover bind:open={datePopoverOpen}>
+					<Popover>
 						{#snippet trigger({ props })}
 							<Button {...props} variant="outline" size="sm" class="tnum w-36 justify-between" disabled={loading}>
 								{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
@@ -709,7 +707,7 @@
 						/>
 					</Popover>
 				{:else}
-					<Select bind:open={datePopoverOpen} bind:value={dateValue} options={dateOptions} size="sm" disabled={loading} aria-label="Date" class="tnum w-36" contentClass="tnum" />
+					<Select bind:value={dateValue} options={dateOptions} size="sm" disabled={loading} aria-label="Date" class="tnum w-36" contentClass="tnum" />
 				{/if}
 			{/if}
 

@@ -3,6 +3,7 @@
 	import { Popover as PopoverPrimitive } from "bits-ui";
 
 	import { cn } from "$lib/utils";
+	import FocusTrap from "./focus-trap.svelte";
 
 	type Props = {
 		open?: boolean;
@@ -24,6 +25,10 @@
 	</PopoverPrimitive.Trigger>
 
 	<PopoverPrimitive.Portal>
+		{#if open}
+			<FocusTrap />
+		{/if}
+
 		<PopoverPrimitive.Content
 			{align}
 			{sideOffset}
