@@ -1,40 +1,39 @@
 <script lang="ts">
-	import { mode } from "mode-watcher";
-
-	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
+	import { Skeleton } from "$lib/components/ui";
 
 	import { dateTimeFormat, formatDuration, humanFileSize, type TitleContext } from "$lib/common";
-	import linkParser from "$lib/link-parser";
 
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
-	import { SvelteMap } from "svelte/reactivity";
 
 	import Image from "$lib/components/image.svelte";
 	import dayjs from "dayjs";
 
-	import TextFragment from "$lib/components/message/text-fragment.svelte";
-	import Emote from "$lib/components/message/emote.svelte";
-	import Link from "$lib/components/message/link.svelte";
-	import Badge from "$lib/components/message/badge.svelte";
+	import MessageContent from "$lib/components/message/content.svelte";
+	import VirtualList from "$lib/components/virtual-list.svelte";
 
-	import VirtualList from "svelte-tiny-virtual-list";
-	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
+	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
 
 	import { LoaderCircleIcon } from "@lucide/svelte";
 
-	import * as TwitchServices from "$lib/twitch/services/index.js";
-
 	getContext<TitleContext>("title").set("The Jake Files");
+
+	type ArchiveFile = {
+		id: string;
+		duration: number;
+		size: number;
+		created_at: number;
+		title: string;
+	};
 
 	const channelId = "94682428";
 
-	const emotesClass = "max-h-7 -my-1 -z-10";
+	const chat = new ChatSource({ emoteClass: "-my-1 -z-10 max-h-7" });
 
-	let listHeight = $state(0);
+	let fileList: ReturnType<typeof VirtualList> | undefined = $state();
 	let chatList: HTMLDivElement | null = $state(null);
-	let itemSize = 96;
+	const itemSize = 96;
 
 	let selectedFile: number | null = $state(null);
 
@@ -45,23 +44,9 @@
 
 	let chatError = $state("");
 
-	const channelEmotes = new SvelteMap<string, EmoteProps>();
-	const globalEmotes = new SvelteMap<string, EmoteProps>();
-	let emoteUpdates = $state(0);
+	let files: ArchiveFile[] | null = $state(null);
 
-	const channelBadges = new SvelteMap<string, BadgeProps>();
-	const globalBadges = new SvelteMap<string, BadgeProps>();
-	let badgeUpdates = $state(0);
-
-	let files:
-		| {
-				id: string;
-				duration: number;
-				size: number;
-				created_at: number;
-				title: string;
-		  }[]
-		| null = $state(null);
+	const fileEntries: ArchiveFile[] = $derived(files ?? []);
 
 	const fetchFiles = async () => {
 		const res = await fetch("https://fi.supa.sh/.archive/jake/files.json");
@@ -79,9 +64,7 @@
 		currentVideoTime = 0;
 
 		await tick();
-		const virtualList = document.querySelector(".virtual-list-wrapper");
-		if (!virtualList) return;
-		virtualList.scrollTop = index * itemSize - virtualList.clientHeight / 2 + itemSize / 2;
+		fileList?.scrollToIndex(index, "center");
 	};
 
 	let logsController: AbortController | null = null;
@@ -120,7 +103,7 @@
 		untrack(async () => {
 			await goto(`?i=${file.id}`, { replaceState: true, keepFocus: true, noScroll: true });
 
-			const style = ["bg-zinc-800", "p-1", "text-zinc-50", "ring-2", "ring-ring"];
+			const style = ["ring-2", "ring-accent", "rounded-md"];
 			document.querySelector(".active-card")?.classList.remove("active-card", ...style);
 			const fileCard = document.getElementById(`file-card-${selectedFile}`);
 			if (!fileCard) return;
@@ -145,7 +128,7 @@
 	};
 
 	const isNewMessageDivider = (msg: Message, index: number) => {
-		const file = files?.[selectedFile || -1];
+		const file = files?.[selectedFile ?? -1];
 		if (!file) return false;
 
 		const clipStart = file.created_at - file.duration;
@@ -157,14 +140,14 @@
 
 	onMount(() => {
 		fetchFiles();
-		fetchGlobalBadges();
-		fetchChannelBadges();
-		fetchGlobalEmotes();
-		fetchChannelEmotes();
+		chat.loadGlobalBadges();
+		chat.loadGlobalEmotes();
+		chat.loadChannelBadges(channelId);
+		chat.loadChannelEmotes(channelId);
 	});
 
 	let chatRenderInterval: NodeJS.Timeout | null = setInterval(async () => {
-		if (!selectedFile) return;
+		if (selectedFile === null) return;
 		const file = files?.[selectedFile];
 		if (!file) return;
 
@@ -182,194 +165,6 @@
 	onDestroy(() => {
 		if (chatRenderInterval) clearInterval(chatRenderInterval);
 	});
-
-	const getBadges = (msg: Message) => {
-		const badges: { id: string; src: string; title: string; alt: string }[] = [];
-
-		const badgeList = msg.tags["badges"].split(",");
-		for (const badge of badgeList) {
-			const [id, version] = badge.split("/");
-			const key = `${id}/${version}`;
-
-			const badgeData = channelBadges.get(key) || globalBadges.get(key);
-			if (badgeData) {
-				badges.push({
-					id,
-					src: badgeData.url,
-					title: badgeData.title,
-					alt: badgeData.title,
-				});
-			}
-		}
-
-		return badges;
-	};
-
-	const fetchGlobalBadges = async () => {
-		const globalBadgesList = await TwitchServices.IVR.getGlobalBadges();
-
-		globalBadgesList.forEach((badge) => {
-			badge.versions.forEach((version) => {
-				globalBadges.set(`${badge.set_id}/${version.id}`, {
-					url: version.image_url_1x,
-					title: version.title,
-				});
-			});
-		});
-
-		badgeUpdates++;
-	};
-
-	const fetchChannelBadges = async () => {
-		const channelBadgesList = await TwitchServices.IVR.getChannelBadges(channelId);
-
-		channelBadgesList.forEach((badge) => {
-			badge.versions.forEach((version) => {
-				channelBadges.set(`${badge.set_id}/${version.id}`, {
-					url: version.image_url_1x,
-					title: version.title,
-				});
-			});
-		});
-
-		badgeUpdates++;
-	};
-
-	const fetchGlobalEmotes = async () => {
-		const [stvEmotes, bttvEmotes, ffzEmotes] = (
-			await Promise.allSettled([TwitchServices.SevenTV.getGlobalEmotes(), TwitchServices.BetterTTV.getGlobalEmotes(), TwitchServices.FrankerFaceZ.getGlobalEmotes()])
-		).map((p) => (p.status === "fulfilled" ? p.value : []));
-
-		stvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name!, {
-				url: `https://7tv.app/emotes/${emote.id}`,
-				src: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
-			});
-		});
-
-		bttvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.code!, {
-				url: `https://betterttv.com/emotes/${emote.id}`,
-				src: `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`,
-			});
-		});
-
-		ffzEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name!, {
-				url: `https://www.frankerfacez.com/emoticon/${emote.id}-${emote.name}`,
-				src: `https://cdn.frankerfacez.com/emote/${emote.id}/1`,
-			});
-		});
-
-		emoteUpdates++;
-	};
-
-	const fetchChannelEmotes = async () => {
-		const [stvEmotes, bttvEmotes, ffzEmotes] = (
-			await Promise.allSettled([
-				TwitchServices.SevenTV.getChannelEmotes(channelId),
-				TwitchServices.BetterTTV.getChannelEmotes(channelId),
-				TwitchServices.FrankerFaceZ.getChannelEmotes(channelId),
-			])
-		).map((p) => (p.status === "fulfilled" ? p.value : []));
-
-		stvEmotes.forEach((emote) => {
-			channelEmotes.set(emote.name!, {
-				url: `https://7tv.app/emotes/${emote.id}`,
-				src: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
-			});
-		});
-
-		bttvEmotes.forEach((emote) => {
-			channelEmotes.set(emote.code!, {
-				url: `https://betterttv.com/emotes/${emote.id}`,
-				src: `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`,
-			});
-		});
-
-		ffzEmotes.forEach((emote) => {
-			channelEmotes.set(emote.name!, {
-				url: `https://www.frankerfacez.com/emoticon/${emote.id}-${emote.name}`,
-				src: `https://cdn.frankerfacez.com/emote/${emote.id}/1`,
-			});
-		});
-
-		emoteUpdates++;
-	};
-
-	const parseMessage = (msg: Message) => {
-		let components: ChatComponents = [];
-
-		let twitchEmotes: TMIEmote[] = [];
-		const systemMsg = msg.tags["system-msg"];
-		const posOffset = systemMsg ? [...systemMsg].length + 1 : 0;
-		if (msg.tags["emotes"]) {
-			for (const e of msg.tags["emotes"].split("/")) {
-				const [id, positions] = e.split(":");
-				for (const pos of positions.split(",")) {
-					twitchEmotes.push({ id, pos: pos.split("-").map((s) => Number(s) + posOffset) });
-				}
-			}
-			twitchEmotes = twitchEmotes.sort((a, b) => a.pos[0] - b.pos[0]);
-		}
-
-		let cum = "";
-		const unicode = [...msg.text];
-		for (let i = 0; i < unicode.length; i++) {
-			const c = unicode[i];
-
-			const nextEmote = twitchEmotes[0];
-			if (nextEmote?.pos[0] === i) {
-				twitchEmotes.shift();
-				components.push({
-					type: Emote,
-					props: {
-						_class: emotesClass,
-						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
-						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
-						url: `https://emotes.susgee.dev/emote/${nextEmote.id}`,
-					},
-				});
-				i = nextEmote.pos[1];
-				continue;
-			}
-
-			if (c === " ") {
-				if (cum.trim()) {
-					processWord(cum, components);
-					cum = "";
-				}
-				components.push({ type: TextFragment, props: { text: " " } });
-			} else {
-				cum += c;
-			}
-
-			if (i === unicode.length - 1 && cum.trim()) {
-				processWord(cum, components);
-			}
-		}
-
-		return components;
-	};
-
-	const processWord = (word: string, components: ChatComponents) => {
-		const emoteProps = channelEmotes.get(word) || globalEmotes.get(word);
-		if (emoteProps) {
-			components.push({ type: Emote, props: { _class: emotesClass, name: word, ...emoteProps } });
-			return;
-		}
-
-		const url = linkParser.parse(word);
-		if (url) {
-			components.push({
-				type: Link,
-				props: { href: `${url.protocol || "//"}${url.host}${url.rest}`, text: word },
-			});
-			return;
-		}
-
-		components.push({ type: TextFragment, props: { text: word } });
-	};
 </script>
 
 <svelte:window on:keydown={windowKeydown} />
@@ -391,10 +186,10 @@
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
 				<div role="button" tabindex="0" onclick={() => openFile(index)} class="rounded-sm" id="file-card-{index}">
 					<div class="relative overflow-hidden">
-						<span class="absolute right-0 top-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs tabular-nums text-white" title={date.format(dateTimeFormat)}>
+						<span class="absolute top-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white tabular-nums" title={date.format(dateTimeFormat)}>
 							{date.format("MMM 'YY")}
 						</span>
-						<span class="absolute bottom-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs tabular-nums text-white">
+						<span class="absolute right-0 bottom-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white tabular-nums">
 							{formatDuration(file.duration, "s")}
 						</span>
 						<Image src="https://fi.supa.sh/.archive/jake/thumb/{file.id}.jpg" loading="lazy" class="aspect-video w-full rounded-sm" />
@@ -420,35 +215,33 @@
 	<div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80" tabindex="-1">
 		{#if files}
 			<div class="flex h-full w-full flex-col md:flex-row">
-				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="block bg-zinc-200 py-1 text-center text-lg font-medium dark:bg-zinc-800 md:hidden">Close</div>
-				<div
-					class="order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:order-none md:h-full md:min-w-80 md:max-w-80"
-					bind:clientHeight={listHeight}
-				>
-					<VirtualList height={listHeight} itemCount={files.length} {itemSize}>
-						<div
-							slot="item"
-							let:index
-							let:style
-							{style}
-							class={["flex h-24 cursor-pointer gap-2 overflow-hidden border-b p-2 hover:bg-zinc-200 hover:dark:bg-zinc-800", index === selectedFile && "bg-zinc-300 dark:bg-zinc-800"]}
-							onclick={(e) => {
-								e.stopPropagation();
-								selectedFile = index;
-							}}
-						>
-							{@const file = files[index]}
-							<div class="relative aspect-video h-full">
-								<span class="absolute bottom-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs tabular-nums text-white">
-									{formatDuration(file.duration, "s")}
-								</span>
-								<Image src="https://fi.supa.sh/.archive/jake/thumb/{file.id}.jpg" class="h-full rounded-sm" />
+				<div onclick={() => (selectedFile = null)} role="button" tabindex="0" class="bg-surface border-line block border-b py-2 text-center text-sm font-medium md:hidden">Close</div>
+				<div class="bg-surface border-line order-last flex h-2/5 w-full flex-col overflow-y-hidden overscroll-contain md:order-0 md:h-full md:max-w-80 md:min-w-80 md:border-r">
+					<VirtualList bind:this={fileList} itemCount={fileEntries.length} {itemSize} class="overflow-x-hidden">
+						{#snippet item(index, style)}
+							{@const file = fileEntries[index]}
+							<!-- svelte-ignore a11y_click_events_have_key_events -->
+							<!-- svelte-ignore a11y_no_static_element_interactions -->
+							<div
+								{style}
+								class={["border-line hover:bg-raised flex w-full cursor-pointer gap-2 overflow-hidden border-b p-2 transition-colors", index === selectedFile && "bg-raised"]}
+								onclick={(e) => {
+									e.stopPropagation();
+									selectedFile = index;
+								}}
+							>
+								<div class="relative aspect-video h-full">
+									<span class="absolute right-0 bottom-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white tabular-nums">
+										{formatDuration(file.duration, "s")}
+									</span>
+									<Image src="https://fi.supa.sh/.archive/jake/thumb/{file.id}.jpg" class="h-full rounded-sm" />
+								</div>
+								<div class="flex min-w-0 flex-col wrap-break-word">
+									<span class="line-clamp-2 text-sm" title={file.title}>{file.title}</span>
+									<span class="text-dim mt-auto text-xs">{dayjs(file.created_at * 1000).format(dateTimeFormat)}</span>
+								</div>
 							</div>
-							<div class="flex min-w-0 flex-col break-words">
-								<span class="line-clamp-2 text-sm" title={file.title}>{file.title}</span>
-								<span class="mt-auto text-xs text-muted-foreground">{dayjs(file.created_at * 1000).format(dateTimeFormat)}</span>
-							</div>
-						</div>
+						{/snippet}
 					</VirtualList>
 				</div>
 				<div
@@ -476,44 +269,28 @@
 						onclick={(e) => e.stopPropagation()}
 					></video>
 				</div>
-				<div class="flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain bg-zinc-100 dark:bg-zinc-900 md:min-w-80 md:max-w-80">
+				<div class="bg-surface border-line flex w-full flex-1 flex-col overflow-y-hidden overscroll-contain md:max-w-80 md:min-w-80 md:border-l">
 					<div class="hidden justify-center border-b py-2 md:flex">
 						<p class="text-lg font-semibold">Chat Replay</p>
 					</div>
 					{#if chatError}
-						<div class="p-2 text-red-500">{chatError}</div>
+						<div class="text-warn p-2 text-sm">{chatError}</div>
 					{:else if chatLogs === null}
-						<div class="p-2 text-muted-foreground">Loading chat logs...</div>
+						<div class="text-dim p-2 text-sm">Loading chat logs...</div>
 					{:else if chatLogs.length === 0}
-						<div class="p-2 text-muted-foreground">No chat logs found for this date :(</div>
+						<div class="text-dim p-2 text-sm">No chat logs found for this date :(</div>
 					{:else}
 						<div class="flex h-full flex-col gap-y-1.5 overflow-y-scroll p-2 leading-tight" bind:this={chatList}>
 							{#each chatBuffer as msg, index (index)}
 								{#if isNewMessageDivider(msg, index)}
-									<div class="my-2 flex items-center text-muted-foreground">
-										<div class="flex-grow border-t border-muted-foreground"></div>
+									<div class="text-dim my-2 flex items-center text-xs">
+										<div class="border-line grow border-t"></div>
 										<span class="mx-1">New messages</span>
-										<div class="flex-grow border-t border-muted-foreground"></div>
+										<div class="border-line grow border-t"></div>
 									</div>
 								{/if}
-								<div class="text-wrap break-words">
-									{#if msg.tags["badges"]}
-										<span class="inline-flex h-5 select-none gap-x-0.5 align-middle empty:hidden">
-											{#key badgeUpdates}
-												{#each getBadges(msg) as badge (badge.id)}
-													<Badge src={badge.src} title={badge.title} alt="" />
-												{/each}
-											{/key}
-										</span>
-									{/if}
-									<span class:hidden={msg.tags["target-user-id"]} style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-										{msg.displayName}:
-									</span>
-									{#key emoteUpdates}
-										{#each parseMessage(msg) as { type: Component, props }, index (index)}
-											<Component {...props} />
-										{/each}
-									{/key}
+								<div class="text-wrap wrap-break-word">
+									<MessageContent {chat} {msg} />
 								</div>
 							{/each}
 						</div>
@@ -525,4 +302,3 @@
 		{/if}
 	</div>
 {/if}
-

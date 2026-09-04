@@ -42,7 +42,6 @@
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="flex flex-1 items-center justify-center overflow-hidden">
-	<!-- svelte-ignore a11y_media_has_caption -->
 	<video bind:this={video} controls autoplay class="h-full max-w-full"></video>
 </div>
 <p class="px-1 text-xs text-gray-500">Prototype &mdash; UI subject to change</p>

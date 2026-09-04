@@ -1,10 +1,7 @@
 <script lang="ts">
 	import { browser } from "$app/environment";
 
-	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
-	import { Checkbox } from "$lib/components/ui/checkbox/index.js";
-	import { Button } from "$lib/components/ui/button/index.js";
-	import * as Dialog from "$lib/components/ui/dialog/index.js";
+	import { Button, Checkbox, Dialog, Label, Skeleton } from "$lib/components/ui";
 
 	import type { TitleContext } from "$lib/common";
 	import type { Stream } from "$lib/twitch/livestreams";
@@ -68,68 +65,63 @@
 <svelte:window on:keydown={windowKeydown} bind:scrollY={windowScrollY} />
 
 <button
-	class="fixed bottom-5 right-5 z-50 rounded-md bg-zinc-100 p-2 opacity-80 transition-opacity hover:opacity-100 dark:bg-zinc-900"
+	class="border-line bg-surface text-dim hover:text-accent hover:border-accent ring-focus fixed right-5 bottom-5 z-30 grid size-12 place-items-center rounded-full border shadow-lg transition-colors"
 	aria-disabled={loading}
+	title={loading ? "Refreshing" : "Scroll, or right-click to refresh"}
 	oncontextmenu={(e) => e.preventDefault()}
 	onmouseup={(e) => {
 		if (loading) return;
-		if (e.button === 2) return fetchStreams();
-		if (e.button !== 0) return;
+		if (e.button === 2) fetchStreams();
+	}}
+	onclick={() => {
+		if (loading) return;
 
 		window.scrollTo({ top: windowScrollY > 100 ? 0 : document.body.scrollHeight, behavior: "smooth" });
 	}}
 >
 	{#if loading}
-		<RefreshCwIcon size={24} class="animate-spin" />
+		<RefreshCwIcon class="size-5.5 animate-spin" />
 	{:else}
-		<ChevronsDownIcon size={24} class={["transition-all", windowScrollY > 100 && "rotate-180"]} />
+		<ChevronsDownIcon class={["size-5.5 transition-transform", windowScrollY > 100 && "rotate-180"]} />
 	{/if}
 </button>
 
-<Dialog.Root bind:open={isKickDialogOpen}>
-	<Dialog.Content>
-		<Dialog.Header>
-			<Dialog.Title>Heads up before you continue</Dialog.Title>
-		</Dialog.Header>
-		<p>Kick operates under different content moderation standards than most streaming platforms.</p>
-		<p>Streams may contain material that some viewers may find offensive.</p>
-		<p>The platform has a known history of viewbotting, and viewer counts may not reflect genuine audience size.</p>
-		<p>Kick content is not endorsed or affiliated with supa.sh. Viewer discretion is advised.</p>
+<Dialog bind:open={isKickDialogOpen} title="Heads up before you continue" description="Kick moderates content differently than most streaming platforms.">
+	<ul class="text-dim space-y-1.5 text-sm">
+		<li>Streams may contain material some viewers find offensive.</li>
+		<li>The platform has a known history of viewbotting, so viewer counts may not reflect a genuine audience.</li>
+		<li>Kick content is not endorsed by or affiliated with supa.sh.</li>
+	</ul>
 
-		<div class="flex gap-2">
-			<Button
-				variant="default"
-				class="flex-1"
-				onclick={() => {
-					kickConsent = true;
-					showKick = true;
-					isKickDialogOpen = false;
-				}}
-			>
-				Show Kick streams anyway
-			</Button>
-			<Button variant="secondary" class="flex-1" onclick={() => (isKickDialogOpen = false)}>Cancel</Button>
-		</div>
-	</Dialog.Content>
-</Dialog.Root>
+	{#snippet footer()}
+		<Button variant="ghost" onclick={() => (isKickDialogOpen = false)}>Cancel</Button>
+		<Button
+			variant="accent"
+			onclick={() => {
+				kickConsent = true;
+				showKick = true;
+				isKickDialogOpen = false;
+			}}
+		>
+			Show Kick streams
+		</Button>
+	{/snippet}
+</Dialog>
 
-<div class="flex w-full max-w-[2500px] flex-col self-center p-5">
-	<h1 class="text-4xl font-bold">
-		<span class="bg-gradient-to-r from-blue-700 via-yellow-300 to-red-600 bg-clip-text font-extrabold text-transparent">Romanian</span> Livestreams
-	</h1>
-
-	<span class="font-light">
+<div class="flex w-full max-w-[2500px] flex-col gap-3 self-center p-4">
+	<header class="flex flex-wrap items-baseline gap-x-3">
+		<h1 class="font-display text-3xl font-bold tracking-tight">
+			<span class="bg-linear-to-r from-[#0057b8] via-[#ffd200] to-[#e4002b] bg-clip-text text-transparent">Romanian</span> livestreams
+		</h1>
 		{#if streams.length}
-			<span class="font-normal">{streams.length.toLocaleString()}</span>
-			channels with
-			<span class="font-normal">{streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()}</span>
-			viewers
-		{:else}
-			&nbsp;
+			<p class="text-dim text-base">
+				<span class="font-display text-text font-semibold tabular-nums">{streams.length.toLocaleString()}</span> channels,
+				<span class="font-display text-signal font-semibold tabular-nums">{streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()}</span> watching
+			</p>
 		{/if}
-	</span>
+	</header>
 
-	<div class="mb-1">
+	<div class="flex items-center gap-2">
 		<Checkbox
 			id="show-kick-checkbox"
 			bind:checked={showKick}
@@ -140,7 +132,7 @@
 				}
 			}}
 		/>
-		<label for="show-kick-checkbox">Show Kick streams</label>
+		<Label for="show-kick-checkbox" class="cursor-pointer normal-case">Show Kick streams</Label>
 	</div>
 
 	<div
@@ -156,7 +148,7 @@
 		{:else}
 			{#each { length: 30 }}
 				<div>
-					<Skeleton class="aspect-video w-full rounded" />
+					<Skeleton class="aspect-video w-full rounded-md" />
 					<div class="mt-1 flex flex-row">
 						<Skeleton class="mr-1 size-12 rounded-full" />
 						<div class="flex h-full flex-1 flex-col gap-0.5">

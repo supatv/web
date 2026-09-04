@@ -1,36 +1,4 @@
-import { type Component } from "svelte";
-
-export type Message = {
-	text: string;
-	displayName: string;
-	channel?: string;
-	timestamp: string;
-	id: string;
-	tags: {
-		[key: string]: string;
-	};
-};
-
-export type TMIEmote = {
-	id: string;
-	pos: number[];
-};
-
-export type ChatComponents = {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	type: Component<any>;
-	props: object;
-}[];
-
-export type EmoteProps = {
-	url: string;
-	src: string;
-};
-
-export type BadgeProps = {
-	url: string;
-	title: string;
-};
+import type { Message } from "./chat.svelte";
 
 const searchPrefixes: Record<string, (searchString: string, chatLogs: Message[]) => Message[]> = {
 	regex(searchString, chatLogs) {
@@ -74,7 +42,9 @@ const textSearch = (searchValue: string, chatLogs: Message[], withChannel: boole
 	const source = lastQuery !== null && lastSource === chatLogs && lastWithChannel === withChannel && searchValue.startsWith(lastQuery) ? lastResult : chatLogs;
 
 	const matcher = new RegExp(escapeRegex(searchValue), "i");
-	const result = withChannel ? source.filter((msg) => matcher.test(msg.text) || matcher.test(msg.displayName) || matcher.test(msg.channel ?? "")) : source.filter((msg) => matcher.test(msg.text) || matcher.test(msg.displayName));
+	const result = withChannel
+		? source.filter((msg) => matcher.test(msg.text) || matcher.test(msg.displayName) || matcher.test(msg.channel ?? ""))
+		: source.filter((msg) => matcher.test(msg.text) || matcher.test(msg.displayName));
 
 	lastQuery = searchValue;
 	lastSource = chatLogs;

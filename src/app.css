@@ -1,90 +1,115 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+@import "tw-animate-css";
 
-@layer base {
-	:root {
-		--background: 0 0% 100%;
-		--foreground: 0 0% 3.9%;
-		--card: 0 0% 100%;
-		--card-foreground: 0 0% 3.9%;
-		--popover: 0 0% 100%;
-		--popover-foreground: 0 0% 3.9%;
-		--primary: 267 84% 81%;
-		--primary-foreground: 267 100% 9%;
-		/* --primary: 0 72.2% 50.6%;
-    --primary-foreground: 0 85.7% 97.3%; */
-		--secondary: 0 0% 96.1%;
-		--secondary-foreground: 0 0% 9%;
-		--muted: 0 0% 96.1%;
-		--muted-foreground: 0 0% 45.1%;
-		--accent: 0 0% 96.1%;
-		--accent-foreground: 0 0% 9%;
-		--destructive: 0 72.22% 50.59%;
-		--destructive-foreground: 0 0% 98%;
-		--border: 0 0% 89.8%;
-		--input: 0 0% 89.8%;
-		--ring: 267 84% 81%;
-		/* --ring: 0 72.2% 50.6%; */
-		--radius: 0.5rem;
-	}
+@custom-variant dark (&:is(.dark *));
 
-	.dark {
-		--background: 0 0% 3.9%;
-		--foreground: 0 0% 98%;
-		--card: 0 0% 3.9%;
-		--card-foreground: 0 0% 98%;
-		--popover: 0 0% 3.9%;
-		--popover-foreground: 0 0% 98%;
-		--primary: 267 84% 81%;
-		--primary-foreground: 267 100% 9%;
-		/* --primary: 0 72.2% 50.6%;
-    --primary-foreground: 0 85.7% 97.3%; */
-		--secondary: 0 0% 14.9%;
-		--secondary-foreground: 0 0% 98%;
-		--muted: 0 0% 14.9%;
-		--muted-foreground: 0 0% 63.9%;
-		--accent: 0 0% 14.9%;
-		--accent-foreground: 0 0% 98%;
-		--destructive: 0 62.8% 30.6%;
-		--destructive-foreground: 0 0% 98%;
-		--border: 0 0% 14.9%;
-		--input: 0 0% 14.9%;
-		--ring: 267 84% 81%;
-		/* --ring: 0 72.2% 50.6%; */
-	}
+/*
+ * bits-ui reports component state as `data-state="open"` / `data-orientation="…"`, and sets
+ * booleans as `data-active="false"` rather than omitting them. Tailwind's bare `data-open:`
+ * shorthand compiles to `[data-open]`, which misses the first and wrongly matches the second.
+ */
+@custom-variant open (&[data-state="open"]);
+@custom-variant closed (&[data-state="closed"]);
+@custom-variant checked (&[data-state="checked"]);
+@custom-variant on (&[data-active="true"], &[aria-pressed="true"], &[aria-current="page"]);
+
+:root {
+	--ground: #fafafa;
+	--surface: #ffffff;
+	--raised: #f0f0f0;
+	--line: #e3e3e3;
+	--text: #1a1a1a;
+	--dim: #6b6b6b;
+
+	--accent: #6d28d9;
+	--accent-ink: #ffffff;
+	--signal: #4d7c0f;
+	--warn: #c2410c;
+
+	--radius: 0.5rem;
+}
+
+.dark {
+	--ground: #0c0c0c;
+	--surface: #151515;
+	--raised: #1f1f1f;
+	--line: #2c2c2c;
+	--text: #ececec;
+	--dim: #9a9a9a;
+
+	--accent: #a78bfa;
+	--accent-ink: #1b0c3a;
+	--signal: #a3d949;
+	--warn: #fb923c;
+}
+
+@theme inline {
+	--color-ground: var(--ground);
+	--color-surface: var(--surface);
+	--color-raised: var(--raised);
+	--color-line: var(--line);
+	--color-text: var(--text);
+	--color-dim: var(--dim);
+	--color-accent: var(--accent);
+	--color-accent-ink: var(--accent-ink);
+	--color-signal: var(--signal);
+	--color-warn: var(--warn);
+
+	--radius-sm: calc(var(--radius) - 3px);
+	--radius-md: var(--radius);
+	--radius-lg: calc(var(--radius) + 3px);
+
+	--font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+	--font-display: "Space Grotesk Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
 }
 
 @layer base {
 	* {
-		@apply border-border;
+		border-color: var(--line);
 	}
 
 	body {
-		@apply bg-background text-foreground;
+		background: var(--ground);
+		color: var(--text);
+	}
+
+	/* browsers default `button` to an arrow; everything clickable here should read as clickable */
+	button:not(:disabled),
+	summary,
+	[role="button"]:not([aria-disabled="true"]),
+	[role="option"],
+	[role="tab"],
+	label:has(input[type="checkbox"], input[type="radio"]) {
+		cursor: pointer;
 	}
 }
 
-@layer base {
-	:root {
-		--sidebar-background: 0 0% 98%;
-		--sidebar-foreground: 240 5.3% 26.1%;
-		--sidebar-primary: 240 5.9% 10%;
-		--sidebar-primary-foreground: 0 0% 98%;
-		--sidebar-accent: 240 4.8% 95.9%;
-		--sidebar-accent-foreground: 240 5.9% 10%;
-		--sidebar-border: 220 13% 91%;
-		--sidebar-ring: 217.2 91.2% 59.8%;
+@layer components {
+	.ring-focus,
+	.field-focus {
+		outline: 2px solid transparent;
+		outline-offset: 2px;
 	}
 
-	.dark {
-		--sidebar-background: 240 5.9% 10%;
-		--sidebar-foreground: 240 4.8% 95.9%;
-		--sidebar-primary: 224.3 76.3% 48%;
-		--sidebar-primary-foreground: 0 0% 100%;
-		--sidebar-accent: 240 3.7% 15.9%;
-		--sidebar-accent-foreground: 240 4.8% 95.9%;
-		--sidebar-border: 240 3.7% 15.9%;
-		--sidebar-ring: 217.2 91.2% 59.8%;
+	.ring-focus:focus-visible {
+		outline-color: var(--accent);
 	}
+
+	.field-focus {
+		outline-offset: 0;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	*,
+	*::before,
+	*::after {
+		animation-duration: 0.01ms !important;
+		animation-iteration-count: 1 !important;
+		transition-duration: 0.01ms !important;
+	}
+}
+
+main:has(#main-fit-screen) {
+	max-height: 100svh;
 }

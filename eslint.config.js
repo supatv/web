@@ -19,23 +19,22 @@ export default ts.config(
 				NodeJS: "readonly",
 				__BUILD_DATE: "readonly",
 				__COMMIT_HASH: "readonly",
-				Fuzzysort: "readonly",
 			},
 		},
 		rules: {
 			"require-await": "error",
+			// the site is served from the domain root with no `base` path, and most
+			// navigations here are query-string-only
+			"svelte/no-navigation-without-resolve": "off",
 		},
 	},
 	{
-		files: ["**/*.svelte"],
+		files: ["**/*.svelte", "**/*.svelte.ts", "**/*.svelte.js"],
 
 		languageOptions: {
 			parserOptions: {
 				parser: ts.parser,
 			},
 		},
-	},
-	{
-		ignores: ["src/lib/components/ui/**"],
 	}
 );

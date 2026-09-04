@@ -34,7 +34,7 @@
 
 <div onmouseenter={() => (focused = true)} onmouseleave={() => (focused = false)} role="link" tabindex="-1" class="transition-transform hover:-translate-y-1">
 	<div
-		class={["relative aspect-video size-full overflow-hidden rounded transition", active && "ring-2 ring-ring"]}
+		class={["relative aspect-video size-full overflow-hidden rounded-md transition", active && "ring-accent ring-2"]}
 		role="button"
 		tabindex="-1"
 		onmouseup={(e) => {
@@ -49,7 +49,7 @@
 		oncontextmenu={(e) => e.preventDefault()}
 	>
 		{#if showKick}
-			<div class="absolute z-30 m-1 h-5 rounded-sm bg-black/60 p-1">
+			<div class="absolute z-20 m-1 h-5 rounded-sm bg-black/60 p-1">
 				{#if stream.platform === "kick"}
 					<img src={KickWordmark} alt="Kick" class="h-full" />
 				{:else}
@@ -58,7 +58,7 @@
 			</div>
 		{/if}
 
-		<span class="absolute right-0 top-0 z-30 m-1 rounded-sm bg-black/60 px-1 py-0.5 text-xs text-neutral-100">
+		<span class="absolute top-0 right-0 z-20 m-1 rounded bg-black/60 px-1 py-0.5 text-xs font-medium text-white tabular-nums">
 			{formatUptime(stream.started)}
 		</span>
 
@@ -82,28 +82,23 @@
 					<span class="overflow-hidden" title={stream.name}>{stream.name}</span>
 					{#if stream.type === "partner"}
 						<span title="Partner">
-							<BadgeCheckIcon class="size-5 min-w-5 fill-purple-400 text-background dark:fill-purple-300" />
+							<BadgeCheckIcon class="text-ground fill-accent size-5 min-w-5" />
 						</span>
 					{:else if stream.type === "affiliate"}
 						<span title="Affiliate">
-							<DiamondIcon class="ml-0.5 size-3 min-w-3 fill-purple-400 text-transparent dark:fill-purple-300" />
+							<DiamondIcon class="fill-accent ml-0.5 size-3 min-w-3 text-transparent" />
 						</span>
 					{/if}
 				</div>
-				<div class="ml-auto flex items-center text-red-500 dark:text-red-400">
-					<UserIcon class="size-4" />
+				<div class="text-signal ml-auto flex items-center gap-0.5 text-sm font-semibold tabular-nums">
+					<UserIcon class="size-3.5" />
 					<span>{stream.viewers.toLocaleString()}</span>
 				</div>
 			</div>
 
-			<!-- <p class="text-sm capitalize text-purple-500 dark:text-purple-300">{stream.type}</p> -->
+			<p class="w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap" title={stream.title}>{stream.title}</p>
 
-			<p class="w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm" title={stream.title}>{stream.title}</p>
-
-			<p class="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-muted-foreground" title={stream.game}>{stream.game}</p>
+			<p class="text-dim overflow-hidden text-xs text-ellipsis whitespace-nowrap" title={stream.game}>{stream.game}</p>
 		</div>
 	</div>
 </div>
-
-<style>
-</style>

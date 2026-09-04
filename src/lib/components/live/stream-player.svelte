@@ -8,10 +8,11 @@
 	// import { LoaderCircleIcon } from "@lucide/svelte";
 
 	const { channelName, platform }: { channelName: string; platform: string } = $props();
-	const channelKey = `${platform}:${channelName}`;
+	const channelKey = $derived(`${platform}:${channelName}`);
 
-	const playlistUrl =
-		platform === "kick" ? `https://api-tv.supa.sh/kick_playback/${channelName}.m3u8` : `https://luminous.alienpls.org/live/${channelName}?allow_source=true&fast_bread=true&warp=true&platform=web`;
+	const playlistUrl = $derived(
+		platform === "kick" ? `https://api-tv.supa.sh/kick_playback/${channelName}.m3u8` : `https://luminous.alienpls.org/live/${channelName}?allow_source=true&fast_bread=true&warp=true&platform=web`
+	);
 
 	let video: HTMLVideoElement;
 	let hls: Hls;

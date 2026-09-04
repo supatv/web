@@ -1,32 +1,23 @@
 <script lang="ts">
 	import "@fontsource-variable/inter";
+	import "@fontsource-variable/space-grotesk";
 	import "../app.css";
 
-	let { children } = $props();
+	import { setContext } from "svelte";
+	import { ModeWatcher, toggleMode, mode } from "mode-watcher";
+	import { PanelLeftIcon, SunIcon, MoonIcon, Grid2X2Icon, Volume1Icon, Volume2Icon, VolumeOffIcon } from "@lucide/svelte";
+
+	import { browser } from "$app/environment";
+	import { page } from "$app/state";
 
 	import { type TitleContext } from "$lib/common";
 	import { playerVol, playerMuted, gridCols } from "$lib/stores/live";
 
-	import { browser } from "$app/environment";
-	import { page } from "$app/state";
-	import { setContext } from "svelte";
-
-	import { ModeWatcher, toggleMode } from "mode-watcher";
-
-	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
-	import { Slider } from "$lib/components/ui/slider/index.js";
-	import { Toaster } from "$lib/components/ui/sonner/index.js";
-	import * as Dialog from "$lib/components/ui/dialog/index.js";
-
-	import { SunIcon, MoonIcon, Grid2X2Icon, Volume1Icon, Volume2Icon, VolumeOffIcon } from "@lucide/svelte";
-
-	import * as Sidebar from "$lib/components/ui/sidebar/index.js";
+	import { Button, Dialog, Slider, Toaster } from "$lib/components/ui";
+	import { shell } from "$lib/components/ui/shell.svelte";
 	import AppSidebar from "$lib/components/sidebar.svelte";
 
-	let sidebarOpened = $state(browser && window.localStorage.getItem("sidebar-provider-state") === "false" ? false : true);
-	const sidebarOpenChange = (open: boolean) => {
-		window.localStorage.setItem("sidebar-provider-state", open.toString());
-	};
+	let { children } = $props();
 
 	let title = $state("");
 	setContext<TitleContext>("title", {
@@ -35,6 +26,8 @@
 			title = newTitle;
 		},
 	});
+
+	const tool = $derived(page.url.pathname.slice(1).split("/")[0] || "live");
 
 	const colsQueue = [6, 5, 4, 3, 2];
 	const cycleGridCols = () => {
@@ -60,12 +53,8 @@
 			if (v) window.localStorage.setItem("live-grid-cols", v.toString());
 			else window.localStorage.removeItem("live-grid-cols");
 		});
-		playerVol.subscribe((v) => {
-			window.localStorage.setItem("player-vol", v.toString());
-		});
-		playerMuted.subscribe((m) => {
-			window.localStorage.setItem("player-muted", m.toString());
-		});
+		playerVol.subscribe((v) => window.localStorage.setItem("player-vol", v.toString()));
+		playerMuted.subscribe((m) => window.localStorage.setItem("player-muted", m.toString()));
 	}
 
 	const toggleMute = () => {
@@ -87,82 +76,86 @@
 </svelte:head>
 
 <ModeWatcher />
-<Toaster position="top-right" />
+<Toaster />
 
-<Sidebar.Provider onOpenChange={sidebarOpenChange} open={sidebarOpened}>
+<div class="flex min-h-svh w-full">
 	<AppSidebar />
-	<main class="flex flex-1 flex-col">
-		<div class="group sticky top-1 z-50 mx-1 flex w-fit gap-1 rounded-md transition-all hover:bg-zinc-300/50 hover:backdrop-blur dark:hover:bg-zinc-600/50">
-			<Sidebar.Trigger class="size-7" />
-			<Button onclick={toggleMode} variant="ghost" size="icon" class="size-7">
-				<SunIcon class="rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-				<MoonIcon class="absolute rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+
+	<main class="flex min-w-0 flex-1 flex-col pt-14">
+		<!-- fixed, not sticky: sticky chrome is re-rasterised at the subpixel offset a scroll ends on -->
+		<div
+			class={[
+				"border-line bg-surface/80 fixed top-0 right-0 left-0 z-30 flex h-14 items-center gap-1 border-b px-2 backdrop-blur md:transition-[left] md:duration-200",
+				shell.sidebarOpen ? "md:left-60" : "md:left-0",
+			]}
+		>
+			<Button variant="ghost" size="icon-sm" onclick={() => shell.toggleSidebar()} title="Toggle sidebar" aria-controls="app-sidebar" aria-expanded={shell.navOpen}>
+				<PanelLeftIcon />
+				<span class="sr-only">Toggle sidebar</span>
+			</Button>
+
+			<Button variant="ghost" size="icon-sm" onclick={toggleMode} title="Toggle theme">
+				{#if mode.current === "dark"}
+					<MoonIcon />
+				{:else}
+					<SunIcon />
+				{/if}
 				<span class="sr-only">Toggle theme</span>
 			</Button>
-			{#if page.url.pathname === "/live"}
-				<Button onclick={cycleGridCols} variant="ghost" size="icon" class="size-7">
+
+			<div class="bg-line mx-1.5 h-6 w-px"></div>
+
+			{#if tool === "live"}
+				<Button variant="ghost" size="icon-sm" onclick={cycleGridCols} title="Change number of grid columns">
 					{#if $gridCols === null}
 						<Grid2X2Icon />
 					{:else}
-						<span class="text-base font-[400] tabular-nums">{$gridCols}</span>
+						<span class="font-display text-sm font-semibold tabular-nums">{$gridCols}</span>
 					{/if}
 					<span class="sr-only">Change number of grid columns</span>
 				</Button>
-				<div class="flex gap-0.5">
-					<Button onclick={toggleMute} variant="ghost" size="icon" class="size-7 min-w-7">
+
+				<div class="group flex items-center gap-1">
+					<Button variant="ghost" size="icon-sm" onclick={toggleMute} title={$playerMuted ? "Unmute streams" : "Mute streams"}>
 						{#if $playerMuted}
 							<VolumeOffIcon />
-							<span class="sr-only">Unmute streams</span>
+						{:else if $playerVol < 0.5}
+							<Volume1Icon />
 						{:else}
-							{#if $playerVol < 0.5}
-								<Volume1Icon />
-							{:else}
-								<Volume2Icon />
-							{/if}
-							<span class="sr-only">Mute streams</span>
+							<Volume2Icon />
 						{/if}
+						<span class="sr-only">{$playerMuted ? "Unmute streams" : "Mute streams"}</span>
 					</Button>
 					<Slider
 						type="single"
 						max={1}
 						step={0.01}
-						class="mr-1 min-w-20 opacity-0 transition-opacity group-hover:opacity-100 [&:has([data-active])]:opacity-100 [&>*]:!ring-0 [&>*]:!ring-offset-0"
+						class="w-20 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100 pointer-coarse:opacity-100"
 						onValueCommit={(v) => {
 							if (v !== 0) prevVolume = v;
 						}}
-						onValueChange={(v) => {
-							playerMuted.set(v === 0);
-						}}
+						onValueChange={(v) => playerMuted.set(v === 0)}
 						bind:value={$playerVol}
 					/>
 				</div>
-			{:else if page.url.pathname === "/logs"}
-				<Dialog.Root>
-					<Dialog.Trigger class={[buttonVariants({ variant: "ghost" }), "!h-7 !px-1.5"]}>Removals</Dialog.Trigger>
-					<Dialog.Content>
-						<Dialog.Header>
-							<Dialog.Title>Removals</Dialog.Title>
-						</Dialog.Header>
-						<p><span class="font-bold">tv.supa.sh</span> is not able to process deletion requests.</p>
+			{:else if tool === "logs"}
+				<Dialog title="Removals" description="tv.supa.sh cannot process deletion requests.">
+					{#snippet trigger({ props })}
+						<Button {...props} variant="ghost" size="sm">Removals</Button>
+					{/snippet}
+
+					<div class="text-dim space-y-2 text-sm">
 						<p>
-							This service does not store any data itself; it only fetches publicly available logs from
-							<a href="https://logs.zonian.dev/status" target="_blank" rel="nofollow" class="text-blue-600 hover:underline dark:text-primary">third-party sources</a>.
+							This service stores no data of its own. It reads publicly available logs from
+							<a href="https://logs.zonian.dev/status" target="_blank" rel="nofollow" class="text-accent ring-focus hover:underline">third-party sources</a>.
 						</p>
-						<p>Opting out may be possible for each specific instance, depending on that site's own policy.</p>
+						<p>Opting out may be possible for each individual instance, depending on that site's own policy.</p>
 						<p>We are not affiliated with Twitch or its creators.</p>
-					</Dialog.Content>
-				</Dialog.Root>
+					</div>
+				</Dialog>
 			{/if}
 		</div>
 
 		{@render children?.()}
 	</main>
-</Sidebar.Provider>
-
-<style>
-	:global {
-		main:has(#main-fit-screen) {
-			max-height: 100vh;
-		}
-	}
-</style>
+</div>

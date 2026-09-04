@@ -1,0 +1,44 @@
+<script lang="ts">
+	import type { Snippet } from "svelte";
+	import { Popover as PopoverPrimitive } from "bits-ui";
+
+	import { cn } from "$lib/utils";
+	import FocusTrap from "./focus-trap.svelte";
+
+	type Props = {
+		open?: boolean;
+		class?: string;
+		align?: PopoverPrimitive.ContentProps["align"];
+		sideOffset?: number;
+		trigger: Snippet<[{ props: Record<string, unknown> }]>;
+		children?: Snippet;
+	};
+
+	let { open = $bindable(false), class: className, align = "start", sideOffset = 6, trigger, children }: Props = $props();
+</script>
+
+<PopoverPrimitive.Root bind:open>
+	<PopoverPrimitive.Trigger>
+		{#snippet child({ props })}
+			{@render trigger({ props })}
+		{/snippet}
+	</PopoverPrimitive.Trigger>
+
+	<PopoverPrimitive.Portal>
+		{#if open}
+			<FocusTrap />
+		{/if}
+
+		<PopoverPrimitive.Content
+			{align}
+			{sideOffset}
+			class={cn(
+				"border-line bg-surface z-50 rounded-lg border shadow-xl duration-150",
+				"open:animate-in open:fade-in-0 open:zoom-in-95 closed:animate-out closed:fade-out-0 closed:zoom-out-95",
+				className
+			)}
+		>
+			{@render children?.()}
+		</PopoverPrimitive.Content>
+	</PopoverPrimitive.Portal>
+</PopoverPrimitive.Root>

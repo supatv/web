@@ -1,35 +1,9 @@
 <script lang="ts">
-	import { Calendar as CalendarPrimitive } from "bits-ui";
-	import { mode } from "mode-watcher";
 	import dayjs from "dayjs";
-	import linkParser from "$lib/link-parser";
 
-	import { Button, buttonVariants } from "$lib/components/ui/button/index.js";
-	import { ScrollArea } from "$lib/components/ui/scroll-area/index.js";
-	import { Input } from "$lib/components/ui/input/index.js";
-	import { Label } from "$lib/components/ui/label/index.js";
-	import { Skeleton } from "$lib/components/ui/skeleton/index.js";
-
-	import { cn } from "$lib/utils.js";
-	import { CalendarDate, DateFormatter, getLocalTimeZone, today, type DateValue } from "@internationalized/date";
-
-	import * as Calendar from "$lib/components/ui/calendar/index.js";
-	import * as Popover from "$lib/components/ui/popover/index.js";
-	import * as Select from "$lib/components/ui/select/index.js";
-	import * as Card from "$lib/components/ui/card/index.js";
-
-	import FocusTrap from "$lib/components/focus-trap.svelte";
-
-	import VirtualList from "svelte-tiny-virtual-list";
-
-	import TextFragment from "$lib/components/message/text-fragment.svelte";
-	import Emote from "$lib/components/message/emote.svelte";
-	import Link from "$lib/components/message/link.svelte";
-	import Badge from "$lib/components/message/badge.svelte";
-	import Reply from "$lib/components/message/reply.svelte";
-
+	import { CalendarDate, type DateValue } from "@internationalized/date";
 	import { getContext, onMount, tick, untrack } from "svelte";
-	import { SvelteMap, SvelteURLSearchParams } from "svelte/reactivity";
+	import { SvelteURLSearchParams } from "svelte/reactivity";
 
 	import { browser } from "$app/environment";
 	import { page } from "$app/state";
@@ -37,12 +11,13 @@
 
 	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon, ChartColumnIcon } from "@lucide/svelte";
 
+	import { Button, Calendar, Input, Label, Panel, Popover, Select, Skeleton, type SelectOption } from "$lib/components/ui";
+	import VirtualList from "$lib/components/virtual-list.svelte";
+	import MessageContent from "$lib/components/message/content.svelte";
+
 	import { compactNumber, dateTimeFormat, type TitleContext } from "$lib/common";
-
-	import type { EmoteProps, BadgeProps, Message, ChatComponents, TMIEmote } from "$lib/twitch/logs";
+	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
 	import { messageSearch } from "$lib/twitch/logs";
-
-	import * as TwitchServices from "$lib/twitch/services/index.js";
 
 	type LogsDate = {
 		year: string;
@@ -61,10 +36,10 @@
 
 	const lineHeight = 20;
 
+	const chat = new ChatSource();
+
 	let error: string | null = $state(null);
 	let loading = $state(false);
-
-	let datePopoverOpen = $state(false);
 
 	let selectedIndex = $state(0); // Track selected item
 
@@ -72,62 +47,32 @@
 	let calendarDate = $state<DateValue>();
 	let dateValue = $state("");
 
-	const currentDate = today(getLocalTimeZone());
-
-	const monthFmt = new DateFormatter("en-US", {
-		month: "long",
-	});
-
 	const availableYears = $derived(new Set(availableDates.map((date) => date.year)));
 	const availableMonthsByYear = $derived(
 		availableDates.reduce(
 			(acc, date) => {
-				if (!acc[date.year]) {
-					acc[date.year] = new Set();
-				}
-				acc[date.year].add(date.month);
+				const months = (acc[date.year] ??= []);
+				if (!months.includes(date.month)) months.push(date.month);
 				return acc;
 			},
-			{} as Record<string, Set<string>>
+			{} as Record<string, string[]>
 		)
 	);
 
-	const monthOptions = $derived(
-		calendarDate
-			? Array.from(availableMonthsByYear[calendarDate.year] || [])
-					.map((month) => {
-						const monthNum = parseInt(month);
-						const date = currentDate.set({ month: monthNum });
-						return {
-							value: monthNum,
-							label: `${String(monthNum).padStart(2, "0")} (${monthFmt.format(date.toDate(getLocalTimeZone()))})`,
-						};
-					})
-					.sort((a, b) => a.value - b.value)
-			: []
-	);
+	const monthOptions = $derived(calendarDate ? (availableMonthsByYear[calendarDate.year] ?? []).map(Number).sort((a, b) => a - b) : []);
 
 	const yearOptions = $derived(
 		Array.from(availableYears)
-			.map((year) => ({
-				label: year,
-				value: parseInt(year),
-			}))
-			.sort((a, b) => a.value - b.value)
+			.map(Number)
+			.sort((a, b) => a - b)
 	);
 
-	const defaultYear = $derived(calendarDate ? { value: calendarDate.year, label: String(calendarDate.year) } : undefined);
-
-	const defaultMonth = $derived(
-		calendarDate
-			? {
-					value: calendarDate.month,
-					label: monthFmt.format(calendarDate.toDate(getLocalTimeZone())),
-				}
-			: undefined
+	const dateOptions: SelectOption[] = $derived(
+		availableDates.map((date, index) => {
+			const value = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`;
+			return { value, label: value, separatorBefore: index > 0 && date.year !== availableDates[index - 1].year };
+		})
 	);
-
-	const monthLabel = $derived(monthOptions.find((m) => m.value === defaultMonth?.value)?.label ?? "Month");
 
 	const availableDateSet = $derived(new Set(availableDates.map((d) => `${d.year}-${d.month}${d.day ? `-${d.day}` : ""}`)));
 
@@ -177,8 +122,8 @@
 	let isJumpMode = $state(false);
 	onMount(() => {
 		fetchChannelsCount();
-		fetchGlobalBadges();
-		fetchGlobalEmotes();
+		chat.loadGlobalBadges();
+		chat.loadGlobalEmotes();
 
 		const q = page.url.searchParams;
 		if (q.has("channel")) {
@@ -199,7 +144,7 @@
 		isJumpMode = (q.get("sm") || window.localStorage.getItem("logs-search-mode")) === "jump";
 	});
 
-	let logsBoxHeight = $state(0);
+	let logsList: ReturnType<typeof VirtualList> | undefined = $state();
 	let inputChannelName = $state("");
 	let channelName = $state("");
 	let inputUserName = $state("");
@@ -222,16 +167,6 @@
 	let inputQuery = $state("");
 	let query = $state("");
 	let isQueryMode = $derived(Boolean(query.trim()));
-
-	// Emotes
-	const channelEmotes = new SvelteMap<string, EmoteProps>();
-	const globalEmotes = new SvelteMap<string, EmoteProps>();
-	let emoteUpdates = $state(0);
-
-	// Badges
-	const channelBadges = new SvelteMap<string, BadgeProps>();
-	const globalBadges = new SvelteMap<string, BadgeProps>();
-	let badgeUpdates = $state(0);
 
 	$effect(() => {
 		const search = {
@@ -330,9 +265,8 @@
 		if (!filteredChatLogs) return;
 		untrack(async () => {
 			await tick();
-			const virtualList = document.querySelector(".virtual-list-wrapper");
-			if (!virtualList) return;
-			virtualList.scrollTop = scrollFromBottom ? virtualList.scrollHeight : 0;
+			if (scrollFromBottom) logsList?.scrollToBottom();
+			else logsList?.scrollTo(0);
 		});
 	});
 
@@ -366,27 +300,14 @@
 	$effect(() => {
 		const id = page.url.hash.slice(1);
 		if (!id) return;
-		const msgIdx = chatLogs.findIndex((m) => getMessageId(m) === id);
+		const msgIdx = filteredChatLogs.findIndex((m) => getMessageId(m) === id);
 		if (msgIdx === -1) return;
-		// eslint-disable-next-line @typescript-eslint/no-unused-expressions
-		scrollFromBottom;
 		untrack(async () => {
 			await tick();
-			const virtualList = document.querySelector(".virtual-list-wrapper");
-			if (!virtualList) return;
-
-			const listHeight = virtualList.clientHeight;
-			const totalHeight = virtualList.scrollHeight;
-
-			if (scrollFromBottom) {
-				virtualList.scrollTop = msgIdx * lineHeight - listHeight * 0.5 + lineHeight;
-			} else {
-				virtualList.scrollTop = totalHeight - msgIdx * lineHeight - listHeight * 0.5 - lineHeight;
-			}
+			logsList?.scrollToIndex(msgIdx, "center");
 		});
 	});
 
-	// const dateContent = $derived(availableDates[Number(dateValue) ?? 0]);
 	const dateContent = $derived.by(() => {
 		const [year, month, day] = String(dateValue).split("-");
 		if (!year || !month) {
@@ -507,69 +428,20 @@
 	});
 
 	$effect(() => {
-		// fetch badges
-		channelBadges.clear();
-		untrack(() => badgeUpdates++);
-
-		if (!channelId) return;
-
-		untrack(async () => {
-			const channelBadgesList = await TwitchServices.IVR.getChannelBadges(channelId);
-
-			channelBadgesList.forEach((badge) => {
-				badge.versions.forEach((version) => {
-					channelBadges.set(`${badge.set_id}/${version.id}`, {
-						url: version.image_url_1x,
-						title: version.title,
-					});
-				});
-			});
-
-			badgeUpdates++;
-		});
+		chat.loadChannelBadges(channelId);
+		chat.loadChannelEmotes(channelId);
 	});
 
-	const getBadges = (msg: Message) => {
-		const badges: { id: string; src: string; title: string; alt: string }[] = [];
-
-		const badgeList = msg.tags["badges"].split(",");
-		for (const badge of badgeList) {
-			const [id, version] = badge.split("/");
-			const key = `${id}/${version}`;
-
-			const badgeData = channelBadges.get(key) || globalBadges.get(key);
-			if (badgeData) {
-				badges.push({
-					id,
-					src: badgeData.url,
-					title: badgeData.title,
-					alt: badgeData.title,
-				});
-			}
-		}
-
-		return badges;
-	};
+	const closestTo = (target: number, values: number[]) => values.sort((a, b) => a - b).reduce((prev, curr) => (Math.abs(curr - target) < Math.abs(prev - target) ? curr : prev));
 
 	const findClosestAvailableDate = (date: DateValue) => {
-		const year = String(date.year);
-		const month = String(date.month);
+		const yearDates = availableDates.filter((d) => Number(d.year) === date.year);
+		if (!yearDates.length) return null;
 
-		const availableDays = availableDates
-			.filter((d) => d.year === year && d.month === month)
-			.map((d) => parseInt(d.day || "1"))
-			.sort((a, b) => a - b);
+		const month = closestTo(date.month, [...new Set(yearDates.map((d) => Number(d.month)))]);
+		const days = yearDates.filter((d) => Number(d.month) === month).map((d) => parseInt(d.day || "1"));
 
-		if (availableDays.length > 0) {
-			const targetDay = date.day;
-			const closestDay = availableDays.reduce((prev, curr) => {
-				return Math.abs(curr - targetDay) < Math.abs(prev - targetDay) ? curr : prev;
-			});
-
-			return new CalendarDate(date.year, date.month, closestDay);
-		}
-
-		return null;
+		return new CalendarDate(date.year, month, closestTo(date.day, days));
 	};
 
 	const adjustDate = (date: DateValue) => {
@@ -600,47 +472,6 @@
 		}
 	};
 
-	$effect(() => {
-		// fetch channel emotes
-		channelEmotes.clear();
-		untrack(() => emoteUpdates++);
-
-		if (!channelId) return;
-
-		untrack(async () => {
-			const [stvEmotes, bttvEmotes, ffzEmotes] = (
-				await Promise.allSettled([
-					TwitchServices.SevenTV.getChannelEmotes(channelId),
-					TwitchServices.BetterTTV.getChannelEmotes(channelId),
-					TwitchServices.FrankerFaceZ.getChannelEmotes(channelId),
-				])
-			).map((p) => (p.status === "fulfilled" ? p.value : []));
-
-			stvEmotes.forEach((emote) => {
-				channelEmotes.set(emote.name!, {
-					url: `https://7tv.app/emotes/${emote.id}`,
-					src: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
-				});
-			});
-
-			bttvEmotes.forEach((emote) => {
-				channelEmotes.set(emote.code!, {
-					url: `https://betterttv.com/emotes/${emote.id}`,
-					src: `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`,
-				});
-			});
-
-			ffzEmotes.forEach((emote) => {
-				channelEmotes.set(emote.name!, {
-					url: `https://www.frankerfacez.com/emoticon/${emote.id}-${emote.name}`,
-					src: `https://cdn.frankerfacez.com/emote/${emote.id}/1`,
-				});
-			});
-
-			emoteUpdates++;
-		});
-	});
-
 	const formSubmit = (event: SubmitEvent) => {
 		event.preventDefault();
 		if (loading || !inputChannelName) return;
@@ -655,6 +486,7 @@
 		dateValue = "";
 		chatLogs = [];
 		channelStats = null;
+		channelTyped = false;
 
 		if (inputQuery.trim() && !inputUserName) {
 			error = "User is required for global search";
@@ -699,137 +531,30 @@
 		jumpToMessage((jumpIndex - 1 + searchResults.length) % searchResults.length);
 	};
 
-	const fetchGlobalBadges = async () => {
-		const globalBadgesList = await TwitchServices.IVR.getGlobalBadges();
-
-		globalBadgesList.forEach((badge) => {
-			badge.versions.forEach((version) => {
-				globalBadges.set(`${badge.set_id}/${version.id}`, {
-					url: version.image_url_1x,
-					title: version.title,
-				});
-			});
-		});
-
-		badgeUpdates++;
-	};
-
-	const fetchGlobalEmotes = async () => {
-		const [stvEmotes, bttvEmotes, ffzEmotes] = (
-			await Promise.allSettled([TwitchServices.SevenTV.getGlobalEmotes(), TwitchServices.BetterTTV.getGlobalEmotes(), TwitchServices.FrankerFaceZ.getGlobalEmotes()])
-		).map((p) => (p.status === "fulfilled" ? p.value : []));
-
-		stvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name!, {
-				url: `https://7tv.app/emotes/${emote.id}`,
-				src: `https://cdn.7tv.app/emote/${emote.id}/1x.webp`,
-			});
-		});
-
-		bttvEmotes.forEach((emote) => {
-			globalEmotes.set(emote.code!, {
-				url: `https://betterttv.com/emotes/${emote.id}`,
-				src: `https://cdn.betterttv.net/emote/${emote.id}/1x.webp`,
-			});
-		});
-
-		ffzEmotes.forEach((emote) => {
-			globalEmotes.set(emote.name!, {
-				url: `https://www.frankerfacez.com/emoticon/${emote.id}-${emote.name}`,
-				src: `https://cdn.frankerfacez.com/emote/${emote.id}/1`,
-			});
-		});
-
-		emoteUpdates++;
-	};
-
-	const parseMessage = (msg: Message) => {
-		let components: ChatComponents = [];
-
-		let twitchEmotes: TMIEmote[] = [];
-		const systemMsg = msg.tags["system-msg"];
-		const posOffset = systemMsg ? [...systemMsg].length + 1 : 0;
-		if (msg.tags["emotes"]) {
-			for (const e of msg.tags["emotes"].split("/")) {
-				const [id, positions] = e.split(":");
-				for (const pos of positions.split(",")) {
-					twitchEmotes.push({ id, pos: pos.split("-").map((s) => Number(s) + posOffset) });
-				}
-			}
-			twitchEmotes = twitchEmotes.sort((a, b) => a.pos[0] - b.pos[0]);
-		}
-
-		let cum = "";
-		const unicode = [...msg.text];
-		for (let i = 0; i < unicode.length; i++) {
-			const c = unicode[i];
-
-			const nextEmote = twitchEmotes[0];
-			if (nextEmote?.pos[0] === i) {
-				twitchEmotes.shift();
-				components.push({
-					type: Emote,
-					props: {
-						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
-						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
-						url: `https://emotes.susgee.dev/emote/${nextEmote.id}`,
-					},
-				});
-				i = nextEmote.pos[1];
-				continue;
-			}
-
-			if (c === " ") {
-				if (cum.trim()) {
-					processWord(cum, components);
-					cum = "";
-				}
-				components.push({ type: TextFragment, props: { text: " " } });
-			} else {
-				cum += c;
-			}
-
-			if (i === unicode.length - 1 && cum.trim()) {
-				processWord(cum, components);
-			}
-		}
-
-		if (msg.tags["reply-parent-msg-id"]) {
-			const prefix = `@${msg.tags["reply-parent-user-login"]}`;
-			components[0] = {
-				type: Reply,
-				props: {
-					text: prefix,
-					msgId: msg.tags["reply-parent-msg-id"],
-					replyUser: msg.tags["reply-parent-user-login"],
-					replyBody: msg.tags["reply-parent-msg-body"],
-				},
-			};
-		}
-
-		return components;
-	};
-
-	const processWord = (word: string, components: ChatComponents) => {
-		const emoteProps = channelEmotes.get(word) || globalEmotes.get(word);
-		if (emoteProps) {
-			components.push({ type: Emote, props: { name: word, ...emoteProps } });
-			return;
-		}
-
-		const url = linkParser.parse(word);
-		if (url) {
-			components.push({
-				type: Link,
-				props: { href: `${url.protocol || "//"}${url.host}${url.rest}`, text: word },
-			});
-			return;
-		}
-
-		components.push({ type: TextFragment, props: { text: word } });
-	};
-
 	const getMessageId = (msg: Message) => msg.id || msg.timestamp;
+
+	// a CLEARMSG row would otherwise scan the whole log to name the message it removed
+	let messagesById = new Map<string, Message>();
+	let messagesByIdFor: Message[] | null = null;
+	const messageById = (id: string) => {
+		if (messagesByIdFor !== chatLogs) {
+			messagesById = new Map(chatLogs.filter((m) => m.id).map((m) => [m.id, m]));
+			messagesByIdFor = chatLogs;
+		}
+		return messagesById.get(id);
+	};
+
+	// same reason as the parse cache in ChatSource: three dayjs parses per row per scroll tick
+	const times = new WeakMap<Message, { at: string; day: string }>();
+	const messageTime = (msg: Message) => {
+		let time = times.get(msg);
+		if (!time) {
+			const parsed = dayjs(msg.timestamp);
+			time = { at: parsed.format(dateTimeFormat), day: parsed.format("YYYY-MM-DD") };
+			times.set(msg, time);
+		}
+		return time;
+	};
 </script>
 
 <svelte:head>
@@ -845,289 +570,205 @@
 
 <div id="main-fit-screen" class="hidden"></div>
 
-<div class="relative flex h-full min-h-0 flex-1 flex-col p-5">
-	<div class="flex flex-wrap items-end">
-		<h1 class="text-4xl font-bold">Twitch Logs&nbsp;</h1>
+<div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 md:overflow-y-visible">
+	<header class="flex flex-wrap items-baseline gap-x-3">
+		<h1 class="font-display text-3xl font-bold tracking-tight">Logs</h1>
 		{#if channelsCount}
-			<span class="text-xl font-light">for <span class="font-normal">{compactNumber(channelsCount)}</span> channels</span>
+			<p class="text-dim text-base">
+				<span class="font-display text-text font-semibold tabular-nums">{compactNumber(channelsCount)}</span> channels indexed
+			</p>
 		{/if}
-	</div>
+	</header>
 
-	<div class="my-2 flex min-h-0 min-w-64 flex-row justify-between gap-2">
-		<form class="relative flex w-full gap-2 align-middle" onsubmit={formSubmit}>
-			<div class="flex flex-1">
-				<div class="flex gap-2">
-					<div class="relative flex flex-col">
-						<Label for="input-channel" class="text-base">
-							Channel<span class="text-red-500">*</span>
-						</Label>
-						<Input
-							id="input-channel"
-							maxlength={25}
-							bind:ref={channelInput}
-							bind:value={inputChannelName}
-							placeholder="Channel or id:123"
-							onkeydown={channelKeydown}
-							oninput={() => (channelTyped = true)}
-							autocomplete="off"
-							autofocus
-						/>
+	<form class="flex flex-wrap items-end gap-2" onsubmit={formSubmit}>
+		<div class="relative flex flex-col gap-1">
+			<Label for="input-channel">Channel <span class="text-accent">required</span></Label>
+			<Input
+				id="input-channel"
+				class={showAutocomplete ? "w-44 rounded-b-none" : "w-44"}
+				maxlength={25}
+				bind:ref={channelInput}
+				bind:value={inputChannelName}
+				placeholder="Channel or id:123"
+				onkeydown={channelKeydown}
+				oninput={() => (channelTyped = true)}
+				autocomplete="off"
+				autofocus
+			/>
 
-						{#if showAutocomplete}
-							<div class="absolute left-0 right-0 top-full z-10 mt-1">
-								<ScrollArea class="flex-1 rounded-md">
-									<!-- svelte-ignore a11y_no_static_element_interactions -->
-									{#each foundChannels as c, index (c.name)}
-										<div
-											class="flex h-8 items-center text-sm hover:cursor-pointer
-                                        {index === selectedIndex ? 'bg-zinc-200 dark:bg-zinc-800' : 'bg-zinc-100 dark:bg-zinc-900'}"
-											onmouseenter={() => (selectedIndex = index)}
-											onmousedown={() => selectResult(index)}
-										>
-											<span class="mx-3">{c.name}</span>
-										</div>
-									{/each}
-								</ScrollArea>
+			{#if showAutocomplete}
+				<!-- one shell with the field: flush under it, squared at the join and carrying the same accent border, so the pair reads as one outline -->
+				<Panel class="absolute top-full right-0 left-0 z-20 overflow-hidden rounded-t-none rounded-b-md border border-t-0 p-1 shadow-lg">
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					{#each foundChannels as c, index (c.name)}
+						<div
+							class={["flex h-9 cursor-pointer items-center rounded-[5px] px-2 text-base transition-colors", index === selectedIndex ? "bg-raised text-text" : "text-dim"]}
+							onmouseenter={() => (selectedIndex = index)}
+							onmousedown={() => selectResult(index)}
+						>
+							{c.name}
+						</div>
+					{/each}
+				</Panel>
+			{/if}
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label for="input-user"
+				>User {#if inputQuery.trim()}<span class="text-accent">required</span>{/if}</Label
+			>
+			<Input id="input-user" class="w-44" maxlength={25} bind:value={inputUserName} placeholder="Username or id:123" />
+		</div>
+
+		<div class="flex flex-col gap-1">
+			<Label for="input-query">Query</Label>
+			<Input id="input-query" class="w-44" maxlength={500} bind:value={inputQuery} placeholder="Search messages" autocomplete="off" />
+		</div>
+
+		<Button type="submit" variant="accent" disabled={loading}>
+			{#if loading}
+				<LoaderCircleIcon class="animate-spin" />
+			{/if}
+			Load
+		</Button>
+
+		{#if chatLogs.length}
+			<Popover bind:open={statsPopoverOpen} align="end" class="w-80 max-w-[90vw] p-4">
+				{#snippet trigger({ props })}
+					<Button {...props} variant="outline" class="ml-auto" title="Channel stats">
+						<ChartColumnIcon />
+						<span class="hidden md:inline">Stats</span>
+					</Button>
+				{/snippet}
+
+				{#if statsError}
+					<p class="text-warn text-sm">{statsError}</p>
+				{:else}
+					<div class="space-y-4">
+						<div>
+							<h3 class="font-display text-dim text-sm font-medium tracking-wide">
+								Messages{#if userName}&nbsp;by {channelStats?.userLogin || userName}{/if}
+							</h3>
+							{#if channelStats}
+								<p class="font-display text-accent mt-0.5 text-3xl font-bold tabular-nums">{channelStats.messageCount.toLocaleString()}</p>
+							{:else}
+								<Skeleton class="mt-1 h-8 w-28" />
+							{/if}
+						</div>
+
+						{#if !userName}
+							<div>
+								<h3 class="font-display text-dim mb-1.5 text-sm font-medium tracking-wide">Top chatters</h3>
+								<ol class="space-y-1.5">
+									{#if channelStats?.topChatters}
+										{#each channelStats.topChatters as chatter, index (chatter.userId)}
+											<li class="flex items-center justify-between gap-2 text-sm text-nowrap">
+												<span class="flex min-w-0 items-center gap-2">
+													<span class="text-dim w-5 text-right text-sm tabular-nums">{index + 1}</span>
+													<span class="truncate" title={chatter.userLogin}>{chatter.userLogin || `id:${chatter.userId}`}</span>
+												</span>
+												<span class="text-dim tabular-nums">{chatter.messageCount.toLocaleString()}</span>
+											</li>
+										{/each}
+									{:else}
+										{#each { length: 5 }}
+											<Skeleton class="h-6 w-full" />
+										{/each}
+									{/if}
+								</ol>
 							</div>
 						{/if}
 					</div>
+				{/if}
+			</Popover>
+		{/if}
+	</form>
 
-					<div class="flex flex-col">
-						<Label for="input-user" class="text-base">
-							User{#if inputQuery.trim()}<span class="text-red-500">*</span>{/if}
-						</Label>
-						<Input id="input-user" maxlength={25} bind:value={inputUserName} placeholder="Username or id:123" />
-					</div>
-
-					<div class="flex flex-col">
-						<Label for="input-query" class="text-base">Query</Label>
-						<Input id="input-query" maxlength={500} bind:value={inputQuery} placeholder="Global search" autocomplete="off" />
-					</div>
-
-					<div class="flex flex-row items-center gap-1 self-end">
-						<Button type="submit" id="load-btn" class="sticky" disabled={loading}>Load</Button>
-						{#if loading}
-							<LoaderCircleIcon class="size-8 animate-spin" />
-						{/if}
-					</div>
-				</div>
-			</div>
-		</form>
-
-		<div class="flex self-end">
-			<Popover.Root bind:open={statsPopoverOpen}>
-				<Popover.Trigger class={cn(buttonVariants({ variant: "secondary" }), [!chatLogs.length && "hidden"])} title="Channel Stats" aria-label="Channel Stats">
-					<ChartColumnIcon />
-					<span class="hidden md:block">Stats</span>
-				</Popover.Trigger>
-				<Popover.Content class="w-80 max-w-[90vw] rounded-md border-0 p-0" align="end" sideOffset={8}>
-					<Card.Root class="rounded-md">
-						<Card.Content>
-							{#if statsError}
-								<p class="text-red-500">{statsError}</p>
-							{:else}
-								<div class="space-y-4">
-									<div>
-										<h3 class="text-lg font-semibold">
-											Total Messages
-											{#if userName}
-												<span class="font-light text-muted-foreground">
-													by <span class="font-semibold">{channelStats?.userLogin || userName}</span>
-												</span>
-											{/if}
-										</h3>
-										{#if channelStats}
-											<p class="text-2xl font-bold">{channelStats.messageCount.toLocaleString()}</p>
-										{:else}
-											<Skeleton class="h-8 w-28" />
-										{/if}
-									</div>
-
-									{#if !userName}
-										<div>
-											<h3 class="mb-2 text-lg font-semibold">Top Chatters</h3>
-											<div class="space-y-2">
-												{#if channelStats?.topChatters}
-													{#each channelStats.topChatters as chatter, index (chatter.userId)}
-														<div class="flex items-center justify-between gap-2 text-nowrap border-b pb-2 last:border-0">
-															<div class="flex items-center gap-2 overflow-hidden">
-																<span class="ml-4 text-right tabular-nums text-muted-foreground">{index + 1}.</span>
-																<span class="overflow-hidden text-ellipsis font-medium" title={chatter.userLogin}>
-																	{chatter.userLogin || `id:${chatter.userId}`}
-																</span>
-															</div>
-															<span class="tabular-nums text-muted-foreground">{chatter.messageCount.toLocaleString()}</span>
-														</div>
-													{/each}
-												{:else}
-													<Skeleton class="h-8 w-full" />
-													<Skeleton class="h-8 w-full" />
-													<Skeleton class="h-8 w-full" />
-													<Skeleton class="h-8 w-full" />
-													<Skeleton class="h-8 w-full" />
-												{/if}
-											</div>
-										</div>
-									{/if}
-								</div>
-							{/if}
-						</Card.Content>
-					</Card.Root>
-				</Popover.Content>
-			</Popover.Root>
-		</div>
-	</div>
-
-	<div class="mb-1 flex flex-row flex-wrap-reverse justify-between gap-1">
-		<div class="flex flex-1 flex-wrap gap-1 md:flex-nowrap">
+	<div class="flex min-h-0 flex-1 flex-col gap-1.5">
+		<div class="flex flex-wrap items-center gap-1.5">
 			{#if dateContent}
 				{#if dateContent.day}
-					<Popover.Root bind:open={datePopoverOpen}>
-						<Popover.Trigger
-							disabled={loading}
-							class={cn(
-								buttonVariants({
-									variant: "outline",
-									class: "flex h-8 w-36 items-center justify-between rounded-md border px-3 py-2 text-sm tabular-nums hover:bg-transparent focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1",
-								})
-							)}
-						>
-							{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
-							<CalendarIcon class="opacity-50" />
-						</Popover.Trigger>
+					<Popover>
+						{#snippet trigger({ props })}
+							<Button {...props} variant="outline" size="sm" class="w-36 justify-between tabular-nums" disabled={loading}>
+								{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
+								<CalendarIcon class="text-dim" />
+							</Button>
+						{/snippet}
 
-						<Popover.Content class="w-auto border-0 p-0" align="start">
-							<CalendarPrimitive.Root
-								type="single"
-								weekdayFormat="short"
-								class="rounded-md border p-3 tabular-nums"
-								onPlaceholderChange={(date) => adjustDate(date)}
-								onValueChange={(date) => updateDateValue(date)}
-								isDateUnavailable={(date) => !isDateAvailable(date)}
-								bind:value={calendarDate}
-							>
-								{#snippet children({ months, weekdays })}
-									<Calendar.Header class="flex w-full items-center justify-between gap-2">
-										<Select.Root
-											type="single"
-											value={`${defaultYear?.value}`}
-											onValueChange={(v) => {
-												if (!v || !calendarDate) return;
-												if (v === `${calendarDate?.year}`) return;
-												calendarDate = calendarDate.set({ year: Number.parseInt(v) });
-											}}
-										>
-											<Select.Trigger aria-label="Select year" class="h-8 max-w-24 tabular-nums">
-												{defaultYear?.label ?? "Year"}
-											</Select.Trigger>
-											<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
-												{#each yearOptions as { value, label } (value)}
-													<Select.Item value={`${value}`} {label} />
-												{/each}
-											</Select.Content>
-										</Select.Root>
-										<Select.Root
-											type="single"
-											value={`${defaultMonth?.value}`}
-											onValueChange={(v) => {
-												if (!calendarDate) return;
-												if (v === `${calendarDate.month}`) return;
-												calendarDate = calendarDate.set({ month: Number.parseInt(v) });
-											}}
-										>
-											<Select.Trigger aria-label="Select month" class="h-8 w-full break-keep tabular-nums">
-												{monthLabel}
-											</Select.Trigger>
-											<Select.Content class="max-h-[200px] overflow-y-auto tabular-nums">
-												{#each monthOptions as { value, label } (value)}
-													<Select.Item value={`${value}`} {label} />
-												{/each}
-											</Select.Content>
-										</Select.Root>
-									</Calendar.Header>
-									<Calendar.Months>
-										{#each months as month (month)}
-											<Calendar.Grid>
-												<Calendar.GridHead>
-													<Calendar.GridRow class="flex">
-														{#each weekdays as weekday (weekday)}
-															<Calendar.HeadCell>
-																{weekday.slice(0, 2)}
-															</Calendar.HeadCell>
-														{/each}
-													</Calendar.GridRow>
-												</Calendar.GridHead>
-												<Calendar.GridBody>
-													{#each month.weeks as weekDates (weekDates)}
-														<Calendar.GridRow class="mt-2 w-full">
-															{#each weekDates as date (date)}
-																<Calendar.Cell
-																	class="select-none bg-opacity-10 [&[data-disabled]]:pointer-events-none [&[data-selected]]:pointer-events-none [&[data-unavailable]]:pointer-events-none [&[data-unavailable]]:opacity-50"
-																	{date}
-																	month={month.value}
-																>
-																	<Calendar.Day />
-																</Calendar.Cell>
-															{/each}
-														</Calendar.GridRow>
-													{/each}
-												</Calendar.GridBody>
-											</Calendar.Grid>
-										{/each}
-									</Calendar.Months>
-								{/snippet}
-							</CalendarPrimitive.Root>
-						</Popover.Content>
-					</Popover.Root>
+						<Calendar
+							type="single"
+							months={monthOptions}
+							years={yearOptions}
+							isDateUnavailable={(date) => !isDateAvailable(date)}
+							onPlaceholderChange={adjustDate}
+							onValueChange={updateDateValue}
+							bind:value={calendarDate}
+						/>
+					</Popover>
 				{:else}
-					<div class="flex flex-row">
-						<Select.Root type="single" name="input-date" bind:open={datePopoverOpen} bind:value={dateValue} disabled={loading}>
-							<Select.Trigger class="h-8 w-32 tabular-nums">
-								{dateContent.year}-{String(dateContent.month).padStart(2, "0")}{dateContent.day ? `-${String(dateContent.day).padStart(2, "0")}` : ""}
-							</Select.Trigger>
-							<Select.Content>
-								<Select.Group>
-									{#each availableDates as date, index (index)}
-										{#if index > 0 && date.year !== availableDates[index - 1].year}
-											<Select.Separator class="mx-0" />
-										{/if}
-										{@const str = `${date.year}-${date.month.padStart(2, "0")}${date.day ? `-${date.day.padStart(2, "0")}` : ""}`}
-										<Select.Item class="m-0 justify-center p-1 tabular-nums" value={str} label={str} />
-									{/each}
-								</Select.Group>
-							</Select.Content>
-						</Select.Root>
-					</div>
+					<Select
+						bind:value={dateValue}
+						options={dateOptions}
+						size="sm"
+						disabled={loading}
+						aria-label="Date"
+						placeholder={dateValue || "Select"}
+						class="w-36 tabular-nums"
+						contentClass="tabular-nums"
+					/>
 				{/if}
 			{/if}
+
 			{#if chatLogs.length}
-				<div class="order-1 flex flex-1 basis-full gap-1 md:order-none md:basis-auto">
-					<form class="flex-1">
-						<div class="relative flex items-center">
-							<Input id="input-search" maxlength={500} placeholder="Find..." class="h-8 pr-20" autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
-							<span class="pointer-events-none absolute right-2 select-none text-xs tabular-nums text-muted-foreground">
-								{displayMessageCount}
-							</span>
-						</div>
-					</form>
+				<div class="order-1 flex flex-1 basis-full items-center gap-1.5 md:order-0 md:basis-auto">
+					<div class="relative flex min-w-44 flex-1 items-center">
+						<Input
+							id="input-search"
+							size="sm"
+							class="pr-20"
+							maxlength={500}
+							placeholder={isJumpMode ? "Find..." : "Filter..."}
+							autocomplete="off"
+							bind:ref={searchInput}
+							bind:value={searchValue}
+						/>
+						<span class="text-dim pointer-events-none absolute right-2.5 text-xs tabular-nums select-none">{displayMessageCount}</span>
+					</div>
+
 					{#if isJumpSearching}
-						{@const width = searchResults.length.toString().length + 5}
+						{@const width = searchResults.length.toString().length + 4}
 						<div class="flex items-center gap-1">
-							<Input type="number" class="h-8 w-16 tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
-							<span class="text-xs tabular-nums">/</span>
-							<Input type="number" class="h-8 w-16 tabular-nums" value={searchResults.length} disabled style={`width: ${width}ch;`} />
+							<Input type="number" size="sm" class="tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+							<span class="text-dim text-sm">of</span>
+							<span class="text-dim text-sm tabular-nums">{searchResults.length.toLocaleString()}</span>
 						</div>
 					{/if}
 				</div>
+
 				<div class="ml-auto flex gap-1">
-					<Button variant="ghost" size="icon" class="size-8 border" onclick={searchModeToggle} title="Toggle Search Mode" aria-label="Toggle Search Mode" aria-pressed={isJumpMode}>
-						{#if !isJumpMode}
-							<FilterIcon />
-						{:else}
+					<Button
+						variant="outline"
+						size="icon-sm"
+						onclick={searchModeToggle}
+						title={isJumpMode ? "Switch to filtering" : "Switch to jumping"}
+						aria-label={isJumpMode ? "Switch to filtering" : "Switch to jumping"}
+						aria-pressed={isJumpMode}
+						class="on:border-accent on:text-accent"
+					>
+						{#if isJumpMode}
 							<SearchIcon />
+						{:else}
+							<FilterIcon />
 						{/if}
 					</Button>
-					<Button variant="ghost" size="icon" class="size-8 border" onclick={scrollFromBottomToggle}>
+					<Button
+						variant="outline"
+						size="icon-sm"
+						onclick={scrollFromBottomToggle}
+						title={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
+						aria-label={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
+					>
 						{#if scrollFromBottom}
 							<ArrowUpNarrowWideIcon />
 						{:else}
@@ -1135,109 +776,76 @@
 						{/if}
 					</Button>
 					<Button
-						variant="ghost"
-						size="icon"
-						class="size-8 border"
+						variant="outline"
+						size="icon-sm"
+						title="Open raw logs"
+						aria-label="Open raw logs"
 						target="_blank"
-						href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/
-							{dateContent ? `${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ''}` : `search?q=${encodeURIComponent(query)}`}"
+						href="https://logs.zonian.dev/{parseChannelUser(channelName, userName, false)}/{dateContent
+							? `${dateContent.year}/${dateContent.month}${dateContent.day ? `/${dateContent.day}` : ''}`
+							: `search?q=${encodeURIComponent(query)}`}"
 					>
 						<FileTextIcon />
 					</Button>
 				</div>
 			{/if}
 		</div>
-	</div>
 
-	{#if error}
-		<p class="text-red-500">{error}</p>
-	{:else if chatLogs.length}
-		<div class="flex min-h-0 w-full flex-1" bind:clientHeight={logsBoxHeight}>
-			<Card.Root class="h-full w-full flex-col overflow-hidden leading-5">
-				<VirtualList height={logsBoxHeight} itemCount={filteredChatLogs.length} itemSize={lineHeight}>
-					<div class="group !w-auto min-w-full text-nowrap" slot="item" let:index let:style {style}>
+		{#if error}
+			<p class="text-warn text-sm">{error}</p>
+		{:else if chatLogs.length}
+			<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5 max-md:min-h-[60svh]">
+				<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll overscroll-contain py-2">
+					{#snippet item(index, style)}
 						{@const msg = filteredChatLogs[index]}
 						{@const msgId = getMessageId(msg)}
-						{@const dayKey = dayjs(msg.timestamp).format("YYYY-MM-DD")}
-						{@const prevDayKey = index > 0 ? dayjs(filteredChatLogs[index - 1].timestamp).format("YYYY-MM-DD") : null}
-						{@const isNewDay = index > 0 && prevDayKey !== dayKey}
+						{@const time = messageTime(msg)}
+						{@const isNewDay = index > 0 && messageTime(filteredChatLogs[index - 1]).day !== time.day}
 						{@const isHashMatch = msgId === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
 						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
-						<div
-							class={[
-								"flex h-5 w-full items-center gap-x-1 px-3",
-								isNewDay && "-mt-[1px] border-t border-dashed border-black/25 dark:border-white/10",
-								(isHashMatch && "bg-zinc-200 dark:bg-zinc-800") || (isJumpMatch && "bg-zinc-100 dark:bg-zinc-900") || (isHighlight && "bg-purple-600/30"),
-							]}
-						>
-							<span class="select-none text-xs tabular-nums text-neutral-500">{dayjs(msg.timestamp).format(dateTimeFormat)}</span>
-							{#if msg.tags["badges"]}
-								<span class="inline-flex select-none gap-x-0.5 empty:hidden">
-									{#key badgeUpdates}
-										{#each getBadges(msg) as badge (badge.id)}
-											<Badge src={badge.src} title={badge.title} alt="" />
-										{/each}
-									{/key}
+						<div class="group w-max min-w-full text-nowrap" {style}>
+							<div
+								class={[
+									"flex h-5 w-full items-center gap-x-1 px-3",
+									isNewDay && "border-line -mt-px border-t border-dashed",
+									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
+								]}
+							>
+								<span class="text-dim/80 shrink-0 text-xs tabular-nums select-none">{time.at}</span>
+								<span class="h-5 w-max">
+									{#if msg.tags["target-msg-id"]}
+										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
+										<span class="text-dim">
+											{#if msgDeleted}
+												<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
+													A message from {msgDeleted.displayName} was deleted
+												</span>
+											{:else}
+												A message was deleted
+											{/if}
+										</span>
+									{:else}
+										<MessageContent {chat} {msg} />
+									{/if}
 								</span>
-							{/if}
-							<span class="h-5 w-max">
-								{#if msg.tags["target-msg-id"]}
-									{@const msgDeleted = chatLogs.find((m) => m.id === msg.tags["target-msg-id"])}
-									<span class="text-neutral-500">
-										{#if msgDeleted}
-											<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
-												A message from {msgDeleted.displayName} was deleted
-											</span>
-										{:else}
-											A message was deleted
-										{/if}
-									</span>
-								{:else if msg.tags["target-user-id"] || !msg.displayName}
-									<span class="text-neutral-500">
-										{msg.text}
-									</span>
-								{:else}
-									<span style="color: hsl(from {msg.tags['color'] || 'gray'} h s {$mode === 'light' ? '40%' : '70%'})" class="font-bold">
-										{msg.displayName}:
-									</span>
-									<span>
-										{#key emoteUpdates}
-											{#each parseMessage(msg) as { type: Component, props }, index (index)}
-												<Component {...props} />
-											{/each}
-										{/key}
-									</span>
+								{#if !isHashMatch}
+									<Button
+										variant="ghost"
+										size="icon-sm"
+										class="size-5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+										title="Permalink"
+										href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
+										target="_blank"
+									>
+										<ExternalLinkIcon />
+									</Button>
 								{/if}
-							</span>
-							{#if msgId !== page.url.hash.slice(1)}
-								<Button
-									variant="outline"
-									class="right-1 mx-1 size-5 self-center opacity-0 transition-opacity group-hover:opacity-100"
-									href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
-									target="_blank"
-								>
-									<ExternalLinkIcon class="!size-3" />
-								</Button>
-							{/if}
+							</div>
 						</div>
-					</div>
+					{/snippet}
 				</VirtualList>
-			</Card.Root>
-		</div>
-	{/if}
+			</Panel>
+		{/if}
+	</div>
 </div>
-
-{#if datePopoverOpen || statsPopoverOpen}
-	<FocusTrap />
-{/if}
-
-<style>
-	:global(.virtual-list-wrapper) {
-		overflow: scroll !important;
-
-		padding-top: 0.5rem;
-		padding-bottom: 0.5rem;
-	}
-</style>
-
