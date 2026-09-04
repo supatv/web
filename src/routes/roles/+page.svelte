@@ -401,8 +401,8 @@
 					<section class={["@container flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 xl:max-w-xl", activeSection?.role !== section.role && "max-xl:hidden"]}>
 						<div class="flex shrink-0 flex-col">
 							<div class="flex items-center gap-2">
-								<div class="flex min-w-0 items-center gap-1">
-									<RoleIcon class="size-4 shrink-0 text-base" />
+								<div class="flex min-w-0 items-baseline gap-1">
+									<RoleIcon class="size-4 shrink-0 self-center text-base" />
 									<h2 class="font-display truncate text-base font-bold tracking-tight">{roleTitle(section.role)}</h2>
 									<span class="font-display text-dim text-sm font-semibold tabular-nums">{view === "user" ? "in " : ""}{section.total.toLocaleString()}</span>
 								</div>
