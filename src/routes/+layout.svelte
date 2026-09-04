@@ -143,7 +143,7 @@
 							This service stores no data of its own. It reads publicly available logs from
 							<a href="https://logs.zonian.dev/status" target="_blank" rel="nofollow" class="text-accent ring-focus hover:underline">third-party sources</a>.
 						</p>
-						<p>Opting out may be possible with each individual instance, depending on that site's own policy.</p>
+						<p>Opting out may be possible for each individual instance, depending on that site's own policy.</p>
 						<p>We are not affiliated with Twitch or its creators.</p>
 					</div>
 				</Dialog>

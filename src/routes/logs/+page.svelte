@@ -824,12 +824,12 @@
 									<Button
 										variant="ghost"
 										size="icon-sm"
-										class="size-5 shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
+										class="size-5 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
 										title="Permalink"
 										href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
 										target="_blank"
 									>
-										<ExternalLinkIcon class="size-3!" />
+										<ExternalLinkIcon />
 									</Button>
 								{/if}
 							</div>
