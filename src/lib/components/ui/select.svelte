@@ -69,12 +69,13 @@
 		<SelectPrimitive.Content
 			sideOffset={6}
 			class={cn(
-				"border-line bg-surface z-50 max-h-(--bits-floating-available-height) min-w-(--bits-floating-anchor-width) overflow-y-auto rounded-lg border p-1 shadow-xl duration-150",
+				"border-line bg-surface z-50 max-h-[min(18rem,var(--bits-floating-available-height))] min-w-(--bits-floating-anchor-width) overflow-y-auto overscroll-contain rounded-lg border p-1 shadow-xl duration-150 [scrollbar-color:var(--line)_transparent] [scrollbar-width:thin]",
 				"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
 				contentClass
 			)}
 		>
-			<SelectPrimitive.Viewport>
+			<!-- bits-ui makes the viewport the scroll container and hides its scrollbar with !important; scroll on the content instead -->
+			<SelectPrimitive.Viewport class="overflow-visible!">
 				{#each options as option (option.value)}
 					{#if option.separatorBefore}
 						<div class="bg-line my-1 h-px" role="none"></div>
