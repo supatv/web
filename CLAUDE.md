@@ -19,8 +19,10 @@ There is no test framework and no test files in this repo. CI (`.github/workflow
 ## Architecture
 
 SvelteKit 2 / Svelte 5 (runes) SPA-ish site for Twitch utilities, deployed at `tv.supa.sh`.
-**There is no backend in this repo.** Every route is prerendered static HTML and all data is
-fetched from third-party APIs in the browser.
+**There is no backend in this repo.** All data is fetched from third-party APIs in the browser.
+Only `/`, `/live`, `/logs` and `/firehose` prerender to HTML — `/vods*` and `/jake` have no
+`prerender` export and are served by the SPA fallback (`404.html`), so everything they need has
+to work client-side.
 
 - `svelte.config.js` swaps adapters by `NODE_ENV`: `adapter-static` in dev, `adapter-cloudflare`
   in production. Prerender origin is pinned to `https://tv.supa.sh`.
@@ -29,7 +31,10 @@ fetched from third-party APIs in the browser.
   `src/app.d.ts`, allowlisted in `eslint.config.js`). Both must be `JSON.stringify`-ed: Vite deep
   clones the config and throws on a non-plain value such as a bare `Date`.
 - `+page.ts` loaders are either just `export const prerender = true` (logs, live, firehose) or
-  thin `fetch` wrappers around `api-tv.supa.sh` (vods). `/` 308-redirects to `/live`.
+  thin `fetch` wrappers around `api-tv.supa.sh` (vods); `/jake` has no loader at all. `/` is a
+  prerendered `+page.server.ts` that 308-redirects to `/live`.
+- Analytics is a self-hosted umami script in `+layout.svelte`'s `<svelte:head>`; outbound links
+  carry a `data-umami-event` attribute.
 
 ### Routes
 
@@ -38,8 +43,17 @@ fetched from third-party APIs in the browser.
 | `/live`                    | `api-tv.supa.sh/tags/ro` stream list; HLS playback via `luminous.alienpls.org` (Twitch) or `api-tv.supa.sh/kick_playback` (Kick) |
 | `/logs`                    | `logs.zonian.dev` (BestLogs): `/health`, `/meta/search`, `/list`, `/{channel}/{y}/{m}/{d}`, `/search`, `/stats`                  |
 | `/firehose`                | WebSocket to one of `src/routes/firehose/instances.json`, `wss://{instance}/firehose?jsonBasic=true`                             |
-| `/vods`, `/vods/[channel]` | `api-tv.supa.sh`, media on `r2-vods.supa.sh` (mostly disabled in the sidebar)                                                    |
-| `/jake`                    | one-off archive page backed by `fi.supa.sh`                                                                                      |
+| `/vods`, `/vods/[channel]` | `api-tv.supa.sh`, media on `r2-vods.supa.sh`                                                                                     |
+| `/jake`                    | one-off archive: file list on `fi.supa.sh`, chat replay from `logs.supa.codes`                                                   |
+
+The sidebar only links `/live`, `/logs` and `/firehose`; `/vods*` and `/jake` are reachable by URL
+only, so a route having no nav entry does not mean it is dead code.
+
+`/live` playback goes through a `Hls.DefaultConfig.loader` subclass in
+[stream-player.svelte](src/lib/components/live/stream-player.svelte): it rewrites Twitch's
+`#EXT-X-(TWITCH-)PREFETCH` lines into real `#EXTINF` segments for low latency, drops
+`progressive` when the level is fMP4, and routes `/playlist/` requests through the `y.supa.sh`
+proxy.
 
 Emotes and badges come from 7TV / BetterTTV / FrankerFaceZ / IVR through
 `src/lib/twitch/services/` — each service is a plain object of `fetch` functions with a 10s
@@ -72,9 +86,13 @@ non-reactive tick fields so bumping one never reads the signal it writes — oth
 that calls a `load*` method would depend on its own write. Keep that shape when adding a source.
 
 `messageSearch` supports `regex:`, `in:` and `from:` prefixes and otherwise does a
-case-insensitive substring scan. It keeps a **module-level cache** (`lastQuery`/`lastResult`) that
-narrows the previous result set when the new query extends the old one — anything that mutates
-the message array in place instead of replacing it will break that invariant.
+case-insensitive substring scan. It keeps a **module-level cache** (`lastQuery`/`lastResult`,
+guarded on source-array identity) that narrows the previous result set when the new query extends
+the old one — anything that mutates the message array in place instead of replacing it will break
+that invariant. `/firehose` respects this: socket messages land in a plain `chatBuffer` array and
+are flushed into the reactive `chatLogs` by `concat` on a 250ms timer, capped at 10k rows, with
+the flush skipped while `document.hidden` (timers are throttled to ~1/min in a background tab, so
+it only trims the backlog).
 
 ### State conventions
 
@@ -89,26 +107,51 @@ the message array in place instead of replacing it will break that invariant.
 { replaceState: true, keepFocus: true }) })`, with the initial read done in `onMount`. Follow it
   rather than introducing bidirectional bindings.
 - Long lists use [virtual-list.svelte](src/lib/components/virtual-list.svelte), a fixed-`itemSize`
-  windowed list that measures its own height and takes an `item` snippet. Bind it with
-  `bind:this` for its `scrollTo` / `scrollToBottom` / `scrollToIndex` exports rather than reaching
-  for the scroll container. Indexes passed to it are **display** indexes, so in `/logs` they
-  already account for the list being reversed when `scrollFromBottom` is off.
+  windowed list that measures its own height and renders an `item` snippet as `(index, style)` —
+  the row **must** put that `style` on its outer element, since it carries the absolute
+  positioning. Bind it with `bind:this` for its `scrollTo` / `scrollToBottom` / `scrollToIndex`
+  exports rather than reaching for the scroll container. Indexes passed to it are **display**
+  indexes, so in `/logs` they already account for the list being reversed when `scrollFromBottom`
+  is off.
+- `/logs` search has two modes, toggled by `isJumpMode` and persisted to `logs-search-mode`:
+  *filter* narrows the rendered list to `searchResults`, *jump* keeps the full list and instead
+  highlights the hits and steps between them by writing the message id to the URL hash. Both go
+  through `messageSearch`; only the wiring around it differs.
 
 ### UI layer
 
 There is **no shadcn-svelte**. `src/lib/components/ui/` is hand-written and owned by this repo —
 lint and format it like anything else. Each file wraps a bits-ui primitive (or a plain element)
 in one composed component rather than a directory of parts: `Dialog` takes `title`/`description`
-props with `trigger`/`footer` snippets, `Popover` and `Select` take a `trigger` snippet and an
-`options` array. Import from the `$lib/components/ui` barrel. `shell.svelte.ts` holds sidebar
-open/collapsed state; `sidebar.svelte` is a plain `<nav>`, not a primitive.
+props with `trigger`/`footer` snippets, `Popover` takes a `trigger` snippet, `Select` takes a
+`trigger` snippet and an `options` array (`SelectOption`, with an optional `separatorBefore`), and
+`Calendar` wraps the bits-ui calendar with month/year `Select`s. `Panel` and `Skeleton` are plain
+divs. Import from the `$lib/components/ui` barrel — `focus-trap.svelte` is the exception, used
+only inside `Popover`/`Select`. `sidebar.svelte` is a plain `<nav>`, not a primitive.
 
-Controls are sized for touch: `Button` `md`/`icon` and `Input`/`Select` are `h-11`/`size-11` (44px,
-WCAG 2.5.5), the compact `sm`/`icon-sm` and the sidebar rows are 36-40px, and nothing drops below
-24px except the permalink button inside a `/logs` chat row, which is exempt as an inline target in
-a fixed-height virtualised row. Don't reintroduce `h-8` height overrides on pages to tighten a
-toolbar row — change the recipe if the scale is wrong. Icon-only buttons need an accessible name:
-an `aria-label` or an `sr-only` span, not just `title`.
+`shell.svelte.ts` holds the nav state, and it is two states, not one: `sidebarOpen` (desktop,
+persisted to `sidebar-provider-state`) and `mobileNavOpen` (a deliberately unpersisted overlay
+drawer). `navOpen` picks whichever the toggle button drives at the current viewport, off a
+`MediaQuery` pinned one step below Tailwind's `md` so it flips together with the sidebar's
+`max-md:` classes.
+
+Two layout rules that keep getting rediscovered:
+
+- The navbar and the sidebar are `fixed`, not `sticky`, with a spacer div reserving the sidebar's
+  width in the flow. A sticky element is re-rasterised at whatever subpixel offset a scroll lands
+  on, so under fractional display scaling it drifts by a pixel. Don't "simplify" them to sticky.
+- The z ladder is: sidebar and navbar `z-30`, the `FocusTrap` shim and the mobile drawer backdrop
+  `z-40`, popover/select content and the dialog `z-50`. `FocusTrap` is a full-screen inert div
+  rendered inside the portal while a floating layer is open, so the click that dismisses it
+  doesn't also activate whatever it landed on.
+
+Controls are sized for touch: the default `md` size on `Button`/`Input`/`Select` (and `Button`
+`icon`) is `h-11`/`size-11` (44px, WCAG 2.5.5), the compact `sm`/`icon-sm` variants and the sidebar
+rows are 36-40px, `Checkbox` is `size-6`, and nothing drops below 24px except the permalink button
+inside a `/logs` chat row, which is exempt as an inline target in a fixed-height virtualised row.
+Don't reintroduce `h-8` height overrides on pages to tighten a toolbar row — change the recipe if
+the scale is wrong. Icon-only buttons need an accessible name: an `aria-label` or an `sr-only`
+span, not just `title`.
 
 Tailwind 4 is configured entirely in `src/app.css` (no `tailwind.config.ts`, no
 `postcss.config.js`). Colour is a small semantic set — `ground`, `surface`, `raised`, `line`,
@@ -126,7 +169,8 @@ opacities, and clear of the orange `--warn`. `+layout.svelte` still derives `too
 from the pathname, but only to pick the toolbar. The site mark is
 [logo.svelte](src/lib/components/logo.svelte) — a squircle in `currentColor` with antenna ears and a
 face (eyes, smile, blush) in `var(--accent-ink)`; [static/favicon.svg](static/favicon.svg) is the
-same geometry with the dark-theme values baked in, so edit the two together.
+same geometry with the dark-theme values baked in, so edit the two together and re-export
+`static/favicon.png` (the raster fallback linked from `app.html`) to match.
 
 Type is Space Grotesk (`font-display`, headings and numbers) over Inter (body and
 chat rows, chosen for its script coverage); counts and timestamps take the `.tnum` helper.
@@ -134,17 +178,56 @@ The chrome scale is `text-3xl` page `h1`, `text-xl` dialog title, `text-base` fo
 (`Button` `md`, `Input`, `Select`) and the copy beside a control, `text-sm` for `Label`, the
 compact `sm` button and section headings, `text-xs` only for sidebar section labels and the
 footer. Chat rows are the exception and stay at `text-xs`/`text-sm` — their height is pinned by
-the `lineHeight` passed to `VirtualList`, so changing their type means changing that too. The
+the page-level `lineHeight` const passed to `VirtualList` as `itemSize`, so changing their type
+means changing that too. The
 `/live` stream cards keep their own denser scale so the grid stays tight.
 
 bits-ui reports state as `data-state="open"` and booleans as `data-active="false"`, so `app.css`
 defines `open` / `closed` / `checked` / `on` variants rather than using Tailwind's bare `data-*`
-shorthand, which would miss the first and wrongly match the second.
+shorthand, which would miss the first and wrongly match the second. `on` also covers
+`aria-pressed` and `aria-current="page"`.
+
+Focus rings are two component classes in `app.css`, not ad-hoc `focus:ring-*`: `.ring-focus` for
+anything that should show an outline outside its box, `.field-focus` for inputs and select
+triggers that draw focus on their own border instead. `app.css` also carries the reduced-motion
+override and `main:has(#main-fit-screen)`, the opt-in a page uses to clamp itself to `100svh` for
+a full-height virtualised list.
 
 ## Style
 
 Prettier config is unusual and enforced by habit rather than CI: tabs (width 4), `printWidth`
-200, double quotes, LF (also forced by `.gitattributes`). Long single-line ternaries and
-template URLs are normal here; don't reformat to narrower lines. `require-await` is an error in
-ESLint, and `svelte/no-navigation-without-resolve` is off — the site is served from the domain
-root and most navigations are query-string-only.
+200, double quotes, LF (also forced by `.gitattributes`), with narrower overrides for `*.md`
+(2 spaces, `printWidth` 79) and `*.yml`. `.prettierignore` is empty, so `npx prettier --write .`
+will rewrap this file too. Long single-line ternaries and template URLs are normal here; don't
+reformat to narrower lines. `require-await` is an error in ESLint, and
+`svelte/no-navigation-without-resolve` is off — the site is served from the domain root and most
+navigations are query-string-only.
+
+## Commits
+
+Conventional Commits, all lowercase: `type(scope): description`.
+
+- Types in live use: `tweak` (by far the most common — a cosmetic or minor adjustment that is
+  neither a fix nor a feature), `feat`, `fix`, `chore`, `refactor`, `perf`, `docs`, `revert`.
+  `impr`, `impl` and bare `lint` show up before 2025 and are dead; don't revive them.
+- Scope is the route or module touched: `logs`, `live`, `firehose`, `vods`, `jake`, `ui`,
+  `sidebar`, `chat`, `select`, `calendar`, `player`, `meta`, `npm`, `ci`. Omit it for repo-wide
+  changes (`chore: remove dead code`). Never capitalise it.
+- Subject is a lowercase phrase, no trailing period, typically 30-50 characters:
+  `fix(logs): wrap filter input on mobile`, `tweak(calendar): use long month name`.
+- Bodies appear on under a tenth of commits and hard-wrap around 75 columns. Write one only when
+  the change has a reason that isn't visible in the diff, and let it give that reason.
+
+## Don't yap
+
+Applies to code comments and commit messages alike: say it once, then stop.
+
+- A comment explains why the code is odd; a commit subject names the change. Neither narrates.
+  No preamble, no summary of what the reader can already see.
+- Don't list the files touched, recap the diff, tally what you verified, or close on a "this
+  ensures / this makes sure" sentence.
+- No bullet-list changelog bodies. If a change really needs three bullets, it is three commits.
+- Never write about the edit itself — "changed X to fix Y", "removed the old version", "now uses
+  …". The diff and the subject line already carry that.
+- Cut hedges and filler: "simply", "just", "properly", "correctly", "in order to", "note that".
+  If deleting a clause loses no information, it was yapping.
