@@ -598,7 +598,7 @@
 
 			{#if showAutocomplete}
 				<!-- one shell with the field: flush under it, squared at the join and carrying the same accent border, so the pair reads as one outline -->
-				<Panel class="border-accent absolute top-full right-0 left-0 z-20 overflow-hidden rounded-t-none rounded-b-md border-t-0 p-1 shadow-lg">
+				<Panel class="absolute top-full right-0 left-0 z-20 overflow-hidden rounded-t-none rounded-b-md border border-t-0 p-1 shadow-lg">
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					{#each foundChannels as c, index (c.name)}
 						<div
@@ -659,10 +659,10 @@
 						{#if !userName}
 							<div>
 								<h3 class="font-display text-dim mb-1.5 text-sm font-medium tracking-wide">Top chatters</h3>
-								<ol class="space-y-1">
+								<ol class="space-y-1.5">
 									{#if channelStats?.topChatters}
 										{#each channelStats.topChatters as chatter, index (chatter.userId)}
-											<li class="border-line flex items-center justify-between gap-2 border-b pb-1 text-sm text-nowrap last:border-0">
+											<li class="flex items-center justify-between gap-2 text-sm text-nowrap">
 												<span class="flex min-w-0 items-center gap-2">
 													<span class="tnum text-dim w-5 text-right text-sm">{index + 1}</span>
 													<span class="truncate" title={chatter.userLogin}>{chatter.userLogin || `id:${chatter.userId}`}</span>

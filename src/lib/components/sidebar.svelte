@@ -62,14 +62,14 @@
 	aria-label="Main"
 	inert={!shell.navOpen}
 	class={[
-		"border-line bg-surface flex h-svh shrink-0 flex-col overflow-hidden border-r",
+		"bg-surface flex h-svh shrink-0 flex-col overflow-hidden",
 		// mobile: an overlay drawer that never takes up flow width, so a collapsed sidebar cannot
 		// push the page off screen
 		"max-md:fixed max-md:top-0 max-md:left-0 max-md:z-50 max-md:w-60 max-md:shadow-2xl max-md:transition-transform max-md:duration-200",
 		drawerOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
 		// desktop: in the flow, collapsing by width
 		"md:sticky md:top-0 md:transition-[width] md:duration-200",
-		shell.sidebarOpen ? "md:w-60" : "md:w-0 md:border-r-0",
+		shell.sidebarOpen ? "md:w-60" : "md:w-0",
 	]}
 >
 	<div class="flex w-60 min-w-60 flex-1 flex-col">
