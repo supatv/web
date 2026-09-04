@@ -712,28 +712,30 @@
 			{/if}
 
 			{#if chatLogs.length}
-				<div class="relative flex min-w-44 flex-1 items-center">
-					<Input
-						id="input-search"
-						size="sm"
-						class="pr-20"
-						maxlength={500}
-						placeholder={isJumpMode ? "Find..." : "Filter..."}
-						autocomplete="off"
-						bind:ref={searchInput}
-						bind:value={searchValue}
-					/>
-					<span class="tnum text-dim pointer-events-none absolute right-2.5 text-xs select-none">{displayMessageCount}</span>
-				</div>
-
-				{#if isJumpSearching}
-					{@const width = searchResults.length.toString().length + 4}
-					<div class="flex items-center gap-1">
-						<Input type="number" size="sm" class="tnum" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
-						<span class="text-dim text-sm">of</span>
-						<span class="tnum text-dim text-sm">{searchResults.length.toLocaleString()}</span>
+				<div class="order-1 flex flex-1 basis-full items-center gap-1.5 md:order-none md:basis-auto">
+					<div class="relative flex min-w-44 flex-1 items-center">
+						<Input
+							id="input-search"
+							size="sm"
+							class="pr-20"
+							maxlength={500}
+							placeholder={isJumpMode ? "Find..." : "Filter..."}
+							autocomplete="off"
+							bind:ref={searchInput}
+							bind:value={searchValue}
+						/>
+						<span class="tnum text-dim pointer-events-none absolute right-2.5 text-xs select-none">{displayMessageCount}</span>
 					</div>
-				{/if}
+
+					{#if isJumpSearching}
+						{@const width = searchResults.length.toString().length + 4}
+						<div class="flex items-center gap-1">
+							<Input type="number" size="sm" class="tnum" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+							<span class="text-dim text-sm">of</span>
+							<span class="tnum text-dim text-sm">{searchResults.length.toLocaleString()}</span>
+						</div>
+					{/if}
+				</div>
 
 				<div class="ml-auto flex gap-1">
 					<Button
