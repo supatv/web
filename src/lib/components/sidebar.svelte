@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TvIcon, ScrollIcon, HeartIcon, ExternalLinkIcon, FlameIcon } from "@lucide/svelte";
+	import { TvIcon, ScrollIcon, HeartIcon, ExternalLinkIcon, FlameIcon, ShieldIcon } from "@lucide/svelte";
 	import dayjs from "dayjs";
 
 	import { afterNavigate } from "$app/navigation";
@@ -22,6 +22,10 @@
 				{ href: "/logs", icon: ScrollIcon, name: "Logs" },
 				{ href: "/firehose", icon: FlameIcon, name: "Firehose" },
 			],
+		},
+		{
+			label: "Accounts",
+			items: [{ href: "/roles", icon: ShieldIcon, name: "Roles" }],
 		},
 	];
 
