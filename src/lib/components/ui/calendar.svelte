@@ -19,7 +19,7 @@
 		onPlaceholderChange?.(date);
 	};
 
-	const monthName = new Intl.DateTimeFormat(locale, { month: "short", timeZone: "UTC" });
+	const monthName = new Intl.DateTimeFormat(locale, { month: "long", timeZone: "UTC" });
 
 	// the shown month or year can sit outside the allowed list, and dropping it would leave the select blank
 	const withShown = (list: number[], shown: number) => (list.includes(shown) ? list : [...list, shown].sort((a, b) => a - b));
@@ -54,7 +54,7 @@
 				options={yearOptions(shown.year)}
 				value={String(shown.year)}
 				onValueChange={(year) => navigate(shown.set({ year: Number(year) }))}
-				class="min-w-0 flex-1"
+				class="min-w-1/3"
 				contentClass="tnum"
 			/>
 			<Select
