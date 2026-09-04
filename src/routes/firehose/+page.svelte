@@ -95,6 +95,7 @@
 	};
 
 	let chatRenderTimeout: number | NodeJS.Timeout | null = null;
+	let chatRenderRun = 0;
 
 	let chatLogs: Message[] = $state([]);
 	let chatBuffer: Message[] = [];
@@ -102,12 +103,26 @@
 	let scrollPaused = $state(false);
 
 	const renderChat = async () => {
-		chatLogs = chatLogs.concat(chatBuffer).slice(!scrollPaused ? -10_000 : 0);
-		chatBuffer = [];
-		await tick();
+		if (chatRenderTimeout) clearTimeout(chatRenderTimeout);
+		const run = ++chatRenderRun;
+
+		if (document.hidden) {
+			// timers are throttled to ~1/min in a hidden tab, so trim the backlog to what the list would have kept
+			if (chatBuffer.length > 10_000) chatBuffer = chatBuffer.slice(-10_000);
+		} else {
+			chatLogs = chatLogs.concat(chatBuffer).slice(!scrollPaused ? -10_000 : 0);
+			chatBuffer = [];
+			await tick();
+		}
+
+		if (run !== chatRenderRun) return;
 		chatRenderTimeout = setTimeout(renderChat, 250);
 	};
 	if (browser) renderChat();
+
+	const visibilityChange = () => {
+		if (!document.hidden) renderChat();
+	};
 
 	$effect(() => {
 		if (!instanceValue) return;
@@ -119,10 +134,12 @@
 
 			socket = new ReconnectingWebSocket(`wss://${instanceValue}/firehose?jsonBasic=true`);
 			socket.addEventListener("message", (event) => {
-				messagesPerSecond++;
-				setTimeout(() => {
-					messagesPerSecond--;
-				}, 1000);
+				if (!document.hidden) {
+					messagesPerSecond++;
+					setTimeout(() => {
+						messagesPerSecond--;
+					}, 1000);
+				}
 
 				chatBuffer.push(JSON.parse(event.data));
 			});
@@ -154,6 +171,7 @@
 </svelte:head>
 
 <svelte:window on:keydown={windowKeydown} />
+<svelte:document on:visibilitychange={visibilityChange} />
 
 <div id="main-fit-screen" class="hidden"></div>
 
