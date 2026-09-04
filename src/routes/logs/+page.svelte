@@ -798,7 +798,7 @@
 						<div class="group w-max min-w-full text-nowrap" {style}>
 							<div
 								class={[
-									"flex h-5 w-full items-center gap-x-1.5 px-3",
+									"flex h-5 w-full items-center gap-x-1 px-3",
 									isNewDay && "border-line -mt-px border-t border-dashed",
 									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
 								]}

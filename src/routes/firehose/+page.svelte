@@ -192,7 +192,7 @@
 			>
 				{#snippet item(index, style)}
 					{@const msg = filteredChatLogs[index]}
-					<div class="flex h-5 w-max min-w-full flex-row items-center gap-x-1.5 px-3 text-nowrap" {style}>
+					<div class="flex h-5 w-max min-w-full flex-row items-center gap-x-1 px-3 text-nowrap" {style}>
 						<a
 							href="https://www.twitch.tv/{msg.channel}"
 							target="_blank"
