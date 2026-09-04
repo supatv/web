@@ -43,7 +43,8 @@
 	};
 </script>
 
-<div bind:this={viewport} bind:clientHeight={viewportHeight} onscroll={handleScroll} class={cn("h-full overflow-auto", className)}>
+<!-- a viewport of absolutely positioned rows repaints whole every frame unless the scroller gets its own layer -->
+<div bind:this={viewport} bind:clientHeight={viewportHeight} onscroll={handleScroll} class={cn("h-full overflow-auto will-change-transform", className)}>
 	<div class="relative w-full" style="height: {itemCount * itemSize}px;">
 		<!--
 			Keyed by absolute index: rows here are expensive to build, so scrolling should move
