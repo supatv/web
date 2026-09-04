@@ -86,7 +86,7 @@
 	{/if}
 </button>
 
-<Dialog bind:open={isKickDialogOpen} title="Heads up before you continue" description="Kick moderates content to a different standard than most streaming platforms.">
+<Dialog bind:open={isKickDialogOpen} title="Heads up before you continue" description="Kick moderates content differently than most streaming platforms.">
 	<ul class="text-dim space-y-1.5 text-sm">
 		<li>Streams may contain material some viewers find offensive.</li>
 		<li>The platform has a known history of viewbotting, so viewer counts may not reflect a genuine audience.</li>

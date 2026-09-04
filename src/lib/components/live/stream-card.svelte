@@ -58,7 +58,7 @@
 			</div>
 		{/if}
 
-		<span class="tnum absolute top-0 right-0 z-20 m-1 rounded bg-black/70 px-1.5 py-0.5 text-xs font-medium text-white">
+		<span class="tnum absolute top-0 right-0 z-20 m-1 rounded bg-black/70 px-1 py-0.5 text-xs font-medium text-white">
 			{formatUptime(stream.started)}
 		</span>
 
