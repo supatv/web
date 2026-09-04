@@ -6,7 +6,7 @@
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
-	import { LoaderCircleIcon, ExternalLinkIcon, UsersIcon, PaletteIcon, CrownIcon, SwordIcon, GemIcon, StarIcon, BadgeCheckIcon, DiamondIcon } from "@lucide/svelte";
+	import { LoaderCircleIcon, ExternalLinkIcon, UsersIcon, PaletteIcon, CrownIcon, SwordIcon, GemIcon, StarIcon, BadgeCheckIcon, DiamondIcon, TrophyIcon } from "@lucide/svelte";
 
 	import { Button, Checkbox, Input, Label, Panel, Select, Skeleton, type SelectOption } from "$lib/components/ui";
 	import VirtualList from "$lib/components/virtual-list.svelte";
@@ -269,7 +269,6 @@
 		const parts = [`${compactNumber(section.summary.partners)} partners`, `${compactNumber(section.summary.affiliates)} affiliates`];
 		if (section.summary.staff) parts.push(`${compactNumber(section.summary.staff)} staff`);
 		parts.push(`${compactNumber(section.summary.channelsTotalFollowers)} combined followers`);
-		if (section.rank?.total_channels) parts.push(`ranked #${section.rank.total_channels.toLocaleString()}`);
 
 		return parts.join(" · ");
 	};
@@ -402,9 +401,21 @@
 					<section class={["@container flex min-h-0 min-w-0 flex-1 flex-col gap-1.5 xl:max-w-xl", activeSection?.role !== section.role && "max-xl:hidden"]}>
 						<div class="flex shrink-0 flex-col">
 							<div class="flex items-center gap-2">
-								<RoleIcon class="text-dim size-4 shrink-0" />
-								<h2 class="font-display truncate text-base font-bold tracking-tight">{roleTitle(section.role)}</h2>
-								<span class="font-display text-dim text-sm font-semibold tabular-nums">{section.total.toLocaleString()}</span>
+								<div class="flex min-w-0 items-center gap-1">
+									<RoleIcon class="text-dim size-4 shrink-0" />
+									<h2 class="font-display truncate text-base font-bold tracking-tight">{roleTitle(section.role)}</h2>
+									<span class="font-display text-dim text-sm font-semibold tabular-nums">{section.total.toLocaleString()}</span>
+								</div>
+
+								{#if section.rank?.total_channels}
+									<span
+										class="font-display text-dim flex shrink-0 items-center gap-1 text-sm font-semibold tabular-nums"
+										title="Ranked #{section.rank.total_channels.toLocaleString()} by channels"
+									>
+										<TrophyIcon class="size-4" />
+										#{section.rank.total_channels.toLocaleString()}
+									</span>
+								{/if}
 							</div>
 
 							{#if section.summary}
