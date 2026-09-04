@@ -81,8 +81,14 @@
 <div class="flex min-h-svh w-full">
 	<AppSidebar />
 
-	<main class="flex min-w-0 flex-1 flex-col">
-		<div class="border-line bg-surface/80 sticky top-0 z-30 flex h-14 shrink-0 items-center gap-1 border-b px-2 backdrop-blur">
+	<main class="flex min-w-0 flex-1 flex-col pt-14">
+		<!-- fixed, not sticky: sticky chrome is re-rasterised at the subpixel offset a scroll ends on -->
+		<div
+			class={[
+				"border-line bg-surface/80 fixed top-0 right-0 left-0 z-30 flex h-14 items-center gap-1 border-b px-2 backdrop-blur md:transition-[left] md:duration-200",
+				shell.sidebarOpen ? "md:left-60" : "md:left-0",
+			]}
+		>
 			<Button variant="ghost" size="icon-sm" onclick={() => shell.toggleSidebar()} title="Toggle sidebar" aria-controls="app-sidebar" aria-expanded={shell.navOpen}>
 				<PanelLeftIcon />
 				<span class="sr-only">Toggle sidebar</span>

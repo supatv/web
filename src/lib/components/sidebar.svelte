@@ -57,18 +57,24 @@
 	<button type="button" aria-label="Close navigation" class="fixed inset-0 z-40 bg-black/60 md:hidden" onclick={() => (shell.mobileNavOpen = false)}></button>
 {/if}
 
+<!-- the nav is fixed, so on desktop this reserves its width in the flow -->
+<div class={["hidden shrink-0 md:block md:transition-[width] md:duration-200", shell.sidebarOpen ? "md:w-60" : "md:w-0"]}></div>
+
 <nav
 	id="app-sidebar"
 	aria-label="Main"
 	inert={!shell.navOpen}
 	class={[
-		"bg-surface flex h-svh shrink-0 flex-col overflow-hidden",
+		// fixed rather than sticky: a sticky element is re-rasterised at whatever subpixel offset
+		// the page scroll lands on, so with fractional display scaling it shifts by a pixel when a
+		// scroll ends somewhere that is not a whole device pixel
+		"bg-surface fixed top-0 left-0 flex h-svh flex-col overflow-hidden",
 		// mobile: an overlay drawer that never takes up flow width, so a collapsed sidebar cannot
 		// push the page off screen
-		"max-md:fixed max-md:top-0 max-md:left-0 max-md:z-50 max-md:w-60 max-md:shadow-2xl max-md:transition-transform max-md:duration-200",
+		"max-md:z-50 max-md:w-60 max-md:shadow-2xl max-md:transition-transform max-md:duration-200",
 		drawerOpen ? "max-md:translate-x-0" : "max-md:-translate-x-full",
-		// desktop: in the flow, collapsing by width
-		"md:sticky md:top-0 md:transition-[width] md:duration-200",
+		// desktop: collapsing by width, below the z-40 popover backdrops
+		"md:z-30 md:transition-[width] md:duration-200",
 		shell.sidebarOpen ? "md:w-60" : "md:w-0",
 	]}
 >
