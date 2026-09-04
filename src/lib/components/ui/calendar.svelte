@@ -71,9 +71,9 @@
 		{#each months as month (month.value)}
 			<CalendarPrimitive.Grid class="w-full border-collapse">
 				<CalendarPrimitive.GridHead>
-					<CalendarPrimitive.GridRow class="flex">
+					<CalendarPrimitive.GridRow class="flex py-2">
 						{#each weekdays as weekday (weekday)}
-							<CalendarPrimitive.HeadCell class="text-dim size-9 text-xs font-medium">
+							<CalendarPrimitive.HeadCell class="text-dim w-9 text-xs font-medium">
 								{weekday.slice(0, 2)}
 							</CalendarPrimitive.HeadCell>
 						{/each}
