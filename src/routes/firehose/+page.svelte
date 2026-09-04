@@ -197,7 +197,7 @@
 							href="https://www.twitch.tv/{msg.channel}"
 							target="_blank"
 							title={msg.channel}
-							class="text-dim hover:text-accent inline-block max-w-44 min-w-44 shrink-0 truncate text-xs font-semibold transition-colors"
+							class="text-dim hover:text-accent inline-block max-w-32 min-w-32 shrink-0 truncate text-xs font-semibold transition-colors"
 						>
 							{msg.channel}
 						</a>
