@@ -128,7 +128,7 @@
 
 		<div class="border-line text-dim border-t p-2 text-xs leading-relaxed">
 			<a href="https://github.com/supatv/web/commit/{__COMMIT_HASH}" target="_blank" rel="nofollow" data-umami-event="link-GitHub-commit" class="ring-focus hover:text-text">
-				{dayjs(__BUILD_DATE).format("D MMM")}, commit <span class="tnum font-mono">{__COMMIT_HASH.slice(0, 7)}</span>
+				{dayjs(__BUILD_DATE).format("D MMM")}, commit <span class="font-mono tabular-nums">{__COMMIT_HASH.slice(0, 7)}</span>
 			</a>
 			<p class="mt-1">
 				not affiliated with Twitch or its creators<br />

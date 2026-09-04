@@ -179,7 +179,7 @@
 	<header class="flex flex-wrap items-baseline gap-x-3">
 		<h1 class="font-display text-3xl font-bold tracking-tight">Firehose</h1>
 		<p class="text-dim text-base">
-			<span class="tnum font-display text-accent font-semibold">{messagesPerSecond.toLocaleString()}</span> messages per second
+			<span class="font-display text-accent font-semibold tabular-nums">{messagesPerSecond.toLocaleString()}</span> messages per second
 		</p>
 	</header>
 
@@ -217,7 +217,7 @@
 						>
 							{msg.channel}
 						</a>
-						<span class="tnum text-dim/80 shrink-0 text-xs select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="text-dim/80 shrink-0 text-xs tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
 						<span class="h-5 w-max">
 							<MessageContent {chat} {msg} />
 						</span>

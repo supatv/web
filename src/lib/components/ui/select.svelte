@@ -69,8 +69,8 @@
 		<SelectPrimitive.Content
 			sideOffset={6}
 			class={cn(
-				"border-line bg-surface z-50 max-h-[min(18rem,var(--bits-floating-available-height))] min-w-(--bits-floating-anchor-width) overflow-y-auto overscroll-contain rounded-lg border p-1 shadow-xl duration-150 [scrollbar-color:var(--line)_transparent] [scrollbar-width:thin]",
-				"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+				"border-line bg-surface z-50 max-h-[min(18rem,var(--bits-floating-available-height))] min-w-(--bits-floating-anchor-width) scrollbar-thin [scrollbar-color:var(--line)_transparent] overflow-y-auto overscroll-contain rounded-lg border p-1 shadow-xl duration-150",
+				"open:animate-in open:fade-in-0 open:zoom-in-95 closed:animate-out closed:fade-out-0 closed:zoom-out-95",
 				contentClass
 			)}
 		>

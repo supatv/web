@@ -115,8 +115,8 @@
 		</h1>
 		{#if streams.length}
 			<p class="text-dim text-base">
-				<span class="tnum font-display text-text font-semibold">{streams.length.toLocaleString()}</span> channels,
-				<span class="tnum font-display text-signal font-semibold">{streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()}</span> watching
+				<span class="font-display text-text font-semibold tabular-nums">{streams.length.toLocaleString()}</span> channels,
+				<span class="font-display text-signal font-semibold tabular-nums">{streams.reduce((sum, { viewers }) => sum + viewers, 0).toLocaleString()}</span> watching
 			</p>
 		{/if}
 	</header>

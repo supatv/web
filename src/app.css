@@ -82,11 +82,6 @@
 	label:has(input[type="checkbox"], input[type="radio"]) {
 		cursor: pointer;
 	}
-
-	/* the interface is mostly counts and timestamps; keep them from shifting as they tick */
-	.tnum {
-		font-variant-numeric: tabular-nums;
-	}
 }
 
 @layer components {

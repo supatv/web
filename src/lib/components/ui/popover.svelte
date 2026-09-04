@@ -34,7 +34,7 @@
 			{sideOffset}
 			class={cn(
 				"border-line bg-surface z-50 rounded-lg border shadow-xl duration-150",
-				"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+				"open:animate-in open:fade-in-0 open:zoom-in-95 closed:animate-out closed:fade-out-0 closed:zoom-out-95",
 				className
 			)}
 		>

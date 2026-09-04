@@ -575,7 +575,7 @@
 		<h1 class="font-display text-3xl font-bold tracking-tight">Logs</h1>
 		{#if channelsCount}
 			<p class="text-dim text-base">
-				<span class="tnum font-display text-text font-semibold">{compactNumber(channelsCount)}</span> channels indexed
+				<span class="font-display text-text font-semibold tabular-nums">{compactNumber(channelsCount)}</span> channels indexed
 			</p>
 		{/if}
 	</header>
@@ -650,7 +650,7 @@
 								Messages{#if userName}&nbsp;by {channelStats?.userLogin || userName}{/if}
 							</h3>
 							{#if channelStats}
-								<p class="tnum font-display text-accent mt-0.5 text-3xl font-bold">{channelStats.messageCount.toLocaleString()}</p>
+								<p class="font-display text-accent mt-0.5 text-3xl font-bold tabular-nums">{channelStats.messageCount.toLocaleString()}</p>
 							{:else}
 								<Skeleton class="mt-1 h-8 w-28" />
 							{/if}
@@ -664,10 +664,10 @@
 										{#each channelStats.topChatters as chatter, index (chatter.userId)}
 											<li class="flex items-center justify-between gap-2 text-sm text-nowrap">
 												<span class="flex min-w-0 items-center gap-2">
-													<span class="tnum text-dim w-5 text-right text-sm">{index + 1}</span>
+													<span class="text-dim w-5 text-right text-sm tabular-nums">{index + 1}</span>
 													<span class="truncate" title={chatter.userLogin}>{chatter.userLogin || `id:${chatter.userId}`}</span>
 												</span>
-												<span class="tnum text-dim">{chatter.messageCount.toLocaleString()}</span>
+												<span class="text-dim tabular-nums">{chatter.messageCount.toLocaleString()}</span>
 											</li>
 										{/each}
 									{:else}
@@ -690,7 +690,7 @@
 				{#if dateContent.day}
 					<Popover>
 						{#snippet trigger({ props })}
-							<Button {...props} variant="outline" size="sm" class="tnum w-36 justify-between" disabled={loading}>
+							<Button {...props} variant="outline" size="sm" class="w-36 justify-between tabular-nums" disabled={loading}>
 								{dateContent.year}-{String(dateContent.month).padStart(2, "0")}-{String(dateContent.day).padStart(2, "0")}
 								<CalendarIcon class="text-dim" />
 							</Button>
@@ -707,12 +707,21 @@
 						/>
 					</Popover>
 				{:else}
-					<Select bind:value={dateValue} options={dateOptions} size="sm" disabled={loading} aria-label="Date" placeholder={dateValue || "Select"} class="tnum w-36" contentClass="tnum" />
+					<Select
+						bind:value={dateValue}
+						options={dateOptions}
+						size="sm"
+						disabled={loading}
+						aria-label="Date"
+						placeholder={dateValue || "Select"}
+						class="w-36 tabular-nums"
+						contentClass="tabular-nums"
+					/>
 				{/if}
 			{/if}
 
 			{#if chatLogs.length}
-				<div class="order-1 flex flex-1 basis-full items-center gap-1.5 md:order-none md:basis-auto">
+				<div class="order-1 flex flex-1 basis-full items-center gap-1.5 md:order-0 md:basis-auto">
 					<div class="relative flex min-w-44 flex-1 items-center">
 						<Input
 							id="input-search"
@@ -724,15 +733,15 @@
 							bind:ref={searchInput}
 							bind:value={searchValue}
 						/>
-						<span class="tnum text-dim pointer-events-none absolute right-2.5 text-xs select-none">{displayMessageCount}</span>
+						<span class="text-dim pointer-events-none absolute right-2.5 text-xs tabular-nums select-none">{displayMessageCount}</span>
 					</div>
 
 					{#if isJumpSearching}
 						{@const width = searchResults.length.toString().length + 4}
 						<div class="flex items-center gap-1">
-							<Input type="number" size="sm" class="tnum" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
+							<Input type="number" size="sm" class="tabular-nums" bind:value={jumpInputValue} min={1} max={searchResults.length} style={`width: ${width}ch;`} />
 							<span class="text-dim text-sm">of</span>
-							<span class="tnum text-dim text-sm">{searchResults.length.toLocaleString()}</span>
+							<span class="text-dim text-sm tabular-nums">{searchResults.length.toLocaleString()}</span>
 						</div>
 					{/if}
 				</div>
@@ -803,7 +812,7 @@
 									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
 								]}
 							>
-								<span class="tnum text-dim/80 shrink-0 text-xs select-none">{time.at}</span>
+								<span class="text-dim/80 shrink-0 text-xs tabular-nums select-none">{time.at}</span>
 								<span class="h-5 w-max">
 									{#if msg.tags["target-msg-id"]}
 										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}

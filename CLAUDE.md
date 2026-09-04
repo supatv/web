@@ -114,7 +114,7 @@ it only trims the backlog).
   indexes, so in `/logs` they already account for the list being reversed when `scrollFromBottom`
   is off.
 - `/logs` search has two modes, toggled by `isJumpMode` and persisted to `logs-search-mode`:
-  *filter* narrows the rendered list to `searchResults`, *jump* keeps the full list and instead
+  _filter_ narrows the rendered list to `searchResults`, _jump_ keeps the full list and instead
   highlights the hits and steps between them by writing the message id to the URL hash. Both go
   through `messageSearch`; only the wiring around it differs.
 
@@ -173,7 +173,8 @@ same geometry with the dark-theme values baked in, so edit the two together and 
 `static/favicon.png` (the raster fallback linked from `app.html`) to match.
 
 Type is Space Grotesk (`font-display`, headings and numbers) over Inter (body and
-chat rows, chosen for its script coverage); counts and timestamps take the `.tnum` helper.
+chat rows, chosen for its script coverage); counts and timestamps take Tailwind's `tabular-nums`
+so they stop shifting as they tick.
 The chrome scale is `text-3xl` page `h1`, `text-xl` dialog title, `text-base` for control text
 (`Button` `md`, `Input`, `Select`) and the copy beside a control, `text-sm` for `Label`, the
 compact `sm` button and section headings, `text-xs` only for sidebar section labels and the

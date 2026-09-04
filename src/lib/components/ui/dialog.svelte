@@ -28,13 +28,11 @@
 	{/if}
 
 	<DialogPrimitive.Portal>
-		<DialogPrimitive.Overlay
-			class="data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 fixed inset-0 z-50 bg-black/70 backdrop-blur-[2px]"
-		/>
+		<DialogPrimitive.Overlay class="open:animate-in open:fade-in-0 closed:animate-out closed:fade-out-0 fixed inset-0 z-50 bg-black/70 backdrop-blur-[2px]" />
 		<DialogPrimitive.Content
 			class={cn(
 				"border-line bg-surface fixed top-1/2 left-1/2 z-50 flex w-full max-w-md -translate-x-1/2 -translate-y-1/2 flex-col gap-3 rounded-lg border p-5 shadow-2xl duration-150",
-				"data-[state=open]:animate-in data-[state=open]:fade-in-0 data-[state=open]:zoom-in-95 data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=closed]:zoom-out-95",
+				"open:animate-in open:fade-in-0 open:zoom-in-95 closed:animate-out closed:fade-out-0 closed:zoom-out-95",
 				className
 			)}
 		>

@@ -58,7 +58,7 @@
 			</div>
 		{/if}
 
-		<span class="tnum absolute top-0 right-0 z-20 m-1 rounded bg-black/60 px-1 py-0.5 text-xs font-medium text-white">
+		<span class="absolute top-0 right-0 z-20 m-1 rounded bg-black/60 px-1 py-0.5 text-xs font-medium text-white tabular-nums">
 			{formatUptime(stream.started)}
 		</span>
 
@@ -90,7 +90,7 @@
 						</span>
 					{/if}
 				</div>
-				<div class="text-signal tnum ml-auto flex items-center gap-0.5 text-sm font-semibold">
+				<div class="text-signal ml-auto flex items-center gap-0.5 text-sm font-semibold tabular-nums">
 					<UserIcon class="size-3.5" />
 					<span>{stream.viewers.toLocaleString()}</span>
 				</div>

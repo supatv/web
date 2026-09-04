@@ -110,7 +110,7 @@
 					{#if $gridCols === null}
 						<Grid2X2Icon />
 					{:else}
-						<span class="tnum font-display text-sm font-semibold">{$gridCols}</span>
+						<span class="font-display text-sm font-semibold tabular-nums">{$gridCols}</span>
 					{/if}
 					<span class="sr-only">Change number of grid columns</span>
 				</Button>
