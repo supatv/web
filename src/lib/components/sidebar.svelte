@@ -81,7 +81,7 @@
 			</span>
 		</a>
 
-		<div class="flex flex-1 flex-col gap-5 overflow-y-auto overscroll-contain p-3">
+		<div class="flex flex-1 flex-col gap-5 overflow-y-auto p-3">
 			{#each sections as section (section.label)}
 				<div class="flex flex-col gap-0.5">
 					<h2 class="font-display text-dim mb-1 px-2 text-xs font-semibold tracking-wide">{section.label}</h2>
