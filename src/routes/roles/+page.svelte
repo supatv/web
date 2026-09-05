@@ -338,9 +338,9 @@
 	{:else if user}
 		<Panel class="flex shrink-0 flex-wrap items-center gap-4 p-4">
 			{#if user.avatar}
-				<Image src={user.avatar} alt="" class="size-14 shrink-0 rounded-full" />
+				<Image src={user.avatar} alt="" class="size-14 shrink-0 rounded-sm" />
 			{:else}
-				<div class="bg-raised size-14 shrink-0 rounded-full"></div>
+				<div class="bg-raised size-14 shrink-0 rounded-sm"></div>
 			{/if}
 
 			<div class="flex min-w-0 flex-1 basis-56 flex-col gap-1">
@@ -426,11 +426,11 @@
 						</div>
 
 						{#if section.error}
-							<Panel class="border-line border p-3">
+							<Panel class="p-3">
 								<p class="text-warn text-sm">{section.error}</p>
 							</Panel>
 						{:else}
-							<Panel class="border-line min-h-0 flex-1 overflow-hidden border p-1.5">
+							<Panel class="min-h-0 flex-1 overflow-hidden p-1.5">
 								<!-- pages in the next 100 as the bottom comes into view, so there is no button to press -->
 								<VirtualList
 									itemCount={section.rows.length + (section.loading ? skeletonRows(section) : 0)}
@@ -454,12 +454,12 @@
 												{style}
 											>
 												{#if row.avatar}
-													<Image src={row.avatar} alt="" class="size-7 shrink-0 rounded-full" />
+													<Image src={row.avatar} alt="" class="size-7 shrink-0 rounded-sm" />
 												{:else}
-													<div class="bg-raised size-7 shrink-0 rounded-full"></div>
+													<div class="bg-raised size-7 shrink-0 rounded-sm"></div>
 												{/if}
 
-												<div class="flex min-w-0 flex-1 items-center gap-1">
+												<div class="flex min-w-0 flex-1 items-center gap-0.5">
 													<!-- the pseudo-element stretches this link over the row, so the whole row is one target without nesting anchors -->
 													<a
 														href="/roles?u={row.login}&v={view}"
