@@ -56,7 +56,7 @@
 </script>
 
 <svelte:head>
-	<meta property="og:title" content="Twitch Romanian Livestreams" />
+	<meta property="og:title" content="Twitch Romania" />
 	<meta name="keywords" content="twitch, kick, twitch tools, twitch romania, kick romania, livestreams, live channels directory, twitch chat" />
 	<meta name="description" content="Browse Romanian livestreams from Twitch and Kick." />
 	<meta property="og:description" content="Browse Romanian livestreams from Twitch and Kick." />
@@ -111,7 +111,11 @@
 <div class="flex w-full max-w-[2500px] flex-col gap-3 self-center p-4">
 	<header class="flex flex-wrap items-baseline gap-x-3">
 		<h1 class="font-display text-3xl font-bold tracking-tight">
-			<span class="bg-linear-to-r from-[#0057b8] via-[#ffd200] to-[#e4002b] bg-clip-text text-transparent">Romanian</span> livestreams
+			Twitch
+			{#if showKick}
+				<span class="text-dim">&</span> Kick
+			{/if}
+			<span class="bg-linear-to-r from-[#0057b8] via-[#ffd200] to-[#e4002b] bg-clip-text text-transparent">Romania</span>
 		</h1>
 		{#if streams.length}
 			<p class="text-dim text-base">

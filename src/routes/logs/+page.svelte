@@ -572,7 +572,7 @@
 
 <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 md:overflow-y-visible">
 	<header class="flex flex-wrap items-baseline gap-x-3">
-		<h1 class="font-display text-3xl font-bold tracking-tight">Logs</h1>
+		<h1 class="font-display text-3xl font-bold tracking-tight">Twitch Logs</h1>
 		{#if channelsCount}
 			<p class="text-dim text-base">
 				<span class="font-display text-text font-semibold tabular-nums">{compactNumber(channelsCount)}</span> channels indexed
