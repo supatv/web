@@ -444,7 +444,7 @@
 										{@const row = section.rows[index]}
 										{#if !row}
 											<div class="flex w-full items-center gap-2.5 px-2" {style}>
-												<Skeleton class="size-7 shrink-0 rounded-full" />
+												<Skeleton class="size-7 shrink-0 rounded-sm" />
 												<Skeleton class="h-4 min-w-0 flex-1" />
 											</div>
 										{:else}
