@@ -153,5 +153,5 @@
 	volume={$playerVol}
 	muted={$playerMuted || needToInteract}
 	playsinline={true}
-	class="absolute z-10 aspect-video size-full"
+	class={["absolute z-10 aspect-video size-full transition-opacity duration-500", loading && "opacity-0"]}
 ></video>

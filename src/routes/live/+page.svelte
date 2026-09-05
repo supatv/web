@@ -147,14 +147,21 @@
 			{/each}
 		{:else}
 			{#each { length: 30 }}
-				<div>
-					<Skeleton class="aspect-video w-full rounded-md" />
-					<div class="mt-1 flex flex-row">
-						<Skeleton class="mr-1 size-12 rounded-full" />
-						<div class="flex h-full flex-1 flex-col gap-0.5">
-							<Skeleton class="h-5 max-w-32" />
-							<Skeleton class="h-4 max-w-64" />
-							<Skeleton class="h-4 max-w-24" />
+				<div class="bg-surface flex h-full flex-col overflow-hidden rounded-lg border border-transparent">
+					<Skeleton class="aspect-video w-full rounded-none" />
+					<div class="flex flex-1 gap-2 px-2 py-1">
+						<Skeleton class="size-12 shrink-0 self-center rounded-sm" />
+						<div class="flex min-w-0 flex-1 flex-col">
+							<div class="flex h-6 items-center gap-2">
+								<Skeleton class="h-4 w-32 max-w-full" />
+								<Skeleton class="ml-auto h-4 w-10 shrink-0" />
+							</div>
+							<div class="flex h-5 items-center">
+								<Skeleton class="h-3.5 w-56 max-w-full" />
+							</div>
+							<div class="flex h-4 items-center">
+								<Skeleton class="h-3 w-24 max-w-full" />
+							</div>
 						</div>
 					</div>
 				</div>

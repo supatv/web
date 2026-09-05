@@ -30,11 +30,22 @@
 
 	let focused = $state(false);
 	let active = $state(false);
+
+	const uptime = $derived(formatUptime(stream.started));
 </script>
 
-<div onmouseenter={() => (focused = true)} onmouseleave={() => (focused = false)} role="link" tabindex="-1" class="transition-transform hover:-translate-y-1">
+<div
+	onmouseenter={() => (focused = true)}
+	onmouseleave={() => (focused = false)}
+	role="link"
+	tabindex="-1"
+	class={[
+		"bg-surface hover:border-accent/60 flex h-full flex-col overflow-hidden rounded-lg border border-transparent transition duration-150 hover:-translate-y-1",
+		active && "border-accent ring-accent/40 ring-2",
+	]}
+>
 	<div
-		class={["relative aspect-video size-full overflow-hidden rounded-md transition", active && "ring-accent ring-2"]}
+		class="bg-raised relative aspect-video w-full"
 		role="button"
 		tabindex="-1"
 		onmouseup={(e) => {
@@ -48,20 +59,6 @@
 		}}
 		oncontextmenu={(e) => e.preventDefault()}
 	>
-		{#if showKick}
-			<div class="absolute z-20 m-1 h-5 rounded-sm bg-black/60 p-1">
-				{#if stream.platform === "kick"}
-					<img src={KickWordmark} alt="Kick" class="h-full" />
-				{:else}
-					<img src={TwitchWordmark} alt="Twitch" class="h-full" />
-				{/if}
-			</div>
-		{/if}
-
-		<span class="absolute top-0 right-0 z-20 m-1 rounded bg-black/60 px-1 py-0.5 text-xs font-medium text-white tabular-nums">
-			{formatUptime(stream.started)}
-		</span>
-
 		{#if focused || active}
 			<StreamPlayer channelName={stream.login} platform={stream.platform} />
 		{/if}
@@ -69,20 +66,38 @@
 			src={(stream.thumbnail || `https://static-cdn.jtvnw.net/previews-ttv/live_user_${stream.login}-${$gridCols && $gridCols < 4 ? "900x507" : "600x338"}.jpg`) + `?t=${lastRefresh}`}
 			loading="lazy"
 			alt="Thumbnail"
-			class="aspect-video w-full"
+			class="aspect-video w-full object-cover"
 		/>
+
+		<div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start gap-1.5 p-1.5">
+			{#if showKick}
+				<div class="grid h-5 place-items-center rounded-md bg-black/60 px-1.5 backdrop-blur">
+					{#if stream.platform === "kick"}
+						<img src={KickWordmark} alt="Kick" class="h-2.5" />
+					{:else}
+						<img src={TwitchWordmark} alt="Twitch" class="h-2.5" />
+					{/if}
+				</div>
+			{/if}
+
+			{#if uptime}
+				<span class="font-display ml-auto grid h-5 place-items-center rounded-md bg-black/60 px-1.5 text-xs font-semibold text-white tabular-nums backdrop-blur">
+					{uptime}
+				</span>
+			{/if}
+		</div>
 	</div>
 
-	<div class="mt-1 flex flex-row">
-		<Image src={stream.avatar} loading="lazy" alt="Avatar" class="mr-1 size-12 rounded-full text-[0]" />
+	<div class="flex flex-1 gap-2 px-2 py-1">
+		<Image src={stream.avatar} loading="lazy" alt="Avatar" class="size-12 shrink-0 self-center rounded-sm text-[0]" />
 
-		<div class="flex h-full flex-1 flex-col overflow-hidden leading-tight">
-			<div class="flex gap-2">
-				<div class="flex items-center overflow-hidden font-semibold">
-					<span class="overflow-hidden" title={stream.name}>{stream.name}</span>
+		<div class="flex min-w-0 flex-1 flex-col">
+			<div class="flex items-center gap-2">
+				<div class="flex min-w-0 items-center gap-0.5">
+					<span class="font-display truncate text-base font-semibold" title={stream.name}>{stream.name}</span>
 					{#if stream.type === "partner"}
 						<span title="Partner">
-							<BadgeCheckIcon class="text-ground fill-accent size-5 min-w-5" />
+							<BadgeCheckIcon class="text-surface fill-accent size-5 min-w-5" />
 						</span>
 					{:else if stream.type === "affiliate"}
 						<span title="Affiliate">
@@ -90,15 +105,16 @@
 						</span>
 					{/if}
 				</div>
-				<div class="text-signal ml-auto flex items-center gap-0.5 text-sm font-semibold tabular-nums">
+
+				<div class="font-display text-signal ml-auto flex shrink-0 items-center gap-0.5 text-base font-semibold tabular-nums">
 					<UserIcon class="size-3.5" />
 					<span>{stream.viewers.toLocaleString()}</span>
 				</div>
 			</div>
 
-			<p class="w-full overflow-hidden text-sm text-ellipsis whitespace-nowrap" title={stream.title}>{stream.title}</p>
+			<p class="min-h-5 truncate text-sm" title={stream.title}>{stream.title}</p>
 
-			<p class="text-dim overflow-hidden text-xs text-ellipsis whitespace-nowrap" title={stream.game}>{stream.game}</p>
+			<p class="text-dim min-h-4 truncate text-xs" title={stream.game}>{stream.game}</p>
 		</div>
 	</div>
 </div>
