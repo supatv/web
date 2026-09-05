@@ -363,7 +363,7 @@
 				</div>
 
 				{#if user.description}
-					<p class="text-dim line-clamp-2 text-base" title={user.description}>{user.description}</p>
+					<p class="text-dim line-clamp-2 text-sm" title={user.description}>{user.description}</p>
 				{/if}
 			</div>
 
@@ -404,7 +404,7 @@
 								<div class="flex min-w-0 items-baseline gap-1">
 									<RoleIcon class="size-4 shrink-0 self-center text-base" />
 									<h2 class="font-display truncate text-base font-bold tracking-tight">{roleTitle(section.role)}</h2>
-									<span class="font-display text-dim text-sm font-semibold tabular-nums">{view === "user" ? "in " : ""}{section.total.toLocaleString()}</span>
+									<span class="font-display text-dim text-sm font-semibold whitespace-nowrap tabular-nums">{view === "user" ? "in " : ""}{section.total.toLocaleString()}</span>
 								</div>
 
 								{#if section.rank?.total_channels}
@@ -449,7 +449,7 @@
 											</div>
 										{:else}
 											<div
-												class={["hover:bg-raised flex w-full items-center gap-2.5 rounded-md px-2 transition-colors", row.active === false && "opacity-60"]}
+												class={["group hover:bg-raised flex w-full items-center gap-2.5 rounded-md px-2 transition-colors", row.active === false && "opacity-60"]}
 												title={rowTitle(row)}
 												{style}
 											>
@@ -474,33 +474,33 @@
 													{:else if row.isAffiliate}
 														<DiamondIcon class="fill-accent size-3 shrink-0 text-transparent" />
 													{/if}
+
+													<a
+														href="https://www.twitch.tv/{row.login}"
+														target="_blank"
+														rel="nofollow"
+														data-umami-event="link-Twitch-channel"
+														class="ring-focus text-dim hover:text-accent relative grid size-6 shrink-0 place-items-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+													>
+														<ExternalLinkIcon class="size-4" />
+														<span class="sr-only">Open {row.login} on Twitch</span>
+													</a>
 												</div>
 
-												{#if row.active === false}
+												<!-- {#if row.active === false}
 													<span class="font-display border-warn/40 text-warn hidden shrink-0 rounded-md border px-1.5 py-0.5 text-sm font-medium @[22rem]:inline"
 														>Revoked</span
 													>
-												{/if}
+												{/if} -->
 
-												<span class="text-dim hidden w-14 shrink-0 items-center gap-1 text-sm tabular-nums @[17rem]:flex">
-													<UsersIcon class="size-3.5 shrink-0" />
+												<span class="text-dim hidden w-14 shrink-0 items-center gap-1 text-xs tabular-nums @[17rem]:flex">
+													<UsersIcon class="size-3 shrink-0" />
 													{compactNumber(row.followers ?? 0)}
 												</span>
 
-												<span class="text-dim hidden w-24 shrink-0 text-right text-sm tabular-nums @[32rem]:block">
+												<span class="text-dim hidden shrink-0 text-right text-xs tabular-nums @[22rem]:block">
 													{row.grantedAt ? dayjs(row.grantedAt).format(dateFormat) : "—"}
 												</span>
-
-												<a
-													href="https://www.twitch.tv/{row.login}"
-													target="_blank"
-													rel="nofollow"
-													data-umami-event="link-Twitch-channel"
-													class="ring-focus text-dim hover:text-accent relative grid size-9 shrink-0 place-items-center rounded-md"
-												>
-													<ExternalLinkIcon class="size-4" />
-													<span class="sr-only">Open {row.login} on Twitch</span>
-												</a>
 											</div>
 										{/if}
 									{/snippet}
