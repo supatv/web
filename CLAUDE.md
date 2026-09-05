@@ -19,20 +19,23 @@ There is no test framework and no test files in this repo. CI (`.github/workflow
 ## Architecture
 
 SvelteKit 2 / Svelte 5 (runes) SPA-ish site for Twitch utilities, deployed at `tv.supa.sh`.
-**There is no backend in this repo.** All data is fetched from third-party APIs in the browser.
-Only `/`, `/live`, `/logs` and `/firehose` prerender to HTML — `/vods*` and `/jake` have no
-`prerender` export and are served by the SPA fallback (`404.html`), so everything they need has
-to work client-side.
+**There is no backend in this repo.** All data comes from third-party APIs. Every route but
+`/vods*` prerenders to HTML; `/vods` and `/vods/[channel]` are left dynamic so their `+page.ts`
+runs on the worker for the first request and the `<svelte:head>` og tags a third-party embed
+scrapes are in the served HTML. `/vods/[channel]/[vod]` has no loader and sets its player up
+client-side.
 
 - `svelte.config.js` swaps adapters by `NODE_ENV`: `adapter-static` in dev, `adapter-cloudflare`
-  in production. Prerender origin is pinned to `https://tv.supa.sh`.
+  in production, which SSRs the non-prerendered `/vods*` routes on request. `vite build` sets
+  `NODE_ENV=production` itself, so the static branch only comes up in a hand-set non-production
+  build. Prerender origin is pinned to `https://tv.supa.sh`.
 - `src/hooks.ts` reroutes every request to a lowercased pathname, so URLs are case-insensitive.
 - `vite.config.ts` defines the globals `__COMMIT_HASH` and `__BUILD_DATE` (declared in
   `src/app.d.ts`, allowlisted in `eslint.config.js`). Both must be `JSON.stringify`-ed: Vite deep
   clones the config and throws on a non-plain value such as a bare `Date`.
-- `+page.ts` loaders are either just `export const prerender = true` (logs, live, firehose) or
-  thin `fetch` wrappers around `api-tv.supa.sh` (vods); `/jake` has no loader at all. `/` is a
-  prerendered `+page.server.ts` that 308-redirects to `/live`.
+- `+page.ts` loaders are either just `export const prerender = true` (logs, live, firehose,
+  roles, jake) or thin `fetch` wrappers around `api-tv.supa.sh` (vods). `/` is a prerendered
+  `+page.server.ts` that 308-redirects to `/live`.
 - Analytics is a self-hosted umami script in `+layout.svelte`'s `<svelte:head>`; outbound links
   carry a `data-umami-event` attribute.
 
@@ -45,9 +48,10 @@ to work client-side.
 | `/firehose`                | WebSocket to one of `src/routes/firehose/instances.json`, `wss://{instance}/firehose?jsonBasic=true`                             |
 | `/vods`, `/vods/[channel]` | `api-tv.supa.sh`, media on `r2-vods.supa.sh`                                                                                     |
 | `/jake`                    | one-off archive: file list on `fi.supa.sh`, chat replay from `logs.supa.codes`                                                   |
+| `/roles`                   | `roles.tv/api` (OpenAPI spec at `https://roles.tv/api/docs`)                                                                     |
 
-The sidebar only links `/live`, `/logs` and `/firehose`; `/vods*` and `/jake` are reachable by URL
-only, so a route having no nav entry does not mean it is dead code.
+The sidebar links `/live`, `/logs`, `/firehose` and `/roles`; `/vods*` and `/jake` are reachable
+by URL only, so a route having no nav entry does not mean it is dead code.
 
 `/live` playback goes through a `Hls.DefaultConfig.loader` subclass in
 [stream-player.svelte](src/lib/components/live/stream-player.svelte): it rewrites Twitch's
@@ -102,10 +106,10 @@ it only trims the backlog).
   persisted to `localStorage` by subscriptions in `+layout.svelte`. Other prefs are written
   directly to `localStorage` (`sidebar-provider-state`, `logs-search-mode`,
   `logs-bottom-scroll-state`, `live-show-kick`, …).
-- The URL query string is the source of truth for `/logs` and `/firehose` filters. The pattern is
-  an `$effect` that reads the reactive values then `untrack(() => { … goto(page.url.search,
-{ replaceState: true, keepFocus: true }) })`, with the initial read done in `onMount`. Follow it
-  rather than introducing bidirectional bindings.
+- The URL query string is the source of truth for `/logs`, `/firehose` and `/roles` filters. The
+  pattern is an `$effect` that reads the reactive values then
+  `untrack(() => { … goto(page.url.search, { replaceState: true, keepFocus: true }) })`, with the
+  initial read done in `onMount`. Follow it rather than introducing bidirectional bindings.
 - Long lists use [virtual-list.svelte](src/lib/components/virtual-list.svelte), a fixed-`itemSize`
   windowed list that measures its own height and renders an `item` snippet as `(index, style)` —
   the row **must** put that `style` on its outer element, since it carries the absolute
@@ -212,8 +216,8 @@ Conventional Commits, all lowercase: `type(scope): description`.
   neither a fix nor a feature), `feat`, `fix`, `chore`, `refactor`, `perf`, `docs`, `revert`.
   `impr`, `impl` and bare `lint` show up before 2025 and are dead; don't revive them.
 - Scope is the route or module touched: `logs`, `live`, `firehose`, `vods`, `jake`, `ui`,
-  `sidebar`, `chat`, `select`, `calendar`, `player`, `meta`, `npm`, `ci`. Omit it for repo-wide
-  changes (`chore: remove dead code`). Never capitalise it.
+  `roles`, `sidebar`, `chat`, `select`, `calendar`, `player`, `meta`, `npm`, `ci`. Omit it for
+  repo-wide changes (`chore: remove dead code`). Never capitalise it.
 - Subject is a lowercase phrase, no trailing period, typically 30-50 characters:
   `fix(logs): wrap filter input on mobile`, `tweak(calendar): use long month name`.
 - Bodies appear on under a tenth of commits and hard-wrap around 75 columns. Write one only when
