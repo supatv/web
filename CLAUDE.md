@@ -75,9 +75,10 @@ handling changes belong in `ChatSource`, not in a page.
 
 `parse` turns a raw IRC-tag message into `ChatComponents` — an array of `{ type: Component, props }`
 rendered via `{#each ... as { type: Component, props }}`. Word lookup order is channel emote →
-global emote → `linkParser.parse` → plain text, with Twitch native emotes spliced in from the
-`emotes` tag by codepoint position (offset by `system-msg` length, iterating `[...text]` so astral
-chars line up).
+global emote → `linkParser.parse` → plain text. Native emotes (`emotes`) and gifs (`gifs`, whose
+`[title]` placeholder becomes a link to the gif url) are spliced in ahead of that as `Span`s
+carrying a codepoint range and a render function, sorted by start (ranges are offset by
+`system-msg` length, and the text is iterated as `[...text]` so astral chars line up).
 
 `parse` and `badges` memoise per message and invalidate when their table changes — a virtualised
 row calls both for every message on screen on every scroll tick, and `/logs` caches its dayjs

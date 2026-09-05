@@ -44,9 +44,10 @@ export type MessageBadge = {
 	title: string;
 };
 
-type TMIEmote = {
-	id: string;
+// a native emote or a gif, keyed by its codepoint range in the message text
+type Span = {
 	pos: number[];
+	render: (text: string) => ChatComponents[number];
 };
 
 const settled = <T>(requests: Promise<T[]>[]) => Promise.allSettled(requests).then((results) => results.map((r) => (r.status === "fulfilled" ? r.value : [])));
@@ -209,33 +210,49 @@ export class ChatSource {
 		const systemMsg = msg.tags["system-msg"];
 		const posOffset = systemMsg ? [...systemMsg].length + 1 : 0;
 
-		const twitchEmotes: TMIEmote[] = [];
+		const spans: Span[] = [];
+
 		if (msg.tags["emotes"]) {
 			for (const entry of msg.tags["emotes"].split("/")) {
 				const [id, positions] = entry.split(":");
 				for (const pos of positions.split(",")) {
-					twitchEmotes.push({ id, pos: pos.split("-").map((s) => Number(s) + posOffset) });
+					spans.push({
+						pos: pos.split("-").map((s) => Number(s) + posOffset),
+						render: (name) => ({
+							type: Emote,
+							props: {
+								class: this.#emoteClass,
+								name,
+								src: `https://static-cdn.jtvnw.net/emoticons/v2/${id}/default/dark/1.0`,
+								url: `https://emotes.susgee.dev/emote/${id}`,
+							},
+						}),
+					});
 				}
 			}
-			twitchEmotes.sort((a, b) => a.pos[0] - b.pos[0]);
 		}
+
+		// gifs=<start>-<end>|<id>|<url>, where the range covers the `[title]` placeholder
+		// Twitch leaves in the text; matched rather than split so a comma in a url only
+		// costs that one entry its tail
+		for (const [, start, end, href] of (msg.tags["gifs"] ?? "").matchAll(/(\d+)-(\d+)\|[^|]*\|([^,]+)/g)) {
+			spans.push({ pos: [Number(start) + posOffset, Number(end) + posOffset], render: (text) => ({ type: Link, props: { href, text } }) });
+		}
+
+		spans.sort((a, b) => a.pos[0] - b.pos[0]);
 
 		let word = "";
 		const unicode = [...msg.text];
 		for (let i = 0; i < unicode.length; i++) {
-			const nextEmote = twitchEmotes[0];
-			if (nextEmote?.pos[0] === i) {
-				twitchEmotes.shift();
-				components.push({
-					type: Emote,
-					props: {
-						class: this.#emoteClass,
-						name: unicode.slice(nextEmote.pos[0], nextEmote.pos[1] + 1).join(""),
-						src: `https://static-cdn.jtvnw.net/emoticons/v2/${nextEmote.id}/default/dark/1.0`,
-						url: `https://emotes.susgee.dev/emote/${nextEmote.id}`,
-					},
-				});
-				i = nextEmote.pos[1];
+			const next = spans[0];
+			if (next?.pos[0] === i) {
+				spans.shift();
+				if (word.trim()) {
+					this.#pushWord(components, word);
+					word = "";
+				}
+				components.push(next.render(unicode.slice(next.pos[0], next.pos[1] + 1).join("")));
+				i = next.pos[1];
 				continue;
 			}
 
