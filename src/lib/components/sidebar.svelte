@@ -82,7 +82,7 @@
 		shell.sidebarOpen ? "md:w-60" : "md:w-0",
 	]}
 >
-	<div class="flex w-60 min-w-60 flex-1 flex-col">
+	<div class="flex min-h-0 w-60 min-w-60 flex-1 flex-col">
 		<a href="/live" class="ring-focus border-line flex h-14 shrink-0 items-center gap-2.5 border-b px-4">
 			<Logo class="text-accent size-6 shrink-0" />
 			<span class="flex flex-col leading-none">
@@ -91,7 +91,7 @@
 			</span>
 		</a>
 
-		<div class="flex flex-1 flex-col gap-5 overflow-y-auto p-3">
+		<div class="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto p-3">
 			{#each sections as section (section.label)}
 				<div class="flex flex-col gap-0.5">
 					<h2 class="font-display text-dim mb-1 px-2 text-xs font-semibold tracking-wide">{section.label}</h2>
@@ -130,7 +130,7 @@
 			</div>
 		</div>
 
-		<div class="border-line text-dim border-t p-2 text-xs leading-relaxed">
+		<div class="border-line text-dim shrink-0 border-t p-2 text-xs leading-relaxed">
 			<a href="https://github.com/supatv/web/commit/{__COMMIT_HASH}" target="_blank" rel="nofollow" data-umami-event="link-GitHub-commit" class="ring-focus hover:text-text">
 				{dayjs(__BUILD_DATE).format("D MMM")}, commit <span class="font-mono tabular-nums">{__COMMIT_HASH.slice(0, 7)}</span>
 			</a>
