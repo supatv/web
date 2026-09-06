@@ -82,7 +82,7 @@ global emote → `linkParser.parse` → plain text. Native emotes (`emotes`) and
 carrying a codepoint range and a render function, sorted by start (ranges are offset by
 `system-msg` length, and the text is iterated as `[...text]` so astral chars line up).
 
-`parse` and `badges` memoise per message and invalidate when their table changes — a virtualised
+`parse` and `badges` memoize per message and invalidate when their table changes — a virtualized
 row calls both for every message on screen on every scroll tick, and `/logs` caches its dayjs
 formatting and its id lookup for the same reason. Keep new per-row work off the hot path.
 
@@ -145,7 +145,7 @@ drawer). `navOpen` picks whichever the toggle button drives at the current viewp
 Two layout rules that keep getting rediscovered:
 
 - The navbar and the sidebar are `fixed`, not `sticky`, with a spacer div reserving the sidebar's
-  width in the flow. A sticky element is re-rasterised at whatever subpixel offset a scroll lands
+  width in the flow. A sticky element is re-rasterized at whatever subpixel offset a scroll lands
   on, so under fractional display scaling it drifts by a pixel. Don't "simplify" them to sticky.
 - The z ladder is: sidebar and navbar `z-30`, the `FocusTrap` shim and the mobile drawer backdrop
   `z-40`, popover/select content and the dialog `z-50`. `FocusTrap` is a full-screen inert div
@@ -155,19 +155,19 @@ Two layout rules that keep getting rediscovered:
 Controls are sized for touch: the default `md` size on `Button`/`Input`/`Select` (and `Button`
 `icon`) is `h-11`/`size-11` (44px, WCAG 2.5.5), the compact `sm`/`icon-sm` variants and the sidebar
 rows are 36-40px, `Checkbox` is `size-6`, and nothing drops below 24px except the permalink button
-inside a `/logs` chat row, which is exempt as an inline target in a fixed-height virtualised row.
+inside a `/logs` chat row, which is exempt as an inline target in a fixed-height virtualized row.
 Don't reintroduce `h-8` height overrides on pages to tighten a toolbar row — change the recipe if
 the scale is wrong. Icon-only buttons need an accessible name: an `aria-label` or an `sr-only`
 span, not just `title`.
 
 Tailwind 4 is configured entirely in `src/app.css` (no `tailwind.config.ts`, no
-`postcss.config.js`). Colour is a small semantic set — `ground`, `surface`, `raised`, `line`,
+`postcss.config.js`). Color is a small semantic set — `ground`, `surface`, `raised`, `line`,
 `text`, `dim`, `accent`, `signal`, `warn` — with light values on `:root` and dark on `.dark`.
-**Do not reach for Tailwind palette colours** (`zinc-800`, `red-500`); use the tokens so both
+**Do not reach for Tailwind palette colors** (`zinc-800`, `red-500`); use the tokens so both
 themes stay correct.
 
-The palette is a hueless neutral grey with a purple `--accent`; `--accent-ink` is the readable
-colour on top of the accent. It is deliberately restrained — a per-tool accent (magenta on
+The palette is a hueless neutral gray with a purple `--accent`; `--accent-ink` is the readable
+color on top of the accent. It is deliberately restrained — a per-tool accent (magenta on
 `/live`, cyan on `/firehose`, keyed off `data-tool`) was dropped, so don't reintroduce a per-route
 hue, and keep the neutrals free of any tint. `--signal` is lime rather than green on purpose:
 `/logs` paints a search match `bg-accent/25` and a highlight `bg-signal/15` on rows that sit next
@@ -199,7 +199,7 @@ Focus rings are two component classes in `app.css`, not ad-hoc `focus:ring-*`: `
 anything that should show an outline outside its box, `.field-focus` for inputs and select
 triggers that draw focus on their own border instead. `app.css` also carries the reduced-motion
 override and `main:has(#main-fit-screen)`, the opt-in a page uses to clamp itself to `100svh` for
-a full-height virtualised list.
+a full-height virtualized list.
 
 ## Style
 
@@ -221,7 +221,7 @@ Conventional Commits, all lowercase: `type(scope): description`.
   `impr`, `impl` and bare `lint` show up before 2025 and are dead; don't revive them.
 - Scope is the route or module touched: `logs`, `live`, `firehose`, `vods`, `jake`, `ui`,
   `roles`, `sidebar`, `chat`, `select`, `calendar`, `player`, `meta`, `npm`, `ci`. Omit it for
-  repo-wide changes (`chore: remove dead code`). Never capitalise it.
+  repo-wide changes (`chore: remove dead code`). Never capitalize it.
 - Subject is a lowercase phrase, no trailing period, typically 30-50 characters:
   `fix(logs): wrap filter input on mobile`, `tweak(calendar): use long month name`.
 - Bodies appear on under a tenth of commits and hard-wrap around 75 columns. Write one only when
