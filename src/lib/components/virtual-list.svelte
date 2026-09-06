@@ -9,6 +9,11 @@
 		distanceFromBottom: number;
 	};
 
+	type Seek = {
+		index: number;
+		align: "start" | "center";
+	};
+
 	type Props = {
 		itemCount: number;
 		itemSize: number;
@@ -27,6 +32,8 @@
 	let offset = $state(0);
 	let pinned = false;
 	let anchor = 0;
+	let seek: Seek | null = null;
+	let placed = -1;
 
 	// under `dynamic` itemSize is only the height a row starts out guessed at. Measured heights and
 	// their running offsets are plain arrays, so a row settling rewrites them without every row
@@ -72,20 +79,34 @@
 
 	const atBottom = () => viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop < 2;
 
-	export const scrollTo = (top: number) => {
-		if (!viewport) return;
+	const place = (top: number) => {
 		viewport.scrollTop = top;
+		placed = viewport.scrollTop;
 		offset = viewport.scrollTop;
 		pinned = atBottom();
 	};
 
+	export const scrollTo = (top: number) => {
+		if (!viewport) return;
+		seek = null;
+		place(top);
+	};
+
 	export const scrollToBottom = () => scrollTo(viewport?.scrollHeight ?? 0);
 
+	const seekTop = ({ index, align }: Seek) => rowTop(index) - (align === "center" ? viewportHeight / 2 - rowHeight(index) / 2 : 0);
+
+	// a row only has an estimated offset until it has been rendered and measured, so hold the index
+	// in view while the rows around it settle rather than the pixel it first landed on
 	export const scrollToIndex = (index: number, align: "start" | "center" = "start") => {
-		scrollTo(rowTop(index) - (align === "center" ? viewportHeight / 2 - rowHeight(index) / 2 : 0));
+		if (!viewport) return;
+		const target: Seek = { index, align };
+		seek = dynamic ? target : null;
+		place(seekTop(target));
 	};
 
 	const handleScroll = () => {
+		if (viewport.scrollTop !== placed) seek = null;
 		offset = viewport.scrollTop;
 		pinned = atBottom();
 		onscroll?.({ offset, distanceFromBottom: viewport.scrollHeight - viewport.clientHeight - offset });
@@ -172,8 +193,9 @@
 
 		if (!dynamic || !viewport) return;
 		untrack(() => {
-			if (pinned) scrollTo(height);
-			else if (anchor) scrollTo(viewport.scrollTop + anchor);
+			if (seek) place(seekTop(seek));
+			else if (pinned) place(height);
+			else if (anchor) place(viewport.scrollTop + anchor);
 			anchor = 0;
 		});
 	});
