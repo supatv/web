@@ -813,8 +813,9 @@
 									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
 								]}
 							>
-								<!-- 12px sits on a higher baseline than the 16px message beside it, which reads as the time floating -->
-								<span class="text-dim/80 relative top-[1.5px] shrink-0 text-xs tabular-nums select-none">{time.at}</span>
+								<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for this
+									to sit on the same line box as the message beside it -->
+								<span class="text-dim/80 shrink-0 text-xs leading-5 tabular-nums select-none">{time.at}</span>
 								<span class="min-w-0 wrap-break-word">
 									{#if msg.tags["target-msg-id"]}
 										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
