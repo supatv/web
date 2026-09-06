@@ -7,6 +7,7 @@
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
 	import MessageContent from "$lib/components/message/content.svelte";
+	import Reply from "$lib/components/message/reply.svelte";
 
 	import { ChevronsDownIcon } from "@lucide/svelte";
 
@@ -209,19 +210,24 @@
 			>
 				{#snippet item(index, style)}
 					{@const msg = filteredChatLogs[index]}
-					<div class="flex w-full flex-row items-start gap-x-1 px-3 py-0.5" {style}>
+					<!-- the message sits on row 2 so the reply preview can take row 1 in the message's own column;
+						with no reply that row is an empty track and costs nothing -->
+					<div class="grid w-full grid-cols-[auto_auto_1fr] items-start gap-x-1 px-3 py-0.5" {style}>
+						{#if msg.tags["reply-parent-msg-id"]}
+							<Reply {msg} class="col-start-3" />
+						{/if}
 						<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for these
 							two to sit on the same line box as the message beside them -->
 						<a
 							href="https://www.twitch.tv/{msg.channel}"
 							target="_blank"
 							title={msg.channel}
-							class="text-dim hover:text-accent inline-block max-w-32 min-w-32 shrink-0 truncate text-xs leading-5 font-semibold transition-colors"
+							class="text-dim hover:text-accent row-start-2 inline-block max-w-32 min-w-32 truncate text-xs leading-5 font-semibold transition-colors"
 						>
 							{msg.channel}
 						</a>
-						<span class="text-dim/80 shrink-0 text-xs leading-5 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
-						<span class="min-w-0 wrap-break-word">
+						<span class="text-dim/80 row-start-2 text-xs leading-5 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="row-start-2 min-w-0 wrap-break-word">
 							<MessageContent {chat} {msg} />
 						</span>
 					</div>
