@@ -119,9 +119,11 @@ it only trims the backlog).
   `itemSize` is the row height, or with `dynamic` only the height a row starts out guessed at:
   the list then measures every rendered row (read off the row on recycle, `ResizeObserver` for
   what happens to it after), keeps a running offset table, holds the scroll still when a row
-  above the fold grows, and re-pins a viewport parked at the bottom. The three chat lists are
-  dynamic because their rows wrap; `/jake`'s file list and `/roles` are fixed. Bind it with
-  `bind:this` for its `scrollTo` / `scrollToBottom` / `scrollToIndex` exports rather than
+  above the fold grows, and re-pins a viewport parked at the bottom. `scrollToIndex` there is a
+  standing target rather than one jump — an unmeasured row is only an estimate away from where it
+  will end up, so the list keeps the index in place until the reader scrolls off it. The three
+  chat lists are dynamic because their rows wrap; `/jake`'s file list and `/roles` are fixed. Bind
+  it with `bind:this` for its `scrollTo` / `scrollToBottom` / `scrollToIndex` exports rather than
   reaching for the scroll container. Indexes passed to it are **display** indexes, so in `/logs`
   they already account for the list being reversed when `scrollFromBottom` is off.
 - `/logs` search has two modes, toggled by `isJumpMode` and persisted to `logs-search-mode`:
