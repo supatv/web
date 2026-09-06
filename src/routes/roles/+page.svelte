@@ -388,7 +388,7 @@
 		<div class="flex shrink-0 flex-wrap gap-1.5 xl:hidden">
 			{#each visibleSections as section (section.role)}
 				{@const TabIcon = roleLabels[section.role].icon}
-				<Button variant={activeSection?.role === section.role ? "accent" : "outline"} size="sm" aria-pressed={activeSection?.role === section.role} onclick={() => (activeRole = section.role)}>
+				<Button variant={activeSection?.role === section.role ? "solid" : "outline"} size="sm" aria-pressed={activeSection?.role === section.role} onclick={() => (activeRole = section.role)}>
 					<TabIcon />
 					{roleTitle(section.role)}
 					<span class="tabular-nums opacity-75">{compactNumber(section.total)}</span>
