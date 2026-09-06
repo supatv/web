@@ -28,7 +28,7 @@
 		{/key}
 	</span>
 {/if}{#if !isNotice}
-	<span class="font-bold" style="color: {nameColor}">{msg.displayName}:</span>
+	<span class="font-bold" style:color={nameColor}>{msg.displayName}:</span>
 {/if}
 
 <span class={[isNotice && "text-dim"]}>

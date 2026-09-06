@@ -3,6 +3,7 @@
 
 	import { getContext, onMount, untrack } from "svelte";
 
+	import { mode } from "mode-watcher";
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
@@ -345,7 +346,9 @@
 
 			<div class="flex min-w-0 flex-1 basis-56 flex-col gap-1">
 				<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-					<h2 class="font-display truncate text-xl font-bold" style:color={user.chatColor || undefined}>{user.displayName || user.login}</h2>
+					<h2 class="font-display truncate text-xl font-bold" style:color={`hsl(from ${user.chatColor || "gray"} h s ${mode.current === "light" ? "40%" : "70%"})`}>
+						{user.displayName || user.login}
+					</h2>
 					<a
 						href="https://www.twitch.tv/{user.login}"
 						target="_blank"
