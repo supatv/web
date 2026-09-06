@@ -32,8 +32,10 @@
 	const chat = new ChatSource({ emoteClass: "-my-1 -z-10 max-h-7" });
 
 	let fileList: ReturnType<typeof VirtualList> | undefined = $state();
-	let chatList: HTMLDivElement | null = $state(null);
+	let chatList: ReturnType<typeof VirtualList> | undefined = $state();
 	const itemSize = 96;
+	const chatItemSize = 26;
+	let chatAtBottom = true;
 
 	let selectedFile: number | null = $state(null);
 
@@ -82,6 +84,7 @@
 		untrack(async () => {
 			chatLogs = null;
 			chatBuffer = [];
+			chatAtBottom = true;
 
 			logsController?.abort();
 			logsController = new AbortController();
@@ -153,12 +156,9 @@
 
 		chatBuffer = chatLogs?.filter((msg) => new Date(msg.timestamp).getTime() <= currentVideoTime * 1000 + (file.created_at - file.duration) * 1000) ?? [];
 
-		if (chatList) {
-			const atBottom = chatList.scrollHeight - chatList.scrollTop - chatList.clientHeight < 50;
-			if (atBottom) {
-				await tick();
-				chatList.scrollTop = chatList.scrollHeight;
-			}
+		if (chatAtBottom) {
+			await tick();
+			chatList?.scrollToBottom();
 		}
 	}, 250);
 
@@ -280,20 +280,31 @@
 					{:else if chatLogs.length === 0}
 						<div class="text-dim p-2 text-sm">No chat logs found for this date :(</div>
 					{:else}
-						<div class="flex h-full flex-col gap-y-1.5 overflow-y-scroll p-2 leading-tight" bind:this={chatList}>
-							{#each chatBuffer as msg, index (index)}
-								{#if isNewMessageDivider(msg, index)}
-									<div class="text-dim my-2 flex items-center text-xs">
-										<div class="border-line grow border-t"></div>
-										<span class="mx-1">New messages</span>
-										<div class="border-line grow border-t"></div>
+						<VirtualList
+							bind:this={chatList}
+							itemCount={chatBuffer.length}
+							itemSize={chatItemSize}
+							dynamic
+							class="overflow-x-hidden overflow-y-scroll p-2 leading-tight"
+							onscroll={({ distanceFromBottom }) => (chatAtBottom = distanceFromBottom < 50)}
+						>
+							{#snippet item(index, style)}
+								{@const msg = chatBuffer[index]}
+								<!-- the gap the rows used to sit in belongs to the row itself now that each one is placed absolutely -->
+								<div class="w-full pb-1.5" {style}>
+									{#if isNewMessageDivider(msg, index)}
+										<div class="text-dim my-2 flex items-center text-xs">
+											<div class="border-line grow border-t"></div>
+											<span class="mx-1">New messages</span>
+											<div class="border-line grow border-t"></div>
+										</div>
+									{/if}
+									<div class="text-wrap wrap-break-word">
+										<MessageContent {chat} {msg} />
 									</div>
-								{/if}
-								<div class="text-wrap wrap-break-word">
-									<MessageContent {chat} {msg} />
 								</div>
-							{/each}
-						</div>
+							{/snippet}
+						</VirtualList>
 					{/if}
 				</div>
 			</div>
