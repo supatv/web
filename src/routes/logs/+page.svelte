@@ -34,7 +34,7 @@
 
 	getContext<TitleContext>("title").set("Logs");
 
-	const lineHeight = 20;
+	const lineHeight = 24;
 
 	const chat = new ChatSource();
 
@@ -796,7 +796,7 @@
 			<p class="text-warn text-sm">{error}</p>
 		{:else if chatLogs.length}
 			<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5 max-md:min-h-[60svh]">
-				<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll overscroll-contain py-2">
+				<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} dynamic class="overflow-x-hidden overflow-y-scroll overscroll-contain py-2">
 					{#snippet item(index, style)}
 						{@const msg = filteredChatLogs[index]}
 						{@const msgId = getMessageId(msg)}
@@ -805,16 +805,17 @@
 						{@const isHashMatch = msgId === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
 						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
-						<div class="group w-max min-w-full text-nowrap" {style}>
+						<div class="group w-full" {style}>
 							<div
 								class={[
-									"flex h-5 w-full items-center gap-x-1 px-3",
+									"flex w-full items-start gap-x-1 px-3 py-0.5",
 									isNewDay && "border-line -mt-px border-t border-dashed",
 									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
 								]}
 							>
-								<span class="text-dim/80 shrink-0 text-xs tabular-nums select-none">{time.at}</span>
-								<span class="h-5 w-max">
+								<!-- 12px sits on a higher baseline than the 16px message beside it, which reads as the time floating -->
+								<span class="text-dim/80 relative top-[1.5px] shrink-0 text-xs tabular-nums select-none">{time.at}</span>
+								<span class="min-w-0 wrap-break-word">
 									{#if msg.tags["target-msg-id"]}
 										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
 										<span class="text-dim">
@@ -829,19 +830,20 @@
 									{:else}
 										<MessageContent {chat} {msg} />
 									{/if}
+									{#if !isHashMatch}
+										<!-- the target is exactly one `leading-5` line tall, so topping it out fills the line rather than growing it -->
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											class="ring-focus text-dim hover:text-accent relative inline-grid size-5 place-items-center rounded-sm align-top opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+											title="Permalink"
+											href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
+											target="_blank"
+										>
+											<ExternalLinkIcon />
+										</Button>
+									{/if}
 								</span>
-								{#if !isHashMatch}
-									<Button
-										variant="ghost"
-										size="icon-sm"
-										class="ring-focus text-dim hover:text-accent relative grid size-5 shrink-0 place-items-center rounded-sm opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-										title="Permalink"
-										href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
-										target="_blank"
-									>
-										<ExternalLinkIcon />
-									</Button>
-								{/if}
 							</div>
 						</div>
 					{/snippet}
