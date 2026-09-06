@@ -10,11 +10,13 @@ npm run build             # production build (needs git available: vite.config.t
 npm run preview
 npm run check             # svelte-kit sync && svelte-check
 npm run lint              # eslint
-npx prettier --write .    # no format script; prettier config exists and CI does not check formatting
+npx prettier --write .    # no format script; CI runs `prettier --check .`
 ```
 
 There is no test framework and no test files in this repo. CI (`.github/workflows/`) runs
-`npm run lint` on every push/PR and `npm run build` on `main`.
+`npm run lint`, `npm run check` and `npx prettier --check .` on every push/PR — each step
+guarded by `if: ${{ !cancelled() }}` so one failure does not mask the other two — and
+`npm run build` on `main`.
 
 ## Architecture
 
@@ -201,11 +203,12 @@ a full-height virtualised list.
 
 ## Style
 
-Prettier config is unusual and enforced by habit rather than CI: tabs (width 4), `printWidth`
-200, double quotes, LF (also forced by `.gitattributes`), with narrower overrides for `*.md`
-(2 spaces, `printWidth` 79) and `*.yml`. `.prettierignore` is empty, so `npx prettier --write .`
-will rewrap this file too. Long single-line ternaries and template URLs are normal here; don't
-reformat to narrower lines. `require-await` is an error in ESLint, and
+Prettier config is unusual: tabs (width 4), `printWidth` 200, double quotes, LF (also
+forced by `.gitattributes`), with narrower overrides for `*.md` (2 spaces, `printWidth` 79)
+and `*.yml`. `.prettierignore` is empty, so `npx prettier --write .` will rewrap this file
+too — and CI's `--check` covers every file in the repo, this one included. Long
+single-line ternaries and template URLs are normal here; don't reformat to narrower
+lines. `require-await` is an error in ESLint, and
 `svelte/no-navigation-without-resolve` is off — the site is served from the domain root and most
 navigations are query-string-only.
 
