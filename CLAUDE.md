@@ -113,13 +113,17 @@ it only trims the backlog).
   pattern is an `$effect` that reads the reactive values then
   `untrack(() => { … goto(page.url.search, { replaceState: true, keepFocus: true }) })`, with the
   initial read done in `onMount`. Follow it rather than introducing bidirectional bindings.
-- Long lists use [virtual-list.svelte](src/lib/components/virtual-list.svelte), a fixed-`itemSize`
-  windowed list that measures its own height and renders an `item` snippet as `(index, style)` —
-  the row **must** put that `style` on its outer element, since it carries the absolute
-  positioning. Bind it with `bind:this` for its `scrollTo` / `scrollToBottom` / `scrollToIndex`
-  exports rather than reaching for the scroll container. Indexes passed to it are **display**
-  indexes, so in `/logs` they already account for the list being reversed when `scrollFromBottom`
-  is off.
+- Long lists use [virtual-list.svelte](src/lib/components/virtual-list.svelte), a windowed list
+  that measures its own height and renders an `item` snippet as `(index, style)` — the row
+  **must** put that `style` on its outer element, since it carries the absolute positioning.
+  `itemSize` is the row height, or with `dynamic` only the height a row starts out guessed at:
+  the list then measures every rendered row (read off the row on recycle, `ResizeObserver` for
+  what happens to it after), keeps a running offset table, holds the scroll still when a row
+  above the fold grows, and re-pins a viewport parked at the bottom. The three chat lists are
+  dynamic because their rows wrap; `/jake`'s file list and `/roles` are fixed. Bind it with
+  `bind:this` for its `scrollTo` / `scrollToBottom` / `scrollToIndex` exports rather than
+  reaching for the scroll container. Indexes passed to it are **display** indexes, so in `/logs`
+  they already account for the list being reversed when `scrollFromBottom` is off.
 - `/logs` search has two modes, toggled by `isJumpMode` and persisted to `logs-search-mode`:
   _filter_ narrows the rendered list to `searchResults`, _jump_ keeps the full list and instead
   highlights the hits and steps between them by writing the message id to the URL hash. Both go
@@ -155,7 +159,7 @@ Two layout rules that keep getting rediscovered:
 Controls are sized for touch: the default `md` size on `Button`/`Input`/`Select` (and `Button`
 `icon`) is `h-11`/`size-11` (44px, WCAG 2.5.5), the compact `sm`/`icon-sm` variants and the sidebar
 rows are 36-40px, `Checkbox` is `size-6`, and nothing drops below 24px except the permalink button
-inside a `/logs` chat row, which is exempt as an inline target in a fixed-height virtualized row.
+inside a `/logs` chat row, which is exempt as a target inline in the message text.
 Don't reintroduce `h-8` height overrides on pages to tighten a toolbar row — change the recipe if
 the scale is wrong. Icon-only buttons need an accessible name: an `aria-label` or an `sr-only`
 span, not just `title`.
@@ -185,9 +189,10 @@ so they stop shifting as they tick.
 The chrome scale is `text-3xl` page `h1`, `text-xl` dialog title, `text-base` for control text
 (`Button` `md`, `Input`, `Select`) and the copy beside a control, `text-sm` for `Label`, the
 compact `sm` button and section headings, `text-xs` only for sidebar section labels and the
-footer. Chat rows are the exception and stay at `text-xs`/`text-sm` — their height is pinned by
-the page-level `lineHeight` const passed to `VirtualList` as `itemSize`, so changing their type
-means changing that too. The
+footer. Chat rows are the exception and stay at `text-xs`/`text-sm` — they wrap after the
+timestamp, and the page-level `lineHeight` const passed to `VirtualList` as `itemSize` is the
+one-line height it starts from, so changing their type, the `leading-5` around them or the
+padding on the row means changing that too. The
 `/live` stream cards keep their own denser scale so the grid stays tight.
 
 bits-ui reports state as `data-state="open"` and booleans as `data-active="false"`, so `app.css`
