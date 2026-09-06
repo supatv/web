@@ -11,6 +11,7 @@
 	import dayjs from "dayjs";
 
 	import MessageContent from "$lib/components/message/content.svelte";
+	import Reply from "$lib/components/message/reply.svelte";
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
@@ -298,6 +299,9 @@
 											<span class="mx-1">New messages</span>
 											<div class="border-line grow border-t"></div>
 										</div>
+									{/if}
+									{#if msg.tags["reply-parent-msg-id"]}
+										<Reply {msg} />
 									{/if}
 									<div class="text-wrap wrap-break-word">
 										<MessageContent {chat} {msg} />
