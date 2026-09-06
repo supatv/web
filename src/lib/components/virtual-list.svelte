@@ -36,7 +36,7 @@
 	const heights: number[] = [];
 	const offsets: number[] = [0];
 	let valid = 0;
-	let guess = itemSize;
+	let guess = 0;
 
 	const rowHeight = (index: number) => heights[index] || itemSize;
 
@@ -91,6 +91,8 @@
 		onscroll?.({ offset, distanceFromBottom: viewport.scrollHeight - viewport.clientHeight - offset });
 	};
 
+	// not a SvelteMap: nothing renders off this, and it is rewritten for every row on every scroll tick
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
 	const observed = new Map<Element, number>();
 	let observer: ResizeObserver | undefined = $state();
 
@@ -140,19 +142,18 @@
 
 		untrack(() => {
 			const sizes: [number, number][] = [];
-			const live = new Set<Element>();
 
 			for (const [i, index] of visible.entries()) {
 				const element = canvas.children[i];
 				if (!element) break;
-				live.add(element);
 				if (!observed.has(element)) resize.observe(element, { box: "border-box" });
 				observed.set(element, index);
 				sizes.push([index, element.getBoundingClientRect().height]);
 			}
 
+			// a row that scrolled out of the window took its element out of the document with it
 			for (const element of observed.keys()) {
-				if (live.has(element)) continue;
+				if (element.isConnected) continue;
 				resize.unobserve(element);
 				observed.delete(element);
 			}
