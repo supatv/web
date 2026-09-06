@@ -14,6 +14,7 @@
 	import { Button, Calendar, Input, Label, Panel, Popover, Select, Skeleton, type SelectOption } from "$lib/components/ui";
 	import VirtualList from "$lib/components/virtual-list.svelte";
 	import MessageContent from "$lib/components/message/content.svelte";
+	import Reply from "$lib/components/message/reply.svelte";
 
 	import { compactNumber, dateTimeFormat, type TitleContext } from "$lib/common";
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
@@ -806,17 +807,22 @@
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
 						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
 						<div class="group w-full" {style}>
+							<!-- the message sits on row 2 so the reply preview can take row 1 in the message's own column;
+								with no reply that row is an empty track and costs nothing -->
 							<div
 								class={[
-									"flex w-full items-start gap-x-1 px-3 py-0.5",
+									"grid w-full grid-cols-[auto_1fr] items-start gap-x-1 px-3 py-0.5",
 									isNewDay && "border-line -mt-px border-t border-dashed",
 									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
 								]}
 							>
+								{#if msg.tags["reply-parent-msg-id"]}
+									<Reply {msg} class="col-start-2" />
+								{/if}
 								<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for this
 									to sit on the same line box as the message beside it -->
-								<span class="text-dim/80 shrink-0 text-xs leading-5 tabular-nums select-none">{time.at}</span>
-								<span class="min-w-0 wrap-break-word">
+								<span class="text-dim/80 row-start-2 text-xs leading-5 tabular-nums select-none">{time.at}</span>
+								<span class="row-start-2 min-w-0 wrap-break-word">
 									{#if msg.tags["target-msg-id"]}
 										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
 										<span class="text-dim">
