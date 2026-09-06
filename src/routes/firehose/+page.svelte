@@ -25,7 +25,7 @@
 
 	getContext<TitleContext>("title").set("Firehose");
 
-	const lineHeight = 20;
+	const lineHeight = 24;
 
 	const chat = new ChatSource();
 
@@ -203,22 +203,24 @@
 				bind:this={logsList}
 				itemCount={filteredChatLogs.length}
 				itemSize={lineHeight}
-				class="overflow-scroll overscroll-contain py-2"
+				dynamic
+				class="overflow-x-hidden overflow-y-scroll overscroll-contain py-2"
 				onscroll={({ distanceFromBottom }) => (scrollPaused = distanceFromBottom > lineHeight)}
 			>
 				{#snippet item(index, style)}
 					{@const msg = filteredChatLogs[index]}
-					<div class="flex h-5 w-max min-w-full flex-row items-center gap-x-1 px-3 text-nowrap" {style}>
+					<div class="flex w-full flex-row items-start gap-x-1 px-3 py-0.5" {style}>
 						<a
 							href="https://www.twitch.tv/{msg.channel}"
 							target="_blank"
 							title={msg.channel}
-							class="text-dim hover:text-accent inline-block max-w-32 min-w-32 shrink-0 truncate text-xs font-semibold transition-colors"
+							class="text-dim hover:text-accent relative top-[1.5px] inline-block max-w-32 min-w-32 shrink-0 truncate text-xs font-semibold transition-colors"
 						>
 							{msg.channel}
 						</a>
-						<span class="text-dim/80 shrink-0 text-xs tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
-						<span class="h-5 w-max">
+						<!-- 12px sits on a higher baseline than the 16px message beside it, which reads as the two floating -->
+						<span class="text-dim/80 relative top-[1.5px] shrink-0 text-xs tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="min-w-0 wrap-break-word">
 							<MessageContent {chat} {msg} />
 						</span>
 					</div>
