@@ -310,7 +310,7 @@
 	<form class="flex flex-wrap items-end gap-2" onsubmit={formSubmit}>
 		<div class="flex flex-col gap-1">
 			<Label for="input-user">User <span class="text-accent">required</span></Label>
-			<Input id="input-user" class="w-44" maxlength={25} bind:value={inputName} placeholder="Username or id:123" autocomplete="off" autofocus />
+			<Input id="input-user" class="w-44" maxlength={25} bind:value={inputName} placeholder="Username or id:123" autocomplete="off" spellcheck="false" autofocus />
 		</div>
 
 		<div class="flex flex-col gap-1">

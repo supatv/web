@@ -593,6 +593,7 @@
 				onkeydown={channelKeydown}
 				oninput={() => (channelTyped = true)}
 				autocomplete="off"
+				spellcheck="false"
 				autofocus
 			/>
 
@@ -602,7 +603,7 @@
 					<!-- svelte-ignore a11y_no_static_element_interactions -->
 					{#each foundChannels as c, index (c.name)}
 						<div
-							class={["flex h-9 cursor-pointer items-center rounded-[5px] px-2 text-base transition-colors", index === selectedIndex ? "bg-raised text-text" : "text-dim"]}
+							class={["flex h-9 cursor-pointer items-center truncate rounded-[5px] px-2 text-base transition-colors", index === selectedIndex ? "bg-raised text-text" : "text-dim"]}
 							onmouseenter={() => (selectedIndex = index)}
 							onmousedown={() => selectResult(index)}
 						>
@@ -617,7 +618,7 @@
 			<Label for="input-user"
 				>User {#if inputQuery.trim()}<span class="text-accent">required</span>{/if}</Label
 			>
-			<Input id="input-user" class="w-44" maxlength={25} bind:value={inputUserName} placeholder="Username or id:123" />
+			<Input id="input-user" class="w-44" maxlength={25} bind:value={inputUserName} placeholder="Username or id:123" spellcheck="false" />
 		</div>
 
 		<div class="flex flex-col gap-1">
