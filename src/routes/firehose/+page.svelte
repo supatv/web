@@ -210,16 +210,17 @@
 				{#snippet item(index, style)}
 					{@const msg = filteredChatLogs[index]}
 					<div class="flex w-full flex-row items-start gap-x-1 px-3 py-0.5" {style}>
+						<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for these
+							two to sit on the same line box as the message beside them -->
 						<a
 							href="https://www.twitch.tv/{msg.channel}"
 							target="_blank"
 							title={msg.channel}
-							class="text-dim hover:text-accent relative top-[1.5px] inline-block max-w-32 min-w-32 shrink-0 truncate text-xs font-semibold transition-colors"
+							class="text-dim hover:text-accent inline-block max-w-32 min-w-32 shrink-0 truncate text-xs leading-5 font-semibold transition-colors"
 						>
 							{msg.channel}
 						</a>
-						<!-- 12px sits on a higher baseline than the 16px message beside it, which reads as the two floating -->
-						<span class="text-dim/80 relative top-[1.5px] shrink-0 text-xs tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="text-dim/80 shrink-0 text-xs leading-5 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
 						<span class="min-w-0 wrap-break-word">
 							<MessageContent {chat} {msg} />
 						</span>
