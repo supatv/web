@@ -9,15 +9,28 @@
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
-	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon, ChartColumnIcon } from "@lucide/svelte";
+	import {
+		LoaderCircleIcon,
+		FileTextIcon,
+		ArrowDownWideNarrowIcon,
+		ArrowUpNarrowWideIcon,
+		CalendarIcon,
+		ChevronsLeftRightIcon,
+		ChevronsRightLeftIcon,
+		ExternalLinkIcon,
+		FilterIcon,
+		SearchIcon,
+		ChartColumnIcon,
+	} from "@lucide/svelte";
 
 	import { Button, Calendar, Input, Label, Panel, Popover, Select, Skeleton, type SelectOption } from "$lib/components/ui";
 	import VirtualList from "$lib/components/virtual-list.svelte";
+	import { shell } from "$lib/components/ui/shell.svelte";
 	import MessageContent from "$lib/components/message/content.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
 	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 
-	import { compactNumber, dateTimeFormat, type TitleContext } from "$lib/common";
+	import { compactNumber, dateTimeFormat, timeFormat, type TitleContext } from "$lib/common";
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
 	import { messageSearch } from "$lib/twitch/logs";
 
@@ -157,6 +170,10 @@
 	let searchInput: HTMLInputElement | null = $state(null);
 
 	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true");
+	let narrow = $state(browser && window.localStorage.getItem("logs-narrow-state") === "true");
+
+	// neither a 340px column nor a phone has room for the date beside the message
+	const shortTime = $derived(narrow || shell.isMobile);
 
 	let channelId = $state("");
 
@@ -505,6 +522,11 @@
 		selectedIndex = 0; // reset selection after choosing
 	};
 
+	const narrowToggle = () => {
+		narrow = !narrow;
+		window.localStorage.setItem("logs-narrow-state", narrow.toString());
+	};
+
 	const scrollFromBottomToggle = () => {
 		scrollFromBottom = !scrollFromBottom;
 		window.localStorage.setItem("logs-bottom-scroll-state", scrollFromBottom.toString());
@@ -549,12 +571,12 @@
 	};
 
 	// same reason as the parse cache in ChatSource: three dayjs parses per row per scroll tick
-	const times = new WeakMap<Message, { at: string; day: string }>();
+	const times = new WeakMap<Message, { at: string; short: string; day: string }>();
 	const messageTime = (msg: Message) => {
 		let time = times.get(msg);
 		if (!time) {
 			const parsed = dayjs(msg.timestamp);
-			time = { at: parsed.format(dateTimeFormat), day: parsed.format("YYYY-MM-DD") };
+			time = { at: parsed.format(dateTimeFormat), short: parsed.format(timeFormat), day: parsed.format("YYYY-MM-DD") };
 			times.set(msg, time);
 		}
 		return time;
@@ -770,6 +792,21 @@
 					<Button
 						variant="outline"
 						size="icon-sm"
+						onclick={narrowToggle}
+						title={narrow ? "Widen the log" : "Narrow the log"}
+						aria-label={narrow ? "Widen the log" : "Narrow the log"}
+						aria-pressed={narrow}
+						class="on:border-accent on:text-accent max-md:hidden"
+					>
+						{#if narrow}
+							<ChevronsLeftRightIcon />
+						{:else}
+							<ChevronsRightLeftIcon />
+						{/if}
+					</Button>
+					<Button
+						variant="outline"
+						size="icon-sm"
 						onclick={scrollFromBottomToggle}
 						title={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
 						aria-label={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
@@ -800,7 +837,14 @@
 			<p class="text-warn text-sm">{error}</p>
 		{:else if chatLogs.length}
 			<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5 max-md:min-h-[60svh]">
-				<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} dynamic class="overflow-x-hidden overflow-y-scroll overscroll-contain py-2">
+				<VirtualList
+					bind:this={logsList}
+					itemCount={filteredChatLogs.length}
+					itemSize={lineHeight}
+					dynamic
+					class="overflow-x-hidden overflow-y-scroll overscroll-contain py-2"
+					contentClass="border-line {narrow ? 'md:max-w-120 md:border-r' : ''}"
+				>
 					{#snippet item(index, style)}
 						{@const msg = filteredChatLogs[index]}
 						{@const msgId = getMessageId(msg)}
@@ -824,7 +868,7 @@
 								{/if}
 								<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for this
 									to sit on the same line box as the message beside it -->
-								<span class="text-dim/80 row-start-2 text-xs leading-5 tabular-nums select-none">{time.at}</span>
+								<span class="text-dim/80 row-start-2 text-xs leading-5 tabular-nums select-none">{shortTime ? time.short : time.at}</span>
 								<span class="row-start-2 min-w-0 wrap-break-word">
 									{#if msg.tags["target-msg-id"]}
 										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
