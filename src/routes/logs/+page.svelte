@@ -30,9 +30,10 @@
 	import Deleted from "$lib/components/message/deleted.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
 	import ReplyThread from "$lib/components/message/reply-thread.svelte";
+	import UserCard from "$lib/components/message/user-card.svelte";
 
 	import { compactNumber, dateTimeFormat, timeFormat, type TitleContext } from "$lib/common";
-	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
+	import { ChatSource, type ChatUser, type Message } from "$lib/twitch/chat.svelte";
 	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
 	import { messageSearch, splitDeletions } from "$lib/twitch/logs";
 
@@ -565,6 +566,9 @@
 	};
 
 	let threadMsg: Message | null = $state(null);
+	let cardUser: ChatUser | null = $state(null);
+	// a message loaded by user rather than by channel carries no channel of its own
+	const openUserCard = (user: ChatUser) => (cardUser = { ...user, channel: user.channel || channelName });
 
 	const getMessageId = (msg: Message) => msg.id || msg.timestamp;
 
@@ -871,7 +875,7 @@
 									to sit on the same line box as the message beside it -->
 								<span class="text-dim/80 row-start-3 text-xs leading-5 tabular-nums select-none">{shortTime ? time.short : time.at}</span>
 								<span class="row-start-3 min-w-0 wrap-break-word">
-									<MessageContent {chat} {msg} />{#if !isHashMatch}
+									<MessageContent {chat} {msg} onuserclick={openUserCard} />{#if !isHashMatch}
 										<!-- the target is exactly one `leading-5` line tall, so topping it out fills the line rather than growing it -->
 										<Button
 											variant="ghost"
@@ -895,3 +899,4 @@
 </div>
 
 <ReplyThread {chat} messages={chatLogs} bind:msg={threadMsg} />
+<UserCard bind:user={cardUser} />

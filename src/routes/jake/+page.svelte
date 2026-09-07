@@ -14,9 +14,10 @@
 	import Deleted from "$lib/components/message/deleted.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
 	import ReplyThread from "$lib/components/message/reply-thread.svelte";
+	import UserCard from "$lib/components/message/user-card.svelte";
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
-	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
+	import { ChatSource, type ChatUser, type Message } from "$lib/twitch/chat.svelte";
 	import { splitDeletions } from "$lib/twitch/logs";
 	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
 
@@ -53,6 +54,7 @@
 	let chatError = $state("");
 
 	let threadMsg: Message | null = $state(null);
+	let cardUser: ChatUser | null = $state(null);
 
 	let files: ArchiveFile[] | null = $state(null);
 
@@ -320,7 +322,7 @@
 										<Reply {msg} onclick={() => (threadMsg = msg)} />
 									{/if}
 									<div class={["-mx-1 rounded-sm px-1 text-wrap wrap-break-word", notice && noticeStyle[notice.tone].row]}>
-										<MessageContent {chat} {msg} />
+										<MessageContent {chat} {msg} onuserclick={(user) => (cardUser = user)} />
 									</div>
 								</div>
 							{/snippet}
@@ -335,3 +337,4 @@
 {/if}
 
 <ReplyThread {chat} messages={chatBuffer} bind:msg={threadMsg} />
+<UserCard bind:user={cardUser} />

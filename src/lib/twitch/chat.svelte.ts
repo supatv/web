@@ -21,6 +21,14 @@ export type Message = {
 	};
 };
 
+// the chatter a row names, as the user card takes them: a ban or timeout row is drawn under the
+// name of the user it removed rather than the moderator who ran it, so the target's id wins
+export type ChatUser = {
+	id: string;
+	name: string;
+	channel?: string;
+};
+
 export type ChatComponents = {
 	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	type: Component<any>;

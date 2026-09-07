@@ -10,6 +10,7 @@
 	import Deleted from "$lib/components/message/deleted.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
 	import ReplyThread from "$lib/components/message/reply-thread.svelte";
+	import UserCard from "$lib/components/message/user-card.svelte";
 
 	import { ChevronsDownIcon } from "@lucide/svelte";
 
@@ -22,7 +23,7 @@
 
 	import { timeFormat, type TitleContext } from "$lib/common";
 
-	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
+	import { ChatSource, type ChatUser, type Message } from "$lib/twitch/chat.svelte";
 	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
 	import { messageSearch } from "$lib/twitch/logs";
 
@@ -109,6 +110,7 @@
 	let scrollPaused = $state(false);
 
 	let threadMsg: Message | null = $state(null);
+	let cardUser: ChatUser | null = $state(null);
 
 	const renderChat = async () => {
 		if (chatRenderTimeout) clearTimeout(chatRenderTimeout);
@@ -250,7 +252,7 @@
 						</a>
 						<span class="text-dim/80 row-start-3 text-xs leading-5 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
 						<span class="row-start-3 min-w-0 wrap-break-word">
-							<MessageContent {chat} {msg} />
+							<MessageContent {chat} {msg} onuserclick={(user) => (cardUser = user)} />
 						</span>
 					</div>
 				{/snippet}
@@ -269,3 +271,4 @@
 </div>
 
 <ReplyThread {chat} messages={chatLogs} bind:msg={threadMsg} />
+<UserCard bind:user={cardUser} />
