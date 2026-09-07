@@ -5,7 +5,6 @@ import linkParser from "$lib/link-parser";
 
 import Emote from "$lib/components/message/emote.svelte";
 import Link from "$lib/components/message/link.svelte";
-import Reply from "$lib/components/message/reply.svelte";
 import TextFragment from "$lib/components/message/text-fragment.svelte";
 
 import * as TwitchServices from "$lib/twitch/services/index.js";
@@ -178,6 +177,10 @@ export class ChatSource {
 		return badges;
 	}
 
+	#isText(component: ChatComponents[number] | undefined, matches: (text: string) => boolean) {
+		return component?.type === TextFragment && matches((component.props as { text: string }).text);
+	}
+
 	#pushWord(components: ChatComponents, word: string) {
 		const emote = this.channelEmotes.get(word) ?? this.globalEmotes.get(word);
 		if (emote) {
@@ -271,15 +274,11 @@ export class ChatSource {
 			}
 		}
 
-		if (msg.tags["reply-parent-msg-id"]) {
-			components[0] = {
-				type: Reply,
-				props: {
-					text: `@${msg.tags["reply-parent-user-login"]}`,
-					replyUser: msg.tags["reply-parent-user-login"],
-					replyBody: msg.tags["reply-parent-msg-body"],
-				},
-			};
+		// a reply carries the parent author twice: as tags, and as an `@name ` prefix Twitch
+		// splices into the text itself. The preview a row draws above the message says it, so
+		// drop the prefix rather than repeat it
+		if (msg.tags["reply-parent-msg-id"] && this.#isText(components[0], (text) => text.startsWith("@"))) {
+			components.splice(0, this.#isText(components[1], (text) => text === " ") ? 2 : 1);
 		}
 
 		this.#parsed.set(msg, components);

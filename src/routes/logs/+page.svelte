@@ -9,13 +9,28 @@
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 
-	import { LoaderCircleIcon, FileTextIcon, ArrowDownWideNarrowIcon, ArrowUpNarrowWideIcon, CalendarIcon, ExternalLinkIcon, FilterIcon, SearchIcon, ChartColumnIcon } from "@lucide/svelte";
+	import {
+		LoaderCircleIcon,
+		FileTextIcon,
+		ArrowDownWideNarrowIcon,
+		ArrowUpNarrowWideIcon,
+		CalendarIcon,
+		ChevronsLeftRightIcon,
+		ChevronsRightLeftIcon,
+		ExternalLinkIcon,
+		FilterIcon,
+		SearchIcon,
+		ChartColumnIcon,
+	} from "@lucide/svelte";
 
 	import { Button, Calendar, Input, Label, Panel, Popover, Select, Skeleton, type SelectOption } from "$lib/components/ui";
 	import VirtualList from "$lib/components/virtual-list.svelte";
+	import { shell } from "$lib/components/ui/shell.svelte";
 	import MessageContent from "$lib/components/message/content.svelte";
+	import Reply from "$lib/components/message/reply.svelte";
+	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 
-	import { compactNumber, dateTimeFormat, type TitleContext } from "$lib/common";
+	import { compactNumber, dateTimeFormat, timeFormat, type TitleContext } from "$lib/common";
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
 	import { messageSearch } from "$lib/twitch/logs";
 
@@ -34,7 +49,7 @@
 
 	getContext<TitleContext>("title").set("Logs");
 
-	const lineHeight = 20;
+	const lineHeight = 24;
 
 	const chat = new ChatSource();
 
@@ -155,6 +170,10 @@
 	let searchInput: HTMLInputElement | null = $state(null);
 
 	let scrollFromBottom = $state(browser && window.localStorage.getItem("logs-bottom-scroll-state") === "true");
+	let narrow = $state(browser && window.localStorage.getItem("logs-narrow-state") === "true");
+
+	// neither a 340px column nor a phone has room for the date beside the message
+	const shortTime = $derived(narrow || shell.isMobile);
 
 	let channelId = $state("");
 
@@ -503,6 +522,11 @@
 		selectedIndex = 0; // reset selection after choosing
 	};
 
+	const narrowToggle = () => {
+		narrow = !narrow;
+		window.localStorage.setItem("logs-narrow-state", narrow.toString());
+	};
+
 	const scrollFromBottomToggle = () => {
 		scrollFromBottom = !scrollFromBottom;
 		window.localStorage.setItem("logs-bottom-scroll-state", scrollFromBottom.toString());
@@ -531,6 +555,8 @@
 		jumpToMessage((jumpIndex - 1 + searchResults.length) % searchResults.length);
 	};
 
+	let threadMsg: Message | null = $state(null);
+
 	const getMessageId = (msg: Message) => msg.id || msg.timestamp;
 
 	// a CLEARMSG row would otherwise scan the whole log to name the message it removed
@@ -545,12 +571,12 @@
 	};
 
 	// same reason as the parse cache in ChatSource: three dayjs parses per row per scroll tick
-	const times = new WeakMap<Message, { at: string; day: string }>();
+	const times = new WeakMap<Message, { at: string; short: string; day: string }>();
 	const messageTime = (msg: Message) => {
 		let time = times.get(msg);
 		if (!time) {
 			const parsed = dayjs(msg.timestamp);
-			time = { at: parsed.format(dateTimeFormat), day: parsed.format("YYYY-MM-DD") };
+			time = { at: parsed.format(dateTimeFormat), short: parsed.format(timeFormat), day: parsed.format("YYYY-MM-DD") };
 			times.set(msg, time);
 		}
 		return time;
@@ -636,7 +662,7 @@
 		{#if chatLogs.length}
 			<Popover bind:open={statsPopoverOpen} align="end" class="w-80 max-w-[90vw] p-4">
 				{#snippet trigger({ props })}
-					<Button {...props} variant="outline" class="ml-auto" title="Channel stats">
+					<Button {...props} variant="outline" title="Channel stats">
 						<ChartColumnIcon />
 						<span class="hidden md:inline">Stats</span>
 					</Button>
@@ -766,6 +792,21 @@
 					<Button
 						variant="outline"
 						size="icon-sm"
+						onclick={narrowToggle}
+						title={narrow ? "Widen the log" : "Narrow the log"}
+						aria-label={narrow ? "Widen the log" : "Narrow the log"}
+						aria-pressed={narrow}
+						class="on:border-accent on:text-accent max-md:hidden"
+					>
+						{#if narrow}
+							<ChevronsLeftRightIcon />
+						{:else}
+							<ChevronsRightLeftIcon />
+						{/if}
+					</Button>
+					<Button
+						variant="outline"
+						size="icon-sm"
 						onclick={scrollFromBottomToggle}
 						title={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
 						aria-label={scrollFromBottom ? "Showing oldest first" : "Showing newest first"}
@@ -796,7 +837,14 @@
 			<p class="text-warn text-sm">{error}</p>
 		{:else if chatLogs.length}
 			<Panel class="relative flex min-h-0 w-full flex-1 flex-col overflow-hidden leading-5 max-md:min-h-[60svh]">
-				<VirtualList bind:this={logsList} itemCount={filteredChatLogs.length} itemSize={lineHeight} class="overflow-scroll overscroll-contain py-2">
+				<VirtualList
+					bind:this={logsList}
+					itemCount={filteredChatLogs.length}
+					itemSize={lineHeight}
+					dynamic
+					class="overflow-x-hidden overflow-y-scroll overscroll-contain py-2"
+					contentClass="border-line {narrow ? 'md:max-w-120 md:border-r' : ''}"
+				>
 					{#snippet item(index, style)}
 						{@const msg = filteredChatLogs[index]}
 						{@const msgId = getMessageId(msg)}
@@ -805,16 +853,23 @@
 						{@const isHashMatch = msgId === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
 						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
-						<div class="group w-max min-w-full text-nowrap" {style}>
+						<div class="group w-full" {style}>
+							<!-- the message sits on row 2 so the reply preview can take row 1 in the message's own column;
+								with no reply that row is an empty track and costs nothing -->
 							<div
 								class={[
-									"flex h-5 w-full items-center gap-x-1 px-3",
+									"grid w-full grid-cols-[auto_1fr] items-start gap-x-1 px-3 py-0.5",
 									isNewDay && "border-line -mt-px border-t border-dashed",
 									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
 								]}
 							>
-								<span class="text-dim/80 shrink-0 text-xs tabular-nums select-none">{time.at}</span>
-								<span class="h-5 w-max">
+								{#if msg.tags["reply-parent-msg-id"]}
+									<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-2" />
+								{/if}
+								<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for this
+									to sit on the same line box as the message beside it -->
+								<span class="text-dim/80 row-start-2 text-xs leading-5 tabular-nums select-none">{shortTime ? time.short : time.at}</span>
+								<span class="row-start-2 min-w-0 wrap-break-word">
 									{#if msg.tags["target-msg-id"]}
 										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
 										<span class="text-dim">
@@ -828,20 +883,20 @@
 										</span>
 									{:else}
 										<MessageContent {chat} {msg} />
+									{/if}{#if !isHashMatch}
+										<!-- the target is exactly one `leading-5` line tall, so topping it out fills the line rather than growing it -->
+										<Button
+											variant="ghost"
+											size="icon-sm"
+											class="ring-focus text-dim hover:text-accent relative ml-1 inline-grid size-5 place-items-center rounded-sm align-top opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+											title="Permalink"
+											href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
+											target="_blank"
+										>
+											<ExternalLinkIcon />
+										</Button>
 									{/if}
 								</span>
-								{#if !isHashMatch}
-									<Button
-										variant="ghost"
-										size="icon-sm"
-										class="ring-focus text-dim hover:text-accent relative grid size-5 shrink-0 place-items-center rounded-sm opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-										title="Permalink"
-										href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
-										target="_blank"
-									>
-										<ExternalLinkIcon />
-									</Button>
-								{/if}
 							</div>
 						</div>
 					{/snippet}
@@ -850,3 +905,5 @@
 		{/if}
 	</div>
 </div>
+
+<ReplyThread {chat} messages={chatLogs} bind:msg={threadMsg} />

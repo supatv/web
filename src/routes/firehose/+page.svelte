@@ -7,6 +7,8 @@
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
 	import MessageContent from "$lib/components/message/content.svelte";
+	import Reply from "$lib/components/message/reply.svelte";
+	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 
 	import { ChevronsDownIcon } from "@lucide/svelte";
 
@@ -25,7 +27,7 @@
 
 	getContext<TitleContext>("title").set("Firehose");
 
-	const lineHeight = 20;
+	const lineHeight = 24;
 
 	const chat = new ChatSource();
 
@@ -101,6 +103,8 @@
 	let chatBuffer: Message[] = [];
 
 	let scrollPaused = $state(false);
+
+	let threadMsg: Message | null = $state(null);
 
 	const renderChat = async () => {
 		if (chatRenderTimeout) clearTimeout(chatRenderTimeout);
@@ -203,22 +207,30 @@
 				bind:this={logsList}
 				itemCount={filteredChatLogs.length}
 				itemSize={lineHeight}
-				class="overflow-scroll overscroll-contain py-2"
+				dynamic
+				class="overflow-x-hidden overflow-y-scroll overscroll-contain py-2"
 				onscroll={({ distanceFromBottom }) => (scrollPaused = distanceFromBottom > lineHeight)}
 			>
 				{#snippet item(index, style)}
 					{@const msg = filteredChatLogs[index]}
-					<div class="flex h-5 w-max min-w-full flex-row items-center gap-x-1 px-3 text-nowrap" {style}>
+					<!-- the message sits on row 2 so the reply preview can take row 1 in the message's own column;
+						with no reply that row is an empty track and costs nothing -->
+					<div class="grid w-full grid-cols-[auto_auto_1fr] items-start gap-x-1 px-3 py-0.5" {style}>
+						{#if msg.tags["reply-parent-msg-id"]}
+							<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-3" />
+						{/if}
+						<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for these
+							two to sit on the same line box as the message beside them -->
 						<a
 							href="https://www.twitch.tv/{msg.channel}"
 							target="_blank"
 							title={msg.channel}
-							class="text-dim hover:text-accent inline-block max-w-32 min-w-32 shrink-0 truncate text-xs font-semibold transition-colors"
+							class="text-dim hover:text-accent row-start-2 inline-block max-w-32 min-w-32 truncate text-xs leading-5 font-semibold transition-colors select-none"
 						>
 							{msg.channel}
 						</a>
-						<span class="text-dim/80 shrink-0 text-xs tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
-						<span class="h-5 w-max">
+						<span class="text-dim/80 row-start-2 text-xs leading-5 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="row-start-2 min-w-0 wrap-break-word">
 							<MessageContent {chat} {msg} />
 						</span>
 					</div>
@@ -236,3 +248,5 @@
 		</Panel>
 	{/if}
 </div>
+
+<ReplyThread {chat} messages={chatLogs} bind:msg={threadMsg} />

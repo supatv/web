@@ -82,6 +82,13 @@ global emote → `linkParser.parse` → plain text. Native emotes (`emotes`) and
 carrying a codepoint range and a render function, sorted by start (ranges are offset by
 `system-msg` length, and the text is iterated as `[...text]` so astral chars line up).
 
+A reply draws a preview line above its row ([message/reply.svelte](src/lib/components/message/reply.svelte)),
+so `parse` drops the `@name` prefix Twitch splices into the reply's own text rather than rendering
+it. Clicking the preview opens [message/reply-thread.svelte](src/lib/components/message/reply-thread.svelte),
+which collects the thread out of the array the page hands it, matching `reply-thread-parent-msg-id`
+and falling back to `reply-parent-msg-id` for logs older than that tag. The dialog belongs to the
+page, not the row — one bits-ui root per reply row would put it on the scroll path.
+
 `parse` and `badges` memoize per message and invalidate when their table changes — a virtualized
 row calls both for every message on screen on every scroll tick, and `/logs` caches its dayjs
 formatting and its id lookup for the same reason. Keep new per-row work off the hot path.
@@ -108,22 +115,32 @@ it only trims the backlog).
 - Cross-page player/grid state is in `src/lib/stores/live.ts` (classic writable stores),
   persisted to `localStorage` by subscriptions in `+layout.svelte`. Other prefs are written
   directly to `localStorage` (`sidebar-provider-state`, `logs-search-mode`,
-  `logs-bottom-scroll-state`, `live-show-kick`, …).
+  `logs-bottom-scroll-state`, `logs-narrow-state`, `live-show-kick`, …).
 - The URL query string is the source of truth for `/logs`, `/firehose` and `/roles` filters. The
   pattern is an `$effect` that reads the reactive values then
   `untrack(() => { … goto(page.url.search, { replaceState: true, keepFocus: true }) })`, with the
   initial read done in `onMount`. Follow it rather than introducing bidirectional bindings.
-- Long lists use [virtual-list.svelte](src/lib/components/virtual-list.svelte), a fixed-`itemSize`
-  windowed list that measures its own height and renders an `item` snippet as `(index, style)` —
-  the row **must** put that `style` on its outer element, since it carries the absolute
-  positioning. Bind it with `bind:this` for its `scrollTo` / `scrollToBottom` / `scrollToIndex`
-  exports rather than reaching for the scroll container. Indexes passed to it are **display**
-  indexes, so in `/logs` they already account for the list being reversed when `scrollFromBottom`
-  is off.
+- Long lists use [virtual-list.svelte](src/lib/components/virtual-list.svelte), a windowed list
+  that measures its own height and renders an `item` snippet as `(index, style)` — the row
+  **must** put that `style` on its outer element, since it carries the absolute positioning. `class`
+  dresses the scroll viewport, `contentClass` the canvas the rows are placed in.
+  `itemSize` is the row height, or with `dynamic` only the height a row starts out guessed at:
+  the list then measures every rendered row (read off the row on recycle, `ResizeObserver` for
+  what happens to it after), keeps a running offset table, holds the scroll still when a row
+  above the fold grows, and re-pins a viewport parked at the bottom. `scrollToIndex` there is a
+  standing target rather than one jump — an unmeasured row is only an estimate away from where it
+  will end up, so the list keeps the index in place until the reader scrolls off it. The three
+  chat lists are dynamic because their rows wrap; `/jake`'s file list and `/roles` are fixed. Bind
+  it with `bind:this` for its `scrollTo` / `scrollToBottom` / `scrollToIndex` exports rather than
+  reaching for the scroll container. Indexes passed to it are **display** indexes, so in `/logs`
+  they already account for the list being reversed when `scrollFromBottom` is off.
 - `/logs` search has two modes, toggled by `isJumpMode` and persisted to `logs-search-mode`:
   _filter_ narrows the rendered list to `searchResults`, _jump_ keeps the full list and instead
   highlights the hits and steps between them by writing the message id to the URL hash. Both go
-  through `messageSearch`; only the wiring around it differs.
+  through `messageSearch`; only the wiring around it differs. Its `narrow` toggle cuts the messages down
+  to a chat-width column from `md` up — through `contentClass`, so the whole panel still scrolls —
+  and, like a phone-width viewport, drops the date from the timestamp. The button is hidden below
+  `md`, where the viewport already is that column.
 
 ### UI layer
 
@@ -155,7 +172,7 @@ Two layout rules that keep getting rediscovered:
 Controls are sized for touch: the default `md` size on `Button`/`Input`/`Select` (and `Button`
 `icon`) is `h-11`/`size-11` (44px, WCAG 2.5.5), the compact `sm`/`icon-sm` variants and the sidebar
 rows are 36-40px, `Checkbox` is `size-6`, and nothing drops below 24px except the permalink button
-inside a `/logs` chat row, which is exempt as an inline target in a fixed-height virtualized row.
+inside a `/logs` chat row, which is exempt as a target inline in the message text.
 Don't reintroduce `h-8` height overrides on pages to tighten a toolbar row — change the recipe if
 the scale is wrong. Icon-only buttons need an accessible name: an `aria-label` or an `sr-only`
 span, not just `title`.
@@ -185,9 +202,10 @@ so they stop shifting as they tick.
 The chrome scale is `text-3xl` page `h1`, `text-xl` dialog title, `text-base` for control text
 (`Button` `md`, `Input`, `Select`) and the copy beside a control, `text-sm` for `Label`, the
 compact `sm` button and section headings, `text-xs` only for sidebar section labels and the
-footer. Chat rows are the exception and stay at `text-xs`/`text-sm` — their height is pinned by
-the page-level `lineHeight` const passed to `VirtualList` as `itemSize`, so changing their type
-means changing that too. The
+footer. Chat rows are the exception and stay at `text-xs`/`text-sm` — they wrap after the
+timestamp, and the page-level `lineHeight` const passed to `VirtualList` as `itemSize` is the
+one-line height it starts from, so changing their type, the `leading-5` around them or the
+padding on the row means changing that too. The
 `/live` stream cards keep their own denser scale so the grid stays tight.
 
 bits-ui reports state as `data-state="open"` and booleans as `data-active="false"`, so `app.css`
