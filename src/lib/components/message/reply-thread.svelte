@@ -29,7 +29,7 @@
 	description="{thread.length.toLocaleString()} {thread.length === 1 ? 'message' : 'messages'}"
 	class="max-w-2xl"
 >
-	<div class="flex max-h-[60svh] flex-col overflow-y-auto overscroll-contain text-sm leading-5">
+	<div class="flex max-h-[60svh] flex-col overflow-y-auto overscroll-contain leading-5">
 		{#if !rootLoaded}
 			<p class="text-dim mb-1 text-xs">The message this thread started from is not in the loaded logs.</p>
 		{/if}
