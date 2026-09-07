@@ -82,6 +82,13 @@ global emote → `linkParser.parse` → plain text. Native emotes (`emotes`) and
 carrying a codepoint range and a render function, sorted by start (ranges are offset by
 `system-msg` length, and the text is iterated as `[...text]` so astral chars line up).
 
+A reply draws a preview line above its row ([message/reply.svelte](src/lib/components/message/reply.svelte)),
+so `parse` drops the `@name` prefix Twitch splices into the reply's own text rather than rendering
+it. Clicking the preview opens [message/reply-thread.svelte](src/lib/components/message/reply-thread.svelte),
+which collects the thread out of the array the page hands it, matching `reply-thread-parent-msg-id`
+and falling back to `reply-parent-msg-id` for logs older than that tag. The dialog belongs to the
+page, not the row — one bits-ui root per reply row would put it on the scroll path.
+
 `parse` and `badges` memoize per message and invalidate when their table changes — a virtualized
 row calls both for every message on screen on every scroll tick, and `/logs` caches its dayjs
 formatting and its id lookup for the same reason. Keep new per-row work off the hot path.
