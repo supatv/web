@@ -165,7 +165,7 @@
 	let inputUserName = $state("");
 	let userName = $state("");
 
-	let activeElement: HTMLElement | null = $state(null);
+	let channelFocused = $state(false);
 	let channelInput: HTMLInputElement | null = $state(null);
 	let searchInput: HTMLInputElement | null = $state(null);
 
@@ -214,7 +214,7 @@
 		});
 	});
 
-	const showAutocomplete = $derived(browser && channelInput === activeElement && foundChannels.length && !(foundChannels.length === 1 && foundChannels[0].name === inputChannelName.toLowerCase()));
+	const showAutocomplete = $derived(channelFocused && foundChannels.length && !(foundChannels.length === 1 && foundChannels[0].name === inputChannelName.toLowerCase()));
 
 	const channelKeydown = (event: KeyboardEvent) => {
 		if (!showAutocomplete) return;
@@ -240,7 +240,7 @@
 
 	const windowKeydown = (event: KeyboardEvent) => {
 		const isMod = event.ctrlKey || event.metaKey;
-		const isSearchFocused = searchInput === activeElement;
+		const isSearchFocused = searchInput === document.activeElement;
 		if (isMod && event.key === "f") {
 			if (isSearchFocused) {
 				searchModeToggle();
@@ -592,8 +592,6 @@
 
 <svelte:window on:keydown={windowKeydown} />
 
-<svelte:document bind:activeElement />
-
 <div id="main-fit-screen" class="hidden"></div>
 
 <div class="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto p-4 md:overflow-y-visible">
@@ -618,6 +616,8 @@
 				placeholder="Channel or id:123"
 				onkeydown={channelKeydown}
 				oninput={() => (channelTyped = true)}
+				onfocus={() => (channelFocused = true)}
+				onblur={() => (channelFocused = false)}
 				autocomplete="off"
 				spellcheck="false"
 				autofocus
