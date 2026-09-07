@@ -51,8 +51,9 @@
 					target="_blank"
 					rel="noopener noreferrer"
 					data-umami-event={chip.event}
-					class={["relative top-[calc((1ex-1cap)/2)] mr-1 inline-block rounded-sm border px-1 align-middle text-xs whitespace-nowrap hover:underline", tone.chip]}>{chip.text}</a
-				>{:else}<span class={["relative top-[calc((1ex-1cap)/2)] mr-1 inline-block rounded-sm border px-1 align-middle text-xs whitespace-nowrap", tone.chip]}>{chip.text}</span>{/if}{/each}
+					class={["relative top-[calc((1ex-1cap)/2)] mr-1 inline-block rounded-sm border px-1 align-middle text-xs whitespace-nowrap select-none hover:underline", tone.chip]}>{chip.text}</a
+				>{:else}<span class={["relative top-[calc((1ex-1cap)/2)] mr-1 inline-block rounded-sm border px-1 align-middle text-xs whitespace-nowrap select-none", tone.chip]}>{chip.text}</span
+				>{/if}{/each}
 	</span>
 {/if}{#if !notice || notice.author}
 	{@render chatterName(msg.displayName)}<span class="font-bold" style:color={nameColor}>:</span>
