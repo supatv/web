@@ -35,6 +35,14 @@
 	let anchor = 0;
 	let seek: Seek | null = null;
 	let placed = -1;
+	let total = 0;
+
+	// a correction the list owes the scroll position. Assigning scrollTop cancels an in-flight fling
+	// on iOS, and the reader scrolling up through rows that have never been measured earns one of
+	// these every frame, so the rows are moved by that much instead and the scroller is only squared
+	// up once the scroll settles. `offset` stays in canvas space, ahead of scrollTop by what is held.
+	let held = 0;
+	let settling: ReturnType<typeof setTimeout> | undefined;
 
 	// under `dynamic` itemSize is only the height a row starts out guessed at. Measured heights and
 	// their running offsets are plain arrays, so a row settling rewrites them without every row
@@ -78,13 +86,43 @@
 	const end = $derived(Math.min(itemCount, (dynamic ? rowAt(offset + viewportHeight) + 1 : Math.ceil((offset + viewportHeight) / itemSize)) + overscan));
 	const indexes = $derived(Array.from({ length: Math.max(0, end - start) }, (_, i) => start + i));
 
+	// the held correction rides on the canvas rather than the scroller, so the tail it lifts the rows
+	// off the bottom by is added back as canvas height and the scrollable range never moves
+	const paint = () => {
+		canvas.style.height = `${total + held}px`;
+		canvas.style.transform = held ? `translateY(${-held}px)` : "";
+	};
+
+	const clamp = (top: number) => Math.min(Math.max(top, 0), Math.max(0, viewport.scrollHeight - viewport.clientHeight));
+
 	const atBottom = () => viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop < 2;
 
 	const place = (top: number) => {
-		viewport.scrollTop = top;
+		if (held) {
+			held = 0;
+			paint();
+		}
+		const target = clamp(top);
+		// an overscrolling scroller reports a scrollTop outside the range it will settle back into;
+		// writing that range to it snaps the rubberband out from under the reader's finger
+		if (Math.abs(clamp(viewport.scrollTop) - target) > 0.5) viewport.scrollTop = target;
 		placed = viewport.scrollTop;
-		offset = viewport.scrollTop;
+		offset = placed;
 		pinned = atBottom();
+	};
+
+	const settle = () => {
+		clearTimeout(settling);
+		settling = setTimeout(() => {
+			if (held && viewport) place(offset);
+		}, 150);
+	};
+
+	const shift = (delta: number) => {
+		held += delta;
+		paint();
+		offset = viewport.scrollTop + held;
+		settle();
 	};
 
 	export const scrollTo = (top: number) => {
@@ -107,10 +145,18 @@
 	};
 
 	const handleScroll = () => {
-		if (viewport.scrollTop !== placed) seek = null;
-		offset = viewport.scrollTop;
-		pinned = atBottom();
-		onscroll?.({ offset, distanceFromBottom: viewport.scrollHeight - viewport.clientHeight - offset });
+		const top = viewport.scrollTop;
+		// a scroll event landing exactly where the list last put the scroller is the echo of that
+		// write, not the reader: an unmeasured row rendering taller than its slot grows the scrollable
+		// area under a viewport already sitting at the bottom, and taking that for a scroll away from
+		// the bottom is what unpins a list that is following new rows
+		if (top !== placed) {
+			seek = null;
+			pinned = atBottom();
+			if (held) settle();
+		}
+		offset = top + held;
+		onscroll?.({ offset, distanceFromBottom: pinned ? 0 : Math.max(0, viewport.scrollHeight - viewport.clientHeight - top) });
 	};
 
 	// not a SvelteMap: nothing renders off this, and it is rewritten for every row on every scroll tick
@@ -149,28 +195,27 @@
 		observer = resize;
 
 		return () => {
+			clearTimeout(settling);
 			resize.disconnect();
 			observed.clear();
 			observer = undefined;
 		};
 	});
 
-	// rows are recycled across indexes, so one that keeps its height as it takes a new index reports
-	// nothing to the observer and has to be read here; the observer covers what happens to it after
+	// rows are keyed by absolute index, so an element belongs to one row for as long as it is in the
+	// window and the observer reports its height from the moment it is handed over. Reading the rows
+	// back here instead would put a forced layout per row on every scroll tick.
 	$effect(() => {
 		const visible = indexes;
 		const resize = observer;
 		if (!dynamic || !resize || !canvas) return;
 
 		untrack(() => {
-			const sizes: [number, number][] = [];
-
 			for (const [i, index] of visible.entries()) {
 				const element = canvas.children[i];
 				if (!element) break;
 				if (!observed.has(element)) resize.observe(element, { box: "border-box" });
 				observed.set(element, index);
-				sizes.push([index, element.getBoundingClientRect().height]);
 			}
 
 			// a row that scrolled out of the window took its element out of the document with it
@@ -179,8 +224,6 @@
 				resize.unobserve(element);
 				observed.delete(element);
 			}
-
-			record(sizes);
 		});
 	});
 
@@ -190,13 +233,14 @@
 	$effect(() => {
 		const height = dynamic ? layout.total : itemCount * itemSize;
 		if (!canvas) return;
-		canvas.style.height = `${height}px`;
+		total = height;
+		paint();
 
 		if (!dynamic || !viewport) return;
 		untrack(() => {
 			if (seek) place(seekTop(seek));
 			else if (pinned) place(height);
-			else if (anchor) place(viewport.scrollTop + anchor);
+			else if (anchor) shift(anchor);
 			anchor = 0;
 		});
 	});
