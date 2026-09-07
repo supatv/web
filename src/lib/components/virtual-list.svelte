@@ -20,11 +20,12 @@
 		dynamic?: boolean;
 		overscan?: number;
 		class?: string;
+		contentClass?: string;
 		onscroll?: (detail: ScrollDetail) => void;
 		item: Snippet<[number, string]>;
 	};
 
-	let { itemCount, itemSize, dynamic = false, overscan = 4, class: className, onscroll, item }: Props = $props();
+	let { itemCount, itemSize, dynamic = false, overscan = 4, class: className, contentClass, onscroll, item }: Props = $props();
 
 	let viewport: HTMLDivElement;
 	let canvas: HTMLDivElement;
@@ -203,7 +204,8 @@
 
 <!-- a viewport of absolutely positioned rows repaints whole every frame unless the scroller gets its own layer -->
 <div bind:this={viewport} bind:clientHeight={viewportHeight} onscroll={handleScroll} class={cn("h-full overflow-auto will-change-transform", className)}>
-	<div bind:this={canvas} class="relative w-full">
+	<!-- the rows are placed in here, so narrowing this narrows them without narrowing what scrolls -->
+	<div bind:this={canvas} class={cn("relative w-full", contentClass)}>
 		<!--
 			Keyed by absolute index: rows here are expensive to build, so scrolling should move
 			the existing ones and add one at the edge rather than rewrite every row in place.
