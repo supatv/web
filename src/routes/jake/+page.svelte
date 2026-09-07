@@ -12,6 +12,7 @@
 
 	import MessageContent from "$lib/components/message/content.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
+	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
@@ -46,6 +47,8 @@
 	let chatBuffer: Message[] = $state([]);
 
 	let chatError = $state("");
+
+	let threadMsg: Message | null = $state(null);
 
 	let files: ArchiveFile[] | null = $state(null);
 
@@ -117,7 +120,8 @@
 	});
 
 	const windowKeydown = (event: KeyboardEvent) => {
-		if (selectedFile === null || !files) return;
+		// escape closes the thread dialog before it closes the file it was opened from
+		if (selectedFile === null || !files || threadMsg) return;
 
 		if (event.key === "Escape") {
 			selectedFile = null;
@@ -301,7 +305,7 @@
 										</div>
 									{/if}
 									{#if msg.tags["reply-parent-msg-id"]}
-										<Reply {msg} />
+										<Reply {msg} onclick={() => (threadMsg = msg)} />
 									{/if}
 									<div class="text-wrap wrap-break-word">
 										<MessageContent {chat} {msg} />
@@ -317,3 +321,5 @@
 		{/if}
 	</div>
 {/if}
+
+<ReplyThread {chat} messages={chatBuffer} bind:msg={threadMsg} />

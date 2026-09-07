@@ -8,6 +8,7 @@
 
 	import MessageContent from "$lib/components/message/content.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
+	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 
 	import { ChevronsDownIcon } from "@lucide/svelte";
 
@@ -102,6 +103,8 @@
 	let chatBuffer: Message[] = [];
 
 	let scrollPaused = $state(false);
+
+	let threadMsg: Message | null = $state(null);
 
 	const renderChat = async () => {
 		if (chatRenderTimeout) clearTimeout(chatRenderTimeout);
@@ -214,7 +217,7 @@
 						with no reply that row is an empty track and costs nothing -->
 					<div class="grid w-full grid-cols-[auto_auto_1fr] items-start gap-x-1 px-3 py-0.5" {style}>
 						{#if msg.tags["reply-parent-msg-id"]}
-							<Reply {msg} class="col-start-3" />
+							<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-3" />
 						{/if}
 						<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for these
 							two to sit on the same line box as the message beside them -->
@@ -245,3 +248,5 @@
 		</Panel>
 	{/if}
 </div>
+
+<ReplyThread {chat} messages={chatLogs} bind:msg={threadMsg} />

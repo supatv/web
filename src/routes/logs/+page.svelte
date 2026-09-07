@@ -15,6 +15,7 @@
 	import VirtualList from "$lib/components/virtual-list.svelte";
 	import MessageContent from "$lib/components/message/content.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
+	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 
 	import { compactNumber, dateTimeFormat, type TitleContext } from "$lib/common";
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
@@ -532,6 +533,8 @@
 		jumpToMessage((jumpIndex - 1 + searchResults.length) % searchResults.length);
 	};
 
+	let threadMsg: Message | null = $state(null);
+
 	const getMessageId = (msg: Message) => msg.id || msg.timestamp;
 
 	// a CLEARMSG row would otherwise scan the whole log to name the message it removed
@@ -817,7 +820,7 @@
 								]}
 							>
 								{#if msg.tags["reply-parent-msg-id"]}
-									<Reply {msg} class="col-start-2" />
+									<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-2" />
 								{/if}
 								<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for this
 									to sit on the same line box as the message beside it -->
@@ -858,3 +861,5 @@
 		{/if}
 	</div>
 </div>
+
+<ReplyThread {chat} messages={chatLogs} bind:msg={threadMsg} />
