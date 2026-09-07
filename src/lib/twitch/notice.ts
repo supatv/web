@@ -71,8 +71,8 @@ const describe = (msg: Message): Notice | null => {
 		const duration = Number(tags["ban-duration"]);
 
 		return duration
-			? named({ icon: TimerIcon, label: "Timeout", tone: "dim", title: actor ? `${actor} was timed out` : msg.text, chips: [{ text: humanDuration(duration) }] })
-			: named({ icon: BanIcon, label: "Ban", tone: "dim", title: actor ? `${actor} was banned` : msg.text });
+			? named({ icon: TimerIcon, label: "Timeout", tone: "dim", title: actor ? `${actor} has been timed out for ${humanDuration(duration)}` : msg.text })
+			: named({ icon: BanIcon, label: "Ban", tone: "dim", title: actor ? `${actor} has been banned` : msg.text });
 	}
 
 	const bits = Number(tags["bits"]);
