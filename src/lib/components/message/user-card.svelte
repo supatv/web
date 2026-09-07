@@ -122,16 +122,16 @@
 		return rest ? `${years}y ${rest}mo` : `${years}y`;
 	};
 
-	const since = (from: string) => {
-		const months = dayjs().diff(from, "month");
-		return months ? spanAge(months) : `${dayjs().diff(from, "day")}d`;
-	};
+	// const since = (from: string) => {
+	// 	const months = dayjs().diff(from, "month");
+	// 	return months ? spanAge(months) : `${dayjs().diff(from, "day")}d`;
+	// };
 
-	const follow = $derived.by(() => {
-		if (!subage) return {};
-		if (!subage.followedAt) return { value: "never", title: `Not following #${channel}` };
-		return { value: since(subage.followedAt), title: `Following #${channel} since ${dayjs(subage.followedAt).format(dateFormat)}` };
-	});
+	// const follow = $derived.by(() => {
+	// 	if (!subage) return {};
+	// 	if (!subage.followedAt) return { value: "never", title: `Not following #${channel}` };
+	// 	return { value: since(subage.followedAt), title: `Following #${channel} since ${dayjs(subage.followedAt).format(dateFormat)}` };
+	// });
 
 	const sub = $derived.by(() => {
 		if (!subage) return {};
@@ -151,7 +151,7 @@
 		// { term: "ID", value: profile?.id, width: "w-20" },
 		...(subageLoading || subage
 			? [
-					{ term: "Followed", ...follow, width: "w-14" },
+					// { term: "Followed", ...follow, width: "w-14" },
 					{ term: "Subscribed", ...sub, width: "w-16" },
 				]
 			: []),
@@ -207,7 +207,7 @@
 	</div>
 
 	{#if profileLoading || profile}
-		<dl class="text-dim flex flex-wrap gap-x-6 gap-y-2 text-sm">
+		<dl class="text-dim mx-1 flex flex-wrap justify-between gap-x-6 gap-y-2 text-sm">
 			{#each stats as stat (stat.term)}
 				<div>
 					<dt class="font-display font-medium tracking-wide">{stat.term}</dt>
