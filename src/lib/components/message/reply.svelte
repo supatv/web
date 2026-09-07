@@ -13,5 +13,5 @@
 
 <button type="button" {onclick} class={cn("ring-focus text-dim/80 hover:text-text flex min-w-0 items-center gap-x-0.5 rounded-sm text-left text-xs leading-5 transition-colors", className)}>
 	<ReplyIcon class="size-4 shrink-0 -scale-x-100" />
-	<span class="min-w-0 truncate">Replying to @{author}: {body}</span>
+	<span class="min-w-0 truncate"><span class="max-md:hidden">Replying to&nbsp;</span>@{author}: {body}</span>
 </button>
