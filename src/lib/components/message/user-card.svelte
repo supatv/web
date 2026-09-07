@@ -170,18 +170,20 @@
 
 		<div class="flex min-w-0 flex-1 flex-col gap-1.5 self-center">
 			<div class="flex flex-wrap items-center gap-x-2 gap-y-1">
-				<span class="font-display min-w-0 truncate text-xl font-bold" style:color={nameColor}>{name}</span>
-				<a
-					href="https://www.twitch.tv/{login}"
-					target="_blank"
-					rel="nofollow"
-					data-umami-event="link-Twitch-channel"
-					title="twitch.tv/{login}"
-					class="ring-focus text-dim hover:text-accent inline-flex items-center gap-1 text-base"
-				>
-					<ExternalLinkIcon class="size-4" />
-					<span class="sr-only">Open twitch.tv/{login}</span>
-				</a>
+				<span class="font-display min-w-0 text-xl font-bold" style:color={nameColor}>
+					<a
+						href="https://www.twitch.tv/{login}"
+						target="_blank"
+						rel="nofollow"
+						data-umami-event="link-Twitch-channel"
+						title="twitch.tv/{login}"
+						class="ring-focus group inline-flex max-w-full items-center gap-1"
+					>
+						<span class="truncate">{name}</span>
+						<ExternalLinkIcon class="text-dim group-hover:text-accent size-4 shrink-0 transition-colors" />
+						<span class="sr-only">Open twitch.tv/{login}</span>
+					</a>
+				</span>
 
 				{#if login !== name.toLowerCase()}
 					<span class="text-dim truncate text-sm">{login}</span>
