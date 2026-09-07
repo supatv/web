@@ -136,6 +136,9 @@
 
 	let isJumpMode = $state(false);
 	onMount(() => {
+		// autofocus fires before hydration attaches onfocus, so the initial focus is never seen
+		channelFocused = document.activeElement === channelInput;
+
 		fetchChannelsCount();
 		chat.loadGlobalBadges();
 		chat.loadGlobalEmotes();
