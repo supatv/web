@@ -880,7 +880,7 @@
 										<Button
 											variant="ghost"
 											size="icon-sm"
-											class="ring-focus text-dim hover:text-accent relative ml-1 inline-grid size-5 place-items-center rounded-sm align-top opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+											class="ring-focus text-dim hover:text-accent relative ml-1 inline-grid size-5 place-items-center rounded-sm align-top opacity-0 transition group-hover:opacity-100 focus-visible:opacity-100"
 											title="Permalink"
 											href="?c={channelName}&d={new Date(msg.timestamp).toISOString().slice(0, 10)}#{msgId}"
 											target="_blank"
