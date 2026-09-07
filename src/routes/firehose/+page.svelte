@@ -7,12 +7,14 @@
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
 	import MessageContent from "$lib/components/message/content.svelte";
+	import Deleted from "$lib/components/message/deleted.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
 	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 
 	import { ChevronsDownIcon } from "@lucide/svelte";
 
 	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
+	import { SvelteSet } from "svelte/reactivity";
 
 	import { browser } from "$app/environment";
 	import { goto } from "$app/navigation";
@@ -21,6 +23,7 @@
 	import { timeFormat, type TitleContext } from "$lib/common";
 
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
+	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
 	import { messageSearch } from "$lib/twitch/logs";
 
 	import instances from "./instances.json";
@@ -101,6 +104,7 @@
 
 	let chatLogs: Message[] = $state([]);
 	let chatBuffer: Message[] = [];
+	const deletedIds = new SvelteSet<string>();
 
 	let scrollPaused = $state(false);
 
@@ -116,6 +120,12 @@
 		} else {
 			chatLogs = chatLogs.concat(chatBuffer).slice(!scrollPaused ? -10_000 : 0);
 			chatBuffer = [];
+
+			// deletions outlive the rows they mark, so once they have piled up drop the ones no row is left to show
+			if (deletedIds.size > 10_000) {
+				const shown = new Set(chatLogs.map((msg) => msg.id));
+				for (const id of deletedIds) if (!shown.has(id)) deletedIds.delete(id);
+			}
 			await tick();
 		}
 
@@ -136,6 +146,8 @@
 			chatBuffer = [];
 			scrollPaused = false;
 
+			deletedIds.clear();
+
 			socket = new ReconnectingWebSocket(`wss://${instanceValue}/firehose?jsonBasic=true`);
 			socket.addEventListener("message", (event) => {
 				if (!document.hidden) {
@@ -145,7 +157,10 @@
 					}, 1000);
 				}
 
-				chatBuffer.push(JSON.parse(event.data));
+				const msg: Message = JSON.parse(event.data);
+				const deleted = msg.tags["target-msg-id"];
+				if (deleted) deletedIds.add(deleted);
+				else chatBuffer.push(msg);
 			});
 		});
 	});
@@ -213,11 +228,15 @@
 			>
 				{#snippet item(index, style)}
 					{@const msg = filteredChatLogs[index]}
-					<!-- the message sits on row 2 so the reply preview can take row 1 in the message's own column;
-						with no reply that row is an empty track and costs nothing -->
-					<div class="grid w-full grid-cols-[auto_auto_1fr] items-start gap-x-1 px-3 py-0.5" {style}>
+					{@const notice = messageNotice(msg)}
+					<!-- the message sits on row 3 so the deletion note and the reply preview can take the rows above it in
+						the message's own column; without either, those are empty tracks and cost nothing -->
+					<div class={["grid w-full grid-cols-[auto_auto_1fr] items-start gap-x-1 px-3 py-0.5", notice && noticeStyle[notice.tone].row]} {style}>
+						{#if deletedIds.has(msg.id)}
+							<Deleted class="col-start-3 row-start-1" />
+						{/if}
 						{#if msg.tags["reply-parent-msg-id"]}
-							<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-3" />
+							<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-3 row-start-2" />
 						{/if}
 						<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for these
 							two to sit on the same line box as the message beside them -->
@@ -225,12 +244,12 @@
 							href="https://www.twitch.tv/{msg.channel}"
 							target="_blank"
 							title={msg.channel}
-							class="text-dim hover:text-accent row-start-2 inline-block max-w-32 min-w-32 truncate text-xs leading-5 font-semibold transition-colors select-none"
+							class="text-dim hover:text-accent row-start-3 inline-block max-w-32 min-w-32 truncate text-xs leading-5 font-semibold transition-colors select-none"
 						>
 							{msg.channel}
 						</a>
-						<span class="text-dim/80 row-start-2 text-xs leading-5 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
-						<span class="row-start-2 min-w-0 wrap-break-word">
+						<span class="text-dim/80 row-start-3 text-xs leading-5 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="row-start-3 min-w-0 wrap-break-word">
 							<MessageContent {chat} {msg} />
 						</span>
 					</div>

@@ -79,8 +79,28 @@ handling changes belong in `ChatSource`, not in a page.
 rendered via `{#each ... as { type: Component, props }}`. Word lookup order is channel emote →
 global emote → `linkParser.parse` → plain text. Native emotes (`emotes`) and gifs (`gifs`, whose
 `[title]` placeholder becomes a link to the gif url) are spliced in ahead of that as `Span`s
-carrying a codepoint range and a render function, sorted by start (ranges are offset by
-`system-msg` length, and the text is iterated as `[...text]` so astral chars line up).
+carrying a codepoint range and a render function, sorted by start (the ranges index the chatter's
+own text, so `parse` first slices off the `system-msg` the logs concatenate ahead of it, and the
+text is iterated as `[...text]` so astral chars line up).
+
+[notice.ts](src/lib/twitch/notice.ts) covers every row that is not a chatter's own line — mod
+actions, subs, gifts, raids, announcements, cheers — as one `messageNotice(msg)` giving an icon, a
+tone, a plain-text `title` and detail `chips`, memoized per message like `parse`. The
+`title` is Twitch's wording and is never run through `parse`: a system message resolving a timed-out
+user's name into an emote or a link is the bug that motivated it. `actor` is the name that wording
+opens with, drawn bold in the chatter's own color the way a message row draws it. `author` / `body` say whether the
+display name and the chatter's own text follow, and `noticeStyle[tone]` carries the text, chip and
+row classes so a page only spreads `.row` onto its message row. New notice types go in the switch
+there, not in a page.
+
+A CLEARMSG carries no text of its own, so it never becomes a row: `splitDeletions` in `logs.ts`
+takes a log and hands back the messages to draw plus the ids they removed, and the
+page marks those with [message/deleted.svelte](src/lib/components/message/deleted.svelte) above the
+message itself. `/logs` splits its log once on load and `/jake` splits the slice the replay has
+reached, so a message is only struck once the moderator got to it; `/firehose` collects the ids as
+they arrive in a plain `Set` — the 250ms flush hands the list a new array anyway, so the rows redraw
+without every one of them subscribing to a reactive set — and prunes it against the rows still
+loaded once it passes 10k.
 
 A reply draws a preview line above its row ([message/reply.svelte](src/lib/components/message/reply.svelte)),
 so `parse` drops the `@name` prefix Twitch splices into the reply's own text rather than rendering

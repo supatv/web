@@ -2,12 +2,14 @@
 	import { mode } from "mode-watcher";
 
 	import type { ChatSource, Message } from "$lib/twitch/chat.svelte";
+	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
 
 	import Badge from "./badge.svelte";
 
 	let { chat, msg }: { chat: ChatSource; msg: Message } = $props();
 
-	const isNotice = $derived(Boolean(msg.tags["target-user-id"]) || !msg.displayName);
+	const notice = $derived(messageNotice(msg));
+	const tone = $derived(noticeStyle[notice?.tone ?? "dim"]);
 	const nameColor = $derived(`hsl(from ${msg.tags["color"] || "gray"} h s ${mode.current === "light" ? "40%" : "70%"})`);
 
 	// badge images arrive well after the line first paints, so until the tables land reserve
@@ -27,14 +29,32 @@
 			{/each}
 		{/key}
 	</span>
-{/if}{#if !isNotice}
+{/if}{#if notice}
+	{@const Icon = notice.icon}
+	<!-- inline rather than a flex row so a long system message wraps with the rest of the line -->
+	<span class={tone.text}>
+		<Icon
+			class="relative top-[calc((1ex-1cap)/2)] mr-1 inline-block size-4 align-middle"
+			{...notice.title ? { "aria-hidden": "true" } : { "aria-label": notice.label }}
+		/>{#if notice.title}{@const name = notice.actor && notice.title.startsWith(notice.actor) ? notice.actor : ""}<span class="mr-1"
+				>{#if name}<span class="font-bold" style:color={nameColor}>{name}</span>{/if}{notice.title.slice(name.length)}</span
+			>{/if}{#each notice.chips as chip (chip.text)}{#if chip.href}<a
+					href={chip.href}
+					target="_blank"
+					rel="noopener noreferrer"
+					data-umami-event={chip.event}
+					class={["relative top-[calc((1ex-1cap)/2)] mr-1 inline-block rounded-sm border px-1 align-middle text-xs whitespace-nowrap hover:underline", tone.chip]}>{chip.text}</a
+				>{:else}<span class={["relative top-[calc((1ex-1cap)/2)] mr-1 inline-block rounded-sm border px-1 align-middle text-xs whitespace-nowrap", tone.chip]}>{chip.text}</span>{/if}{/each}
+	</span>
+{/if}{#if !notice || notice.author}
 	<span class="font-bold" style:color={nameColor}>{msg.displayName}:</span>
 {/if}
-
-<span class={[isNotice && "text-dim"]}>
-	{#key chat.emoteVersion}
-		{#each chat.parse(msg) as { type: Component, props }, index (index)}
-			<Component {...props} />
-		{/each}
-	{/key}
-</span>
+{#if !notice || notice.body}
+	<span>
+		{#key chat.emoteVersion}
+			{#each chat.parse(msg) as { type: Component, props }, index (index)}
+				<Component {...props} />
+			{/each}
+		{/key}
+	</span>
+{/if}

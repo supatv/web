@@ -208,10 +208,11 @@ export class ChatSource {
 
 		const components: ChatComponents = [];
 
-		// native emote positions are codepoint offsets into the *rendered* line, which
-		// a system message (sub notice, raid, …) prefixes ahead of the user's own text
+		// a system message (sub notice, raid, …) is prefixed onto the text of the message it
+		// came with; the notice renders it, and the emote positions are offsets into what
+		// follows it, so parse the user's own text alone
 		const systemMsg = msg.tags["system-msg"];
-		const posOffset = systemMsg ? [...systemMsg].length + 1 : 0;
+		const unicode = [...msg.text].slice(systemMsg ? [...systemMsg].length + 1 : 0);
 
 		const spans: Span[] = [];
 
@@ -220,7 +221,7 @@ export class ChatSource {
 				const [id, positions] = entry.split(":");
 				for (const pos of positions.split(",")) {
 					spans.push({
-						pos: pos.split("-").map((s) => Number(s) + posOffset),
+						pos: pos.split("-").map(Number),
 						render: (name) => ({
 							type: Emote,
 							props: {
@@ -239,13 +240,12 @@ export class ChatSource {
 		// Twitch leaves in the text; matched rather than split so a comma in a url only
 		// costs that one entry its tail
 		for (const [, start, end, href] of (msg.tags["gifs"] ?? "").matchAll(/(\d+)-(\d+)\|[^|]*\|([^,]+)/g)) {
-			spans.push({ pos: [Number(start) + posOffset, Number(end) + posOffset], render: (text) => ({ type: Link, props: { href, text } }) });
+			spans.push({ pos: [Number(start), Number(end)], render: (text) => ({ type: Link, props: { href, text } }) });
 		}
 
 		spans.sort((a, b) => a.pos[0] - b.pos[0]);
 
 		let word = "";
-		const unicode = [...msg.text];
 		for (let i = 0; i < unicode.length; i++) {
 			const next = spans[0];
 			if (next?.pos[0] === i) {

@@ -11,11 +11,14 @@
 	import dayjs from "dayjs";
 
 	import MessageContent from "$lib/components/message/content.svelte";
+	import Deleted from "$lib/components/message/deleted.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
 	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
+	import { splitDeletions } from "$lib/twitch/logs";
+	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
 
 	import { LoaderCircleIcon } from "@lucide/svelte";
 
@@ -45,6 +48,7 @@
 
 	let chatLogs: Message[] | null = $state(null);
 	let chatBuffer: Message[] = $state([]);
+	let deletedIds: Set<string> = $state(new Set());
 
 	let chatError = $state("");
 
@@ -159,7 +163,11 @@
 		const file = files?.[selectedFile];
 		if (!file) return;
 
-		chatBuffer = chatLogs?.filter((msg) => new Date(msg.timestamp).getTime() <= currentVideoTime * 1000 + (file.created_at - file.duration) * 1000) ?? [];
+		// deletions come out of the slice the replay has reached, so a message is only struck once the
+		// moderator got to it
+		const log = splitDeletions(chatLogs?.filter((msg) => new Date(msg.timestamp).getTime() <= currentVideoTime * 1000 + (file.created_at - file.duration) * 1000) ?? []);
+		chatBuffer = log.messages;
+		deletedIds = log.deleted;
 
 		if (chatAtBottom) {
 			await tick();
@@ -295,6 +303,7 @@
 						>
 							{#snippet item(index, style)}
 								{@const msg = chatBuffer[index]}
+								{@const notice = messageNotice(msg)}
 								<!-- the gap the rows used to sit in belongs to the row itself now that each one is placed absolutely -->
 								<div class="w-full pb-1.5" {style}>
 									{#if isNewMessageDivider(msg, index)}
@@ -304,10 +313,13 @@
 											<div class="border-line grow border-t"></div>
 										</div>
 									{/if}
+									{#if deletedIds.has(msg.id)}
+										<Deleted />
+									{/if}
 									{#if msg.tags["reply-parent-msg-id"]}
 										<Reply {msg} onclick={() => (threadMsg = msg)} />
 									{/if}
-									<div class="text-wrap wrap-break-word">
+									<div class={["-mx-1 rounded-sm px-1 text-wrap wrap-break-word", notice && noticeStyle[notice.tone].row]}>
 										<MessageContent {chat} {msg} />
 									</div>
 								</div>

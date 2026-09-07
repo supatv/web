@@ -27,12 +27,14 @@
 	import VirtualList from "$lib/components/virtual-list.svelte";
 	import { shell } from "$lib/components/ui/shell.svelte";
 	import MessageContent from "$lib/components/message/content.svelte";
+	import Deleted from "$lib/components/message/deleted.svelte";
 	import Reply from "$lib/components/message/reply.svelte";
 	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 
 	import { compactNumber, dateTimeFormat, timeFormat, type TitleContext } from "$lib/common";
 	import { ChatSource, type Message } from "$lib/twitch/chat.svelte";
-	import { messageSearch } from "$lib/twitch/logs";
+	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
+	import { messageSearch, splitDeletions } from "$lib/twitch/logs";
 
 	type LogsDate = {
 		year: string;
@@ -267,6 +269,7 @@
 	};
 
 	let chatLogs: Message[] = $state([]);
+	let deletedIds: Set<string> = $state(new Set());
 
 	let searchValue = $state("");
 	let searchResults = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
@@ -442,7 +445,9 @@
 			}
 
 			const data: { messages: Message[] } = await res.json();
-			chatLogs = data.messages;
+			const log = splitDeletions(data.messages);
+			chatLogs = log.messages;
+			deletedIds = log.deleted;
 			loading = false;
 
 			channelId = data.messages.find((m) => m.tags["room-id"])?.tags["room-id"] ?? "";
@@ -507,6 +512,7 @@
 		availableDates = [];
 		dateValue = "";
 		chatLogs = [];
+		deletedIds = new Set();
 		channelStats = null;
 		channelTyped = false;
 
@@ -561,17 +567,6 @@
 	let threadMsg: Message | null = $state(null);
 
 	const getMessageId = (msg: Message) => msg.id || msg.timestamp;
-
-	// a CLEARMSG row would otherwise scan the whole log to name the message it removed
-	let messagesById = new Map<string, Message>();
-	let messagesByIdFor: Message[] | null = null;
-	const messageById = (id: string) => {
-		if (messagesByIdFor !== chatLogs) {
-			messagesById = new Map(chatLogs.filter((m) => m.id).map((m) => [m.id, m]));
-			messagesByIdFor = chatLogs;
-		}
-		return messagesById.get(id);
-	};
 
 	// same reason as the parse cache in ChatSource: three dayjs parses per row per scroll tick
 	const times = new WeakMap<Message, { at: string; short: string; day: string }>();
@@ -855,38 +850,28 @@
 						{@const isNewDay = index > 0 && messageTime(filteredChatLogs[index - 1]).day !== time.day}
 						{@const isHashMatch = msgId === page.url.hash.slice(1)}
 						{@const isJumpMatch = isJumpSearching && !isHashMatch && jumpHighlights?.has(msgId)}
-						{@const isHighlight = Boolean(msg.tags["system-msg"]) || msg.tags["bits"] || msg.tags["msg-id"] === "announcement"}
+						{@const notice = messageNotice(msg)}
 						<div class="group w-full" {style}>
-							<!-- the message sits on row 2 so the reply preview can take row 1 in the message's own column;
-								with no reply that row is an empty track and costs nothing -->
+							<!-- the message sits on row 3 so the deletion note and the reply preview can take the rows above it in
+								the message's own column; without either, those are empty tracks and cost nothing -->
 							<div
 								class={[
 									"grid w-full grid-cols-[auto_1fr] items-start gap-x-1 px-3 py-0.5",
 									isNewDay && "border-line -mt-px border-t border-dashed",
-									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (isHighlight && "bg-signal/15"),
+									(isHashMatch && "bg-accent/25") || (isJumpMatch && "bg-accent/10") || (notice && noticeStyle[notice.tone].row),
 								]}
 							>
+								{#if deletedIds.has(msgId)}
+									<Deleted class="col-start-2 row-start-1" />
+								{/if}
 								{#if msg.tags["reply-parent-msg-id"]}
-									<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-2" />
+									<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-2 row-start-2" />
 								{/if}
 								<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for this
 									to sit on the same line box as the message beside it -->
-								<span class="text-dim/80 row-start-2 text-xs leading-5 tabular-nums select-none">{shortTime ? time.short : time.at}</span>
-								<span class="row-start-2 min-w-0 wrap-break-word">
-									{#if msg.tags["target-msg-id"]}
-										{@const msgDeleted = messageById(msg.tags["target-msg-id"])}
-										<span class="text-dim">
-											{#if msgDeleted}
-												<span class="cursor-help underline decoration-dotted" title="{msgDeleted.displayName}: {msgDeleted.text}">
-													A message from {msgDeleted.displayName} was deleted
-												</span>
-											{:else}
-												A message was deleted
-											{/if}
-										</span>
-									{:else}
-										<MessageContent {chat} {msg} />
-									{/if}{#if !isHashMatch}
+								<span class="text-dim/80 row-start-3 text-xs leading-5 tabular-nums select-none">{shortTime ? time.short : time.at}</span>
+								<span class="row-start-3 min-w-0 wrap-break-word">
+									<MessageContent {chat} {msg} />{#if !isHashMatch}
 										<!-- the target is exactly one `leading-5` line tall, so topping it out fills the line rather than growing it -->
 										<Button
 											variant="ghost"
