@@ -10,14 +10,21 @@
 
 	let { chat, messages, msg = $bindable() }: { chat: ChatSource; messages: Message[]; msg: Message | null } = $props();
 
+	// the dialog fades out over 150ms after `msg` is cleared, so the thread it was showing has to
+	// outlive the close or the content empties out under the animation
+	let shown: Message | null = $state(null);
+	$effect(() => {
+		if (msg) shown = msg;
+	});
+
 	// the thread tag only arrived in 2021, so a reply older than that names its parent and nothing
 	// else: match either tag, and keep the message that was clicked even if neither turns it up
-	const root = $derived(msg ? msg.tags["reply-thread-parent-msg-id"] || msg.tags["reply-parent-msg-id"] : "");
+	const root = $derived.by(() => (shown ? shown.tags["reply-thread-parent-msg-id"] || shown.tags["reply-parent-msg-id"] : ""));
 
 	const thread = $derived.by(() => {
-		if (!msg) return [];
+		if (!shown) return [];
 		const found = messages.filter((m) => m.id === root || m.tags["reply-thread-parent-msg-id"] === root || m.tags["reply-parent-msg-id"] === root);
-		return found.includes(msg) ? found : [...found, msg];
+		return found.includes(shown) ? found : [...found, shown];
 	});
 
 	const rootLoaded = $derived(thread.some((m) => m.id === root));
@@ -34,7 +41,7 @@
 			<p class="text-dim mb-1 text-xs">The message this thread started from is not in the loaded logs.</p>
 		{/if}
 		{#each thread as message (message.id || message.timestamp)}
-			<div class={["flex items-start gap-x-1 rounded-sm px-1 py-0.5", message === msg && "bg-accent/25"]}>
+			<div class={["flex items-start gap-x-1 rounded-sm px-1 py-0.5", message === shown && "bg-accent/25"]}>
 				<span class="text-dim/80 text-xs leading-5 tabular-nums select-none">{dayjs(message.timestamp).format(timeFormat)}</span>
 				<span class="min-w-0 wrap-break-word">
 					<MessageContent {chat} msg={message} />
