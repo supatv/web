@@ -115,14 +115,15 @@ it only trims the backlog).
 - Cross-page player/grid state is in `src/lib/stores/live.ts` (classic writable stores),
   persisted to `localStorage` by subscriptions in `+layout.svelte`. Other prefs are written
   directly to `localStorage` (`sidebar-provider-state`, `logs-search-mode`,
-  `logs-bottom-scroll-state`, `live-show-kick`, …).
+  `logs-bottom-scroll-state`, `logs-narrow-state`, `live-show-kick`, …).
 - The URL query string is the source of truth for `/logs`, `/firehose` and `/roles` filters. The
   pattern is an `$effect` that reads the reactive values then
   `untrack(() => { … goto(page.url.search, { replaceState: true, keepFocus: true }) })`, with the
   initial read done in `onMount`. Follow it rather than introducing bidirectional bindings.
 - Long lists use [virtual-list.svelte](src/lib/components/virtual-list.svelte), a windowed list
   that measures its own height and renders an `item` snippet as `(index, style)` — the row
-  **must** put that `style` on its outer element, since it carries the absolute positioning.
+  **must** put that `style` on its outer element, since it carries the absolute positioning. `class`
+  dresses the scroll viewport, `contentClass` the canvas the rows are placed in.
   `itemSize` is the row height, or with `dynamic` only the height a row starts out guessed at:
   the list then measures every rendered row (read off the row on recycle, `ResizeObserver` for
   what happens to it after), keeps a running offset table, holds the scroll still when a row
@@ -136,7 +137,10 @@ it only trims the backlog).
 - `/logs` search has two modes, toggled by `isJumpMode` and persisted to `logs-search-mode`:
   _filter_ narrows the rendered list to `searchResults`, _jump_ keeps the full list and instead
   highlights the hits and steps between them by writing the message id to the URL hash. Both go
-  through `messageSearch`; only the wiring around it differs.
+  through `messageSearch`; only the wiring around it differs. Its `narrow` toggle cuts the messages down
+  to a chat-width column from `md` up — through `contentClass`, so the whole panel still scrolls —
+  and, like a phone-width viewport, drops the date from the timestamp. The button is hidden below
+  `md`, where the viewport already is that column.
 
 ### UI layer
 
