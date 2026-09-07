@@ -14,7 +14,18 @@
 	import Image from "$lib/components/image.svelte";
 
 	import { compactNumber, dateFormat, dateTimeFormat, type TitleContext } from "$lib/common";
-	import rolesApi, { parseTarget, roleNames, type GlobalStats, type RoleName, type RoleRanking, type RoleSummary, type RoleTarget, type RoleUser, type RolesView } from "$lib/twitch/roles";
+	import rolesApi, {
+		parseTarget,
+		roleNames,
+		type GlobalStats,
+		type RoleName,
+		type RoleRanking,
+		type RoleSummary,
+		type RoleTarget,
+		type RoleUser,
+		type RolesView,
+		type SearchUser,
+	} from "$lib/twitch/roles";
 
 	getContext<TitleContext>("title").set("Roles");
 
@@ -55,6 +66,12 @@
 
 	let inputName = $state("");
 	let name = $state("");
+
+	let nameInput: HTMLInputElement | null = $state(null);
+	let nameFocused = $state(false);
+	let nameTyped = $state(false);
+	let foundUsers = $state<SearchUser[]>([]);
+	let selectedIndex = $state(0);
 	let view: RolesView = $state("user");
 	let includeInactive = $state(false);
 
@@ -80,6 +97,9 @@
 	const activeSection = $derived(visibleSections.find((section) => section.role === activeRole) ?? visibleSections[0]);
 
 	onMount(() => {
+		// autofocus fires before hydration attaches onfocus, so the initial focus is never seen
+		nameFocused = document.activeElement === nameInput;
+
 		rolesApi
 			.getStats()
 			.then((data) => (stats = data))
@@ -91,6 +111,65 @@
 		view = q.get("v") === "channel" ? "channel" : "user";
 		includeInactive = q.get("i") === "1";
 	});
+
+	// the api matches a login prefix, so an id: target has nothing to complete against
+	$effect(() => {
+		const query = inputName.trim().toLowerCase();
+		if (!query || !nameTyped || query.startsWith("id:")) {
+			foundUsers = [];
+			return;
+		}
+
+		const controller = new AbortController();
+		const timeout = setTimeout(async () => {
+			try {
+				foundUsers = await rolesApi.searchUsers(query, 5, controller.signal);
+				selectedIndex = 0;
+			} catch {
+				if (!controller.signal.aborted) foundUsers = [];
+			}
+		}, 120);
+
+		return () => {
+			clearTimeout(timeout);
+			controller.abort();
+		};
+	});
+
+	const showAutocomplete = $derived(nameFocused && nameTyped && foundUsers.length > 0);
+
+	const selectResult = (index: number, lookup = false) => {
+		const found = foundUsers[index];
+		if (!found) return;
+
+		inputName = found.login;
+		selectedIndex = 0;
+		nameTyped = false;
+		if (lookup) name = found.login;
+	};
+
+	const nameKeydown = (event: KeyboardEvent) => {
+		if (!showAutocomplete) return;
+
+		switch (event.key) {
+			case "ArrowDown":
+				event.preventDefault();
+				selectedIndex = (selectedIndex + 1) % foundUsers.length;
+				break;
+			case "ArrowUp":
+				event.preventDefault();
+				selectedIndex = selectedIndex <= 0 ? foundUsers.length - 1 : selectedIndex - 1;
+				break;
+			case "Escape":
+				nameTyped = false;
+				break;
+			// enter falls through to the form submit, which picks the filled-in login up
+			case "Tab":
+			case "Enter":
+				selectResult(selectedIndex);
+				break;
+		}
+	};
 
 	$effect(() => {
 		const search = {
@@ -232,6 +311,7 @@
 	});
 
 	const openUser = (login: string) => {
+		nameTyped = false;
 		inputName = name = login;
 	};
 
@@ -244,6 +324,7 @@
 
 	const formSubmit = (event: SubmitEvent) => {
 		event.preventDefault();
+		nameTyped = false;
 		name = inputName.trim();
 	};
 
@@ -309,9 +390,47 @@
 	</header>
 
 	<form class="flex flex-wrap items-end gap-2" onsubmit={formSubmit}>
-		<div class="flex flex-col gap-1">
+		<div class="relative flex flex-col gap-1">
 			<Label for="input-user">User <span class="text-accent">required</span></Label>
-			<Input id="input-user" class="w-44" maxlength={25} bind:value={inputName} placeholder="Username or id:123" autocomplete="off" spellcheck="false" autofocus />
+			<Input
+				id="input-user"
+				class={showAutocomplete ? "w-44 rounded-b-none" : "w-44"}
+				maxlength={25}
+				bind:ref={nameInput}
+				bind:value={inputName}
+				placeholder="Username or id:123"
+				onkeydown={nameKeydown}
+				oninput={() => (nameTyped = true)}
+				onfocus={() => (nameFocused = true)}
+				onblur={() => (nameFocused = false)}
+				autocomplete="off"
+				spellcheck="false"
+				autofocus
+			/>
+
+			{#if showAutocomplete}
+				<!-- one shell with the field: flush under it, squared at the join and carrying the same accent border, so the pair reads as one outline -->
+				<Panel class="absolute top-full right-0 left-0 z-20 overflow-hidden rounded-t-none rounded-b-md border border-t-0 p-1 shadow-lg">
+					<!-- svelte-ignore a11y_no_static_element_interactions -->
+					{#each foundUsers as found, index (found.id)}
+						<div
+							class={["flex h-9 cursor-pointer items-center gap-2 rounded-[5px] px-2 text-base transition-colors", index === selectedIndex ? "bg-raised text-text" : "text-dim"]}
+							onmouseenter={() => (selectedIndex = index)}
+							onmousedown={() => selectResult(index, true)}
+						>
+							{#if found.avatar}
+								<Image src={found.avatar} alt="" class="size-6 shrink-0 rounded-sm" />
+							{:else}
+								<div class="bg-raised size-6 shrink-0 rounded-sm"></div>
+							{/if}
+							<span class="truncate">{found.displayName || found.login}</span>
+							{#if found.displayName && found.displayName.toLowerCase() !== found.login}
+								<span class="text-dim/70 truncate text-sm">{found.login}</span>
+							{/if}
+						</div>
+					{/each}
+				</Panel>
+			{/if}
 		</div>
 
 		<div class="flex flex-col gap-1">

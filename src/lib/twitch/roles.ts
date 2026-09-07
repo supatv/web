@@ -55,6 +55,16 @@ export type RoleRanking = {
 	followers: number;
 };
 
+export type SearchUserRole = { role: "FOUNDER" | "SUBSCRIBER" | "VIP" | "MODERATOR" | "ARTIST"; active: boolean };
+
+export type SearchUser = {
+	id: string;
+	login: string;
+	displayName?: string | null;
+	avatar?: string | null;
+	roles?: SearchUserRole[];
+};
+
 export type GlobalStats = Record<"users" | "bots" | "staff" | "partners" | "affiliates" | RoleName, { count: number }>;
 
 export type RoleTarget = { param: "login" | "id"; value: string };
@@ -83,6 +93,10 @@ const request = async <T>(path: string, signal?: AbortSignal): Promise<T> => {
 
 export default {
 	getStats: (signal?: AbortSignal): Promise<GlobalStats> => request<{ data: GlobalStats }>("/stats", signal).then((body) => body.data),
+
+	// prefix search over logins, so an id: target has nothing to match
+	searchUsers: (query: string, limit = 8, signal?: AbortSignal): Promise<SearchUser[]> =>
+		request<{ data?: SearchUser[]; cursor: string | null }>(`/search?${new URLSearchParams({ query, limit: String(limit) })}`, signal).then((body) => body.data ?? []),
 
 	getUser: (view: RolesView, target: RoleTarget, signal?: AbortSignal): Promise<RoleUser> => request<{ data: RoleUser }>(`/${view}/${targetPath(target)}`, signal).then((body) => body.data),
 
