@@ -662,7 +662,7 @@
 		{#if chatLogs.length}
 			<Popover bind:open={statsPopoverOpen} align="end" class="w-80 max-w-[90vw] p-4">
 				{#snippet trigger({ props })}
-					<Button {...props} variant="outline" class="ml-auto" title="Channel stats">
+					<Button {...props} variant="outline" title="Channel stats">
 						<ChartColumnIcon />
 						<span class="hidden md:inline">Stats</span>
 					</Button>
