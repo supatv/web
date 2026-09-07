@@ -225,7 +225,7 @@
 							href="https://www.twitch.tv/{msg.channel}"
 							target="_blank"
 							title={msg.channel}
-							class="text-dim hover:text-accent row-start-2 inline-block max-w-32 min-w-32 truncate text-xs leading-5 font-semibold transition-colors"
+							class="text-dim hover:text-accent row-start-2 inline-block max-w-32 min-w-32 truncate text-xs leading-5 font-semibold transition-colors select-none"
 						>
 							{msg.channel}
 						</a>
