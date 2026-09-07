@@ -112,7 +112,7 @@
 
 	$effect(() => {
 		const query = inputChannelName.trim();
-		if (!query || !channelTyped) {
+		if (!query || !channelTyped || query.startsWith("id:")) {
 			foundChannels = [];
 			return;
 		}
@@ -220,7 +220,7 @@
 		});
 	});
 
-	const showAutocomplete = $derived(channelFocused && foundChannels.length && !(foundChannels.length === 1 && foundChannels[0].name === inputChannelName.toLowerCase()));
+	const showAutocomplete = $derived(channelFocused && channelTyped && foundChannels.length > 0);
 
 	const channelKeydown = (event: KeyboardEvent) => {
 		if (!showAutocomplete) return;
