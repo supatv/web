@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { mode } from "mode-watcher";
 
-	import type { ChatSource, ChatUser, Message } from "$lib/twitch/chat.svelte";
+	import { sharedChatSource, type ChatSource, type ChatUser, type Message } from "$lib/twitch/chat.svelte";
 	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
 
 	import Badge from "./badge.svelte";
@@ -20,7 +20,7 @@
 	// their width from the tag's own count (size-4 each, gap-0.5 between) to keep the message
 	// from jumping; once they have, only the badges that resolved take space, so ones no loaded
 	// set covers — channel badges on /firehose — leave nothing behind
-	const taggedCount = $derived(msg.tags["badges"] ? msg.tags["badges"].split(",").length : 0);
+	const taggedCount = $derived((msg.tags["badges"] ? msg.tags["badges"].split(",").length : 0) + (sharedChatSource(msg) ? 1 : 0));
 	const badgeCount = $derived(chat.badgeVersion && chat.globalBadges.size ? chat.badges(msg).length : taggedCount);
 </script>
 

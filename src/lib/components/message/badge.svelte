@@ -2,4 +2,4 @@
 	let { src, title = "" }: { src: string; title?: string } = $props();
 </script>
 
-<img {src} {title} alt="" class="inline-block size-4 shrink-0 align-middle" />
+<img {src} {title} alt="" class="inline-block size-4 shrink-0 rounded-xs align-middle" />

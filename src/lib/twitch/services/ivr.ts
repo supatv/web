@@ -1,16 +1,20 @@
 import type { Badge, SubAge, User } from "./common";
 
-export default {
-	getUser: async (userId: string): Promise<User | null> => {
-		const res = await fetch(`https://api.ivr.fi/v2/twitch/user?id=${encodeURIComponent(userId)}`, { signal: AbortSignal.timeout(10000) });
-		if (!res.ok) {
-			throw new Error("Failed fetching Twitch user", { cause: res });
-		}
+const getUsers = async (userIds: string[]): Promise<User[]> => {
+	if (!userIds.length) return [];
 
-		// the endpoint takes a list of ids, so a lookup that found nothing is an empty array rather than a 404
-		const [user] = await res.json();
-		return user ?? null;
-	},
+	const res = await fetch(`https://api.ivr.fi/v2/twitch/user?id=${userIds.map(encodeURIComponent).join(",")}`, { signal: AbortSignal.timeout(10000) });
+	if (!res.ok) {
+		throw new Error("Failed fetching Twitch users", { cause: res });
+	}
+
+	return res.json();
+};
+
+export default {
+	getUsers,
+	// ids that resolved to nothing are dropped from the response rather than 404ing
+	getUser: async (userId: string): Promise<User | null> => (await getUsers([userId]))[0] ?? null,
 	// keyed by login rather than id: the numeric form of either resolves to an account named that
 	getSubAge: async (userLogin: string, channelLogin: string): Promise<SubAge> => {
 		const res = await fetch(`https://api.ivr.fi/v2/twitch/subage/${encodeURIComponent(userLogin)}/${encodeURIComponent(channelLogin)}`, { signal: AbortSignal.timeout(10000) });

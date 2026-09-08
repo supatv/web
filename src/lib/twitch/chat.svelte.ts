@@ -57,6 +57,13 @@ type Span = {
 	render: (text: string) => ChatComponents[number];
 };
 
+// in shared chat every message carries the room it originated in; the ones that came from
+// another channel are the ones Twitch marks with that channel's profile picture
+export const sharedChatSource = (msg: Message) => {
+	const source = msg.tags["source-room-id"];
+	return source && source !== msg.tags["room-id"] ? source : "";
+};
+
 const settled = <T>(requests: Promise<T[]>[]) => Promise.allSettled(requests).then((results) => results.map((r) => (r.status === "fulfilled" ? r.value : [])));
 
 /**
@@ -73,6 +80,15 @@ export class ChatSource {
 	readonly globalEmotes = new SvelteMap<string, EmoteProps>();
 	readonly channelBadges = new SvelteMap<string, BadgeProps>();
 	readonly globalBadges = new SvelteMap<string, BadgeProps>();
+
+	// profile pictures of the channels a shared chat pulls from, keyed by room id, and null
+	// while one is still on its way. filled from inside `badges()` as the rows ask for them,
+	// so a plain map redrawn by the version counter rather than a reactive one a render would
+	// be subscribing to and writing to at once
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	readonly #sharedChatBadges = new Map<string, BadgeProps | null>();
+	readonly #sharedChatQueue: string[] = [];
+	#sharedChatTimer: ReturnType<typeof setTimeout> | undefined;
 
 	emoteVersion = $state(0);
 	badgeVersion = $state(0);
@@ -162,6 +178,38 @@ export class ChatSource {
 		this.#addBadges(this.channelBadges, badges);
 	}
 
+	#loadSharedChatBadges() {
+		const ids = this.#sharedChatQueue.splice(0);
+		this.#sharedChatTimer = undefined;
+
+		TwitchServices.IVR.getUsers(ids)
+			.then((users) => {
+				let found = false;
+				for (const user of users) {
+					if (!user.logo) continue;
+					this.#sharedChatBadges.set(user.id, { url: user.logo.replace("600x600", "50x50"), title: `Shared chat from ${user.displayName}` });
+					found = true;
+				}
+
+				if (found) this.badgeVersion = ++this.#badgeTicks;
+			})
+			.catch(() => {});
+	}
+
+	// a shared chat can pull from a channel no page ever loads, and /firehose meets new ones as
+	// they arrive, so the lookup queues the fetch itself and lets the version bump redraw the row.
+	// the window runs from the first id rather than the last, so a busy firehose still resolves a
+	// badge within the second instead of pushing the request back on every channel it meets
+	#sharedChatBadge(roomId: string) {
+		if (this.#sharedChatBadges.has(roomId)) return this.#sharedChatBadges.get(roomId);
+
+		this.#sharedChatBadges.set(roomId, null);
+		this.#sharedChatQueue.push(roomId);
+		if (this.#sharedChatTimer === undefined) this.#sharedChatTimer = setTimeout(() => this.#loadSharedChatBadges(), 1000);
+
+		return null;
+	}
+
 	badges(msg: Message): MessageBadge[] {
 		if (this.#badgedAt !== this.#badgeTicks) {
 			this.#badged = new WeakMap();
@@ -172,6 +220,12 @@ export class ChatSource {
 		if (cached) return cached;
 
 		const badges: MessageBadge[] = [];
+
+		const sharedChat = sharedChatSource(msg);
+		if (sharedChat) {
+			const props = this.#sharedChatBadge(sharedChat);
+			if (props) badges.push({ id: "shared-chat", src: props.url, title: props.title });
+		}
 
 		for (const badge of (msg.tags["badges"] ?? "").split(",")) {
 			const [id, version] = badge.split("/");
