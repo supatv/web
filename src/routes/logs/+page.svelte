@@ -60,7 +60,7 @@
 	let error: string | null = $state(null);
 	let loading = $state(false);
 
-	let selectedIndex = $state(0); // Track selected item
+	let selectedIndex = $state(-1); // Track selected item
 
 	let availableDates: LogsDate[] = $state([]);
 	let calendarDate = $state<DateValue>();
@@ -113,6 +113,8 @@
 
 	$effect(() => {
 		const query = inputChannelName.trim();
+		// the results on screen answer an older query until this one lands, so nothing is preselected in between
+		selectedIndex = -1;
 		if (!query || !channelTyped || query.startsWith("id:")) {
 			foundChannels = [];
 			return;
@@ -126,7 +128,8 @@
 
 				const data = await res.json();
 				foundChannels = (data.channels ?? []).slice(0, 5);
-				selectedIndex = 0;
+				// Enter picks a result only when it continues what was typed
+				selectedIndex = foundChannels[0]?.name.toLowerCase().startsWith(query.toLowerCase()) ? 0 : -1;
 			} catch (err) {
 				if ((err as Error)?.name !== "AbortError") foundChannels = [];
 			}
@@ -531,7 +534,7 @@
 
 	const selectResult = (index: number) => {
 		inputChannelName = foundChannels[index].name;
-		selectedIndex = 0; // reset selection after choosing
+		selectedIndex = -1; // reset selection after choosing
 	};
 
 	const narrowToggle = () => {

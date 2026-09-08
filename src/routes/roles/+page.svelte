@@ -71,7 +71,7 @@
 	let nameFocused = $state(false);
 	let nameTyped = $state(false);
 	let foundUsers = $state<SearchUser[]>([]);
-	let selectedIndex = $state(0);
+	let selectedIndex = $state(-1);
 	let view: RolesView = $state("user");
 	let includeInactive = $state(false);
 
@@ -115,6 +115,8 @@
 	// the api matches a login prefix, so an id: target has nothing to complete against
 	$effect(() => {
 		const query = inputName.trim().toLowerCase();
+		// the results on screen answer an older query until this one lands, so nothing is preselected in between
+		selectedIndex = -1;
 		if (!query || !nameTyped || query.startsWith("id:")) {
 			foundUsers = [];
 			return;
@@ -124,7 +126,8 @@
 		const timeout = setTimeout(async () => {
 			try {
 				foundUsers = await rolesApi.searchUsers(query, 5, controller.signal);
-				selectedIndex = 0;
+				// Enter picks a result only when it continues what was typed
+				selectedIndex = foundUsers[0]?.login.startsWith(query) ? 0 : -1;
 			} catch {
 				if (!controller.signal.aborted) foundUsers = [];
 			}
@@ -143,7 +146,7 @@
 		if (!found) return;
 
 		inputName = found.login;
-		selectedIndex = 0;
+		selectedIndex = -1;
 		nameTyped = false;
 		if (lookup) name = found.login;
 	};
