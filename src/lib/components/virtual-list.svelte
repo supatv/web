@@ -43,6 +43,7 @@
 	// up once the scroll settles. `offset` stays in canvas space, ahead of scrollTop by what is held.
 	let held = 0;
 	let settling: ReturnType<typeof setTimeout> | undefined;
+	let touching = false;
 
 	// under `dynamic` itemSize is only the height a row starts out guessed at. Measured heights and
 	// their running offsets are plain arrays, so a row settling rewrites them without every row
@@ -86,16 +87,28 @@
 	const end = $derived(Math.min(itemCount, (dynamic ? rowAt(offset + viewportHeight) + 1 : Math.ceil((offset + viewportHeight) / itemSize)) + overscan));
 	const indexes = $derived(Array.from({ length: Math.max(0, end - start) }, (_, i) => start + i));
 
-	// the held correction rides on the canvas rather than the scroller, so the tail it lifts the rows
-	// off the bottom by is added back as canvas height and the scrollable range never moves
+	// the held correction rides on the canvas rather than the scroller, and the canvas is shortened by
+	// what it lifts the rows off the bottom by, so the last row still ends where the scrollable area
+	// does. What a correction costs is at the top, out of reach until it is paid out.
 	const paint = () => {
-		canvas.style.height = `${total + held}px`;
+		canvas.style.height = `${Math.max(0, total - held)}px`;
 		canvas.style.transform = held ? `translateY(${-held}px)` : "";
 	};
 
-	const clamp = (top: number) => Math.min(Math.max(top, 0), Math.max(0, viewport.scrollHeight - viewport.clientHeight));
+	// the page dresses the viewport with padding of its own, so the end of the list is the end of the
+	// scroller rather than the end of the rows — lifted into canvas space by what is held, which the
+	// scroller is behind by exactly that much
+	const maxOffset = () => Math.max(0, viewport.scrollHeight - viewport.clientHeight) + held;
 
-	const atBottom = () => viewport.scrollHeight - viewport.clientHeight - viewport.scrollTop < 2;
+	const clamp = (top: number) => Math.min(Math.max(top, 0), maxOffset());
+
+	const atBottom = () => maxOffset() - offset < 2;
+
+	// iOS reasserts its own scroll offset from a touch that is still down, and reports a scrollTop
+	// outside the range it will settle back into for as long as the rubberband is stretched — so the
+	// scroller is only written to while it is standing still, and corrections ride on the canvas until
+	// then. A jump the reader asked for goes through either way and is worth the cancelled fling.
+	const settled = () => !touching && viewport.scrollTop > -0.5 && viewport.scrollTop - (viewport.scrollHeight - viewport.clientHeight) < 0.5;
 
 	const place = (top: number) => {
 		if (held) {
@@ -103,9 +116,7 @@
 			paint();
 		}
 		const target = clamp(top);
-		// an overscrolling scroller reports a scrollTop outside the range it will settle back into;
-		// writing that range to it snaps the rubberband out from under the reader's finger
-		if (Math.abs(clamp(viewport.scrollTop) - target) > 0.5) viewport.scrollTop = target;
+		if (Math.abs(viewport.scrollTop - target) > 0.5) viewport.scrollTop = target;
 		placed = viewport.scrollTop;
 		offset = placed;
 		pinned = atBottom();
@@ -114,8 +125,19 @@
 	const settle = () => {
 		clearTimeout(settling);
 		settling = setTimeout(() => {
-			if (held && viewport) place(offset);
+			if (!held || !viewport) return;
+			if (settled()) place(offset);
+			else settle();
 		}, 150);
+	};
+
+	const grab = () => (touching = true);
+
+	const release = (event: TouchEvent) => {
+		// a fling starts where the finger leaves, so the correction is not paid out here either
+		if (event.touches.length) return;
+		touching = false;
+		if (held) settle();
 	};
 
 	const shift = (delta: number) => {
@@ -150,13 +172,14 @@
 		// write, not the reader: an unmeasured row rendering taller than its slot grows the scrollable
 		// area under a viewport already sitting at the bottom, and taking that for a scroll away from
 		// the bottom is what unpins a list that is following new rows
-		if (top !== placed) {
+		const echo = top === placed;
+		offset = top + held;
+		if (!echo) {
 			seek = null;
 			pinned = atBottom();
 			if (held) settle();
 		}
-		offset = top + held;
-		onscroll?.({ offset, distanceFromBottom: pinned ? 0 : Math.max(0, viewport.scrollHeight - viewport.clientHeight - top) });
+		onscroll?.({ offset, distanceFromBottom: pinned ? 0 : Math.max(0, maxOffset() - offset) });
 	};
 
 	// not a SvelteMap: nothing renders off this, and it is rewritten for every row on every scroll tick
@@ -238,7 +261,11 @@
 
 		if (!dynamic || !viewport) return;
 		untrack(() => {
-			if (seek) place(seekTop(seek));
+			// a scroller that will not be written to yet keeps the position it has, and the row that grew
+			// above the fold still has to be corrected for: the list stays where the reader left it and
+			// comes back for the bottom on the next row that arrives
+			if (!settled()) shift(anchor);
+			else if (seek) place(seekTop(seek));
 			else if (pinned) place(height);
 			else if (anchor) shift(anchor);
 			anchor = 0;
@@ -247,7 +274,16 @@
 </script>
 
 <!-- a viewport of absolutely positioned rows repaints whole every frame unless the scroller gets its own layer -->
-<div bind:this={viewport} bind:clientHeight={viewportHeight} onscroll={handleScroll} class={cn("h-full overflow-auto will-change-transform", className)}>
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<div
+	bind:this={viewport}
+	bind:clientHeight={viewportHeight}
+	onscroll={handleScroll}
+	ontouchstart={grab}
+	ontouchend={release}
+	ontouchcancel={release}
+	class={cn("h-full overflow-auto overscroll-contain will-change-transform", className)}
+>
 	<!-- the rows are placed in here, so narrowing this narrows them without narrowing what scrolls -->
 	<div bind:this={canvas} class={cn("relative w-full", contentClass)}>
 		<!--
