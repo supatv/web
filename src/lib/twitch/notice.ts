@@ -1,4 +1,4 @@
-import { BanIcon, CrownIcon, FlameIcon, GemIcon, GiftIcon, HeartHandshakeIcon, HighlighterIcon, InfoIcon, MegaphoneIcon, StarIcon, SwordsIcon, TimerIcon, type LucideIcon } from "@lucide/svelte";
+import { BanIcon, CrownIcon, FlameIcon, GemIcon, GiftIcon, HeartHandshakeIcon, HighlighterIcon, InfoIcon, MegaphoneIcon, ShieldIcon, StarIcon, SwordsIcon, TimerIcon, type LucideIcon } from "@lucide/svelte";
 
 import type { Message } from "$lib/twitch/chat.svelte";
 
@@ -124,6 +124,10 @@ const describe = (msg: Message): Notice | null => {
 
 			return named({ icon: SwordsIcon, label: "Raid", tone: "accent", title: system, chips, body: true });
 		}
+
+		case "modiversary":
+			// Twitch's wording for this one opens on the verb, so the name has to be put back
+			return named({ icon: ShieldIcon, label: "Mod anniversary", tone: "signal", title: actor ? `${actor} ${system}` : system, body: true });
 
 		case "viewermilestone":
 			return named({ icon: FlameIcon, label: "Milestone", tone: "signal", title: system, body: true });
