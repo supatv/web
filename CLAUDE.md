@@ -126,8 +126,11 @@ with whatever is left over as a case-insensitive substring needle over the text,
 and — under the `channel` option `/firehose` passes — the channel. The filters are `from`, `in`,
 `has`, `is`, `badge`, `subtier` and `regex`; an unknown `is:`/`has:` flag matches nothing rather
 than everything, and `is:deleted` reads the id set the page owns, handed in as the `deleted`
-option. `parseQuery`/`buildQuery` round-trip a query, for anything that composes one rather than
-typing it.
+option. `parseQuery`/`buildQuery` round-trip a query, so
+[search-filters.svelte](src/lib/components/search-filters.svelte) — the popover beside the
+`/firehose` filter input — composes one out of form controls rather than making the reader type it.
+Its fields write the whole query back on every change and re-read it whenever the input beside them
+has moved it, so there is one source of truth and no binding to keep in sync.
 
 It keeps a **module-level cache** (`lastText`/`lastResult`, guarded on source-array identity) that
 narrows the previous result set when the needle grows over an unchanged set of terms — only the

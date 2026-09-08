@@ -4,6 +4,7 @@
 
 	import { Button, Input, Label, Panel, Select, type SelectOption } from "$lib/components/ui";
 
+	import SearchFilters from "$lib/components/search-filters.svelte";
 	import VirtualList from "$lib/components/virtual-list.svelte";
 
 	import MessageContent from "$lib/components/message/content.svelte";
@@ -215,7 +216,10 @@
 
 			<div class="flex min-w-52 flex-1 flex-col gap-1">
 				<Label for="input-search">Filter</Label>
-				<Input id="input-search" maxlength={500} placeholder="Match channel, user or message..." autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+				<div class="flex items-center gap-1.5">
+					<Input id="input-search" maxlength={500} placeholder="Match channel, user or message..." autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
+					<SearchFilters bind:value={searchValue} channels />
+				</div>
 			</div>
 		</div>
 
