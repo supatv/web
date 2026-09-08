@@ -226,22 +226,24 @@
 				Name history
 			</h3>
 			<!-- an account that has renamed a dozen times would push the links off a phone screen -->
-			<ul class="border-line max-h-40 overflow-y-auto overscroll-contain rounded-md border text-sm">
-				{#if namesLoading}
-					<!-- one row: most accounts have only ever chatted under the one name -->
-					<li class="flex items-center justify-between gap-3 px-2 py-1">
-						<Skeleton class="h-5 w-24" />
-						<Skeleton class="h-4 w-32" />
-					</li>
-				{:else}
-					{#each names as entry (entry.user_login + entry.first_timestamp)}
-						<li class="border-line flex items-baseline justify-between gap-3 border-b px-2 py-1 last:border-b-0">
-							<span class="truncate">{entry.user_login}</span>
-							<span class="text-dim shrink-0 text-xs tabular-nums">{dayjs(entry.first_timestamp).format(dateFormat)} – {dayjs(entry.last_timestamp).format(dateFormat)}</span>
+			<div class="border-line overflow-hidden rounded-md border">
+				<ul class="max-h-40 overflow-y-auto overscroll-contain text-sm">
+					{#if namesLoading}
+						<!-- one row: most accounts have only ever chatted under the one name -->
+						<li class="flex items-center justify-between gap-3 px-2 py-1">
+							<Skeleton class="h-5 w-24" />
+							<Skeleton class="h-4 w-32" />
 						</li>
-					{/each}
-				{/if}
-			</ul>
+					{:else}
+						{#each names as entry (entry.user_login + entry.first_timestamp)}
+							<li class="border-line flex items-baseline justify-between gap-3 border-b px-2 py-1 last:border-b-0">
+								<span class="truncate">{entry.user_login}</span>
+								<span class="text-dim shrink-0 text-xs tabular-nums">{dayjs(entry.first_timestamp).format(dateFormat)} – {dayjs(entry.last_timestamp).format(dateFormat)}</span>
+							</li>
+						{/each}
+					{/if}
+				</ul>
+			</div>
 		</section>
 	{/if}
 

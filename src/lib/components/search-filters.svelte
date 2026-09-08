@@ -213,7 +213,7 @@
 	</button>
 {/snippet}
 
-<Popover class="max-h-[60vh] w-90 max-w-[calc(100vw-2rem)] overflow-y-auto p-4" align="end">
+<Popover class="w-90 max-w-[calc(100vw-2rem)] overflow-hidden" align="end">
 	{#snippet trigger({ props })}
 		<Button {...props} variant="outline" {size} title="Advanced filters" aria-label={active ? `Advanced filters (${active} active)` : "Advanced filters"} class={cn("relative", className)}>
 			<SlidersHorizontalIcon />
@@ -225,7 +225,7 @@
 		</Button>
 	{/snippet}
 
-	<div class="flex flex-col gap-3">
+	<div class="flex max-h-[60vh] flex-col gap-3 overflow-y-auto p-4">
 		{@render text("filter-from", "Users", "comma, separated", form.from)}
 		{#if channels}
 			{@render text("filter-in", "Channels", "comma, separated", form.in)}
