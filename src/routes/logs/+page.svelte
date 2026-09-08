@@ -35,7 +35,8 @@
 	import { compactNumber, dateTimeFormat, timeFormat, type TitleContext } from "$lib/common";
 	import { ChatSource, type ChatUser, type Message } from "$lib/twitch/chat.svelte";
 	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
-	import { messageSearch, splitDeletions } from "$lib/twitch/logs";
+	import { splitDeletions } from "$lib/twitch/logs";
+	import { messageSearch } from "$lib/twitch/search";
 
 	type LogsDate = {
 		year: string;
@@ -273,8 +274,9 @@
 	let deletedIds: Set<string> = $state(new Set());
 
 	let searchValue = $state("");
-	let searchResults = $derived(messageSearch(searchValue, chatLogs, scrollFromBottom));
-	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", chatLogs, scrollFromBottom) : searchResults);
+	let searchOptions = $derived({ deleted: deletedIds, reverse: !scrollFromBottom });
+	let searchResults = $derived(messageSearch(searchValue, chatLogs, searchOptions));
+	let filteredChatLogs = $derived(isJumpMode ? messageSearch("", chatLogs, searchOptions) : searchResults);
 	let isJumpSearching = $derived(isJumpMode && searchResults.length && searchValue);
 	let jumpHighlights = $derived(isJumpSearching ? new Set(searchResults.map((m) => getMessageId(m))) : void 0);
 	let jumpIndex = $derived(isJumpSearching ? searchResults.findIndex((m) => getMessageId(m) === page.url.hash.slice(1)) : -1);

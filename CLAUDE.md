@@ -119,14 +119,24 @@ function rather than a `$derived`, `content.svelte` wraps the render in
 non-reactive tick fields so bumping one never reads the signal it writes — otherwise an `$effect`
 that calls a `load*` method would depend on its own write. Keep that shape when adding a source.
 
-`messageSearch` supports `regex:`, `in:` and `from:` prefixes and otherwise does a
-case-insensitive substring scan. It keeps a **module-level cache** (`lastQuery`/`lastResult`,
-guarded on source-array identity) that narrows the previous result set when the new query extends
-the old one — anything that mutates the message array in place instead of replacing it will break
-that invariant. `/firehose` respects this: socket messages land in a plain `chatBuffer` array and
-are flushed into the reactive `chatLogs` by `concat` on a 250ms timer, capped at 10k rows, with
-the flush skipped while `document.hidden` (timers are throttled to ~1/min in a background tab, so
-it only trims the backlog).
+`messageSearch` in [search.ts](src/lib/twitch/search.ts) takes Chatterino's query grammar
+(`docs/Search.md` in the Chatterino wiki): whitespace-separated `filter:value` terms that AND
+together, each negatable with a leading `!` and each taking a comma-separated value list that ORs,
+with whatever is left over as a case-insensitive substring needle over the text, the display name
+and — under the `channel` option `/firehose` passes — the channel. The filters are `from`, `in`,
+`has`, `is`, `badge`, `subtier` and `regex`; an unknown `is:`/`has:` flag matches nothing rather
+than everything, and `is:deleted` reads the id set the page owns, handed in as the `deleted`
+option. `parseQuery`/`buildQuery` round-trip a query, for anything that composes one rather than
+typing it.
+
+It keeps a **module-level cache** (`lastText`/`lastResult`, guarded on source-array identity) that
+narrows the previous result set when the needle grows over an unchanged set of terms — only the
+needle, since every other filter matches its values exactly, so extending one of those swaps the
+hit set out rather than shrinking it. Anything that mutates the message array in place instead of
+replacing it will break that invariant. `/firehose` respects this: socket messages land in a plain
+`chatBuffer` array and are flushed into the reactive `chatLogs` by `concat` on a 250ms timer,
+capped at 10k rows, with the flush skipped while `document.hidden` (timers are throttled to ~1/min
+in a background tab, so it only trims the backlog).
 
 ### State conventions
 

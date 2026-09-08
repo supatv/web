@@ -25,7 +25,7 @@
 
 	import { ChatSource, type ChatUser, type Message } from "$lib/twitch/chat.svelte";
 	import { messageNotice, noticeStyle } from "$lib/twitch/notice";
-	import { messageSearch } from "$lib/twitch/logs";
+	import { messageSearch } from "$lib/twitch/search";
 
 	import instances from "./instances.json";
 
@@ -167,7 +167,7 @@
 		});
 	});
 
-	let filteredChatLogs = $derived(messageSearch(searchValue, chatLogs, null));
+	let filteredChatLogs = $derived(messageSearch(searchValue, chatLogs, { channel: true, deleted: deletedIds }));
 
 	const resumeScroll = () => {
 		scrollPaused = false;
@@ -215,7 +215,7 @@
 
 			<div class="flex min-w-52 flex-1 flex-col gap-1">
 				<Label for="input-search">Filter</Label>
-				<Input id="input-search" maxlength={500} placeholder="Match channel, user or message..." bind:ref={searchInput} bind:value={searchValue} />
+				<Input id="input-search" maxlength={500} placeholder="Match channel, user or message..." autocomplete="off" bind:ref={searchInput} bind:value={searchValue} />
 			</div>
 		</div>
 
