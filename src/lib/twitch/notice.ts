@@ -1,4 +1,19 @@
-import { BanIcon, CrownIcon, FlameIcon, GemIcon, GiftIcon, HeartHandshakeIcon, HighlighterIcon, InfoIcon, MegaphoneIcon, ShieldIcon, StarIcon, SwordsIcon, TimerIcon, type LucideIcon } from "@lucide/svelte";
+import {
+	BanIcon,
+	CrownIcon,
+	FlameIcon,
+	GemIcon,
+	GiftIcon,
+	HeartHandshakeIcon,
+	HighlighterIcon,
+	InfoIcon,
+	MegaphoneIcon,
+	ShieldIcon,
+	StarIcon,
+	SwordsIcon,
+	TimerIcon,
+	type LucideIcon,
+} from "@lucide/svelte";
 
 import type { Message } from "$lib/twitch/chat.svelte";
 

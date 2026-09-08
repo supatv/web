@@ -231,14 +231,15 @@
 				{#snippet item(index, style)}
 					{@const msg = filteredChatLogs[index]}
 					{@const notice = messageNotice(msg)}
-					<!-- the message sits on row 3 so the deletion note and the reply preview can take the rows above it in
-						the message's own column; without either, those are empty tracks and cost nothing -->
-					<div class={["grid w-full grid-cols-[auto_auto_1fr] items-start gap-x-1 px-3 py-0.5", notice && noticeStyle[notice.tone].row]} {style}>
+					<!-- the message sits on the last row so the deletion note and the reply preview can take the rows above
+						it in the message's own column; without either, those are empty tracks and cost nothing. below `md`
+						the channel gets a line of its own above the timestamp rather than eating a third of the width -->
+					<div class={["grid w-full grid-cols-[auto_1fr] items-start gap-x-1 px-3 py-0.5 md:grid-cols-[auto_auto_1fr]", notice && noticeStyle[notice.tone].row]} {style}>
 						{#if deletedIds.has(msg.id)}
-							<Deleted class="col-start-3 row-start-1" />
+							<Deleted class="col-start-2 row-start-2 md:col-start-3 md:row-start-1" />
 						{/if}
 						{#if msg.tags["reply-parent-msg-id"]}
-							<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-3 row-start-2" />
+							<Reply {msg} onclick={() => (threadMsg = msg)} class="col-start-2 row-start-3 md:col-start-3 md:row-start-2" />
 						{/if}
 						<!-- `text-xs` carries a line-height of its own, so the row's `leading-5` has to be restated for these
 							two to sit on the same line box as the message beside them -->
@@ -246,12 +247,12 @@
 							href="https://www.twitch.tv/{msg.channel}"
 							target="_blank"
 							title={msg.channel}
-							class="text-dim hover:text-accent row-start-3 inline-block max-w-32 min-w-32 truncate text-xs leading-5 font-semibold transition-colors select-none"
+							class="text-dim hover:text-accent col-span-2 col-start-1 row-start-1 inline-block w-fit max-w-full truncate text-xs leading-5 font-semibold transition-colors select-none md:col-span-1 md:row-start-3 md:w-auto md:max-w-32 md:min-w-32"
 						>
 							{msg.channel}
 						</a>
-						<span class="text-dim/80 row-start-3 text-xs leading-5 tabular-nums select-none">{dayjs(msg.timestamp).format(timeFormat)}</span>
-						<span class="row-start-3 min-w-0 wrap-break-word">
+						<span class="text-dim/80 col-start-1 row-start-4 text-xs leading-5 tabular-nums select-none md:col-start-2 md:row-start-3">{dayjs(msg.timestamp).format(timeFormat)}</span>
+						<span class="col-start-2 row-start-4 min-w-0 wrap-break-word md:col-start-3 md:row-start-3">
 							<MessageContent {chat} {msg} onuserclick={(user) => (cardUser = user)} />
 						</span>
 					</div>
