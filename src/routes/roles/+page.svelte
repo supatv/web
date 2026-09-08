@@ -373,6 +373,7 @@
 </script>
 
 <svelte:head>
+	<link rel="preconnect" href="https://roles.tv" />
 	<meta property="og:title" content="Twitch Roles" />
 	<meta name="keywords" content="twitch, twitch roles, moderator list, vip list, founders, subscribers, twitch tools, who moderates" />
 	<meta name="description" content="Look up the moderator, VIP, founder, artist and subscriber roles of any Twitch account." />

@@ -591,6 +591,7 @@
 </script>
 
 <svelte:head>
+	<link rel="preconnect" href="https://logs.zonian.dev" />
 	<meta property="og:title" content="Twitch Logs" />
 	<meta name="keywords" content="twitch, twitch logs, search twitch chat logs, find chat history, twitch tools, chat messages, twitch channels" />
 	<meta name="description" content="View chat logs in any Twitch channel." />

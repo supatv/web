@@ -56,6 +56,7 @@
 </script>
 
 <svelte:head>
+	<link rel="preconnect" href="https://api-tv.supa.sh" />
 	<meta property="og:title" content="Twitch Romania" />
 	<meta name="keywords" content="twitch, kick, twitch tools, twitch romania, kick romania, livestreams, live channels directory, twitch chat" />
 	<meta name="description" content="Browse Romanian livestreams from Twitch and Kick." />
