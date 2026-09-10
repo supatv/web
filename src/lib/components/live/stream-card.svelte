@@ -64,7 +64,6 @@
 		{/if}
 		<Image
 			src={(stream.thumbnail || `https://static-cdn.jtvnw.net/previews-ttv/live_user_${stream.login}-${$gridCols && $gridCols < 4 ? "900x507" : "600x338"}.jpg`) + `?t=${lastRefresh}`}
-			loading="lazy"
 			alt="Thumbnail"
 			class="aspect-video w-full object-cover"
 		/>
@@ -89,7 +88,7 @@
 	</div>
 
 	<div class="flex flex-1 gap-2 px-2 py-1">
-		<Image src={stream.avatar} loading="lazy" alt="Avatar" class="size-12 shrink-0 self-center rounded-sm text-[0]" />
+		<Image src={stream.avatar} alt="Avatar" class="size-12 shrink-0 self-center rounded-sm text-[0]" />
 
 		<div class="flex min-w-0 flex-1 flex-col">
 			<div class="flex items-center gap-2">
