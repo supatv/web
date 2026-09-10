@@ -70,7 +70,7 @@
 
 		<div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start gap-1.5 p-1.5">
 			{#if showKick}
-				<div class="grid h-5 place-items-center rounded-md bg-black/60 px-1.5 backdrop-blur">
+				<div class="grid h-5 place-items-center rounded-md bg-black/60 px-1.5">
 					{#if stream.platform === "kick"}
 						<img src={KickWordmark} alt="Kick" class="h-2.5" />
 					{:else}
@@ -80,7 +80,7 @@
 			{/if}
 
 			{#if uptime}
-				<span class="font-display ml-auto grid h-5 place-items-center rounded-md bg-black/60 px-1.5 text-xs font-semibold text-white tabular-nums backdrop-blur">
+				<span class="font-display ml-auto grid h-5 place-items-center rounded-md bg-black/60 px-1.5 text-xs font-semibold text-white tabular-nums">
 					{uptime}
 				</span>
 			{/if}
