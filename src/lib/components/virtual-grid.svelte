@@ -27,7 +27,7 @@
 
 	let { itemCount, itemSize, columns: fixedColumns, minItemWidth = 240, gap = 0, overscan = 2, windowScroll = false, key, text, class: className, contentClass, onscroll, item }: Props = $props();
 
-	let viewport: HTMLDivElement | undefined;
+	let viewport: HTMLDivElement | undefined = $state();
 	let canvas: HTMLDivElement | undefined;
 	let shadow: HTMLDivElement | undefined = $state();
 	// cells are placed against the canvas' padding box, so pad the viewport rather than the canvas
