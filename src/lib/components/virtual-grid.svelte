@@ -18,16 +18,18 @@
 		overscan?: number;
 		windowScroll?: boolean;
 		key?: (index: number) => PropertyKey;
+		text?: (index: number) => string;
 		class?: string;
 		contentClass?: string;
 		onscroll?: (detail: ScrollDetail) => void;
 		item: Snippet<[number, string]>;
 	};
 
-	let { itemCount, itemSize, columns: fixedColumns, minItemWidth = 240, gap = 0, overscan = 2, windowScroll = false, key, class: className, contentClass, onscroll, item }: Props = $props();
+	let { itemCount, itemSize, columns: fixedColumns, minItemWidth = 240, gap = 0, overscan = 2, windowScroll = false, key, text, class: className, contentClass, onscroll, item }: Props = $props();
 
 	let viewport: HTMLDivElement | undefined;
 	let canvas: HTMLDivElement | undefined;
+	let shadow: HTMLDivElement | undefined = $state();
 	// cells are placed against the canvas' padding box, so pad the viewport rather than the canvas
 	let canvasWidth = $state(0);
 	let containerHeight = $state(0);
@@ -69,8 +71,33 @@
 		return visible;
 	});
 
-	const cellStyle = (index: number) =>
-		`position: absolute; top: ${Math.floor(index / columns) * pitch}px; left: ${(index % columns) * (cellWidth + gap)}px; width: ${cellWidth}px; height: ${cellHeight}px;`;
+	const cellOffset = (index: number) => `top: ${Math.floor(index / columns) * pitch}px; left: ${(index % columns) * (cellWidth + gap)}px;`;
+
+	const cellStyle = (index: number) => `position: absolute; ${cellOffset(index)} width: ${cellWidth}px; height: ${cellHeight}px;`;
+
+	// clipped to a point and transparent: revealing a match neither shows the text nor lays it out
+	const shadowStyle = (index: number) => `position: absolute; ${cellOffset(index)} width: 1px; height: 1px; overflow: hidden; white-space: nowrap; color: transparent;`;
+
+	// a stand-in whose cell is on screen would be a second match for the card the reader can already
+	// see, so the window's worth of them is switched off as it moves — plain `hidden` takes an
+	// element out of find-in-page, and it goes back to matchable once the cell is gone again. Only
+	// the window is touched, not every stand-in, and only when it moves off the row it was on.
+	let mutedFrom = 0;
+	let mutedTo = 0;
+
+	const mute = (index: number, matchable: boolean) => shadow?.children[index]?.setAttribute("hidden", matchable ? "until-found" : "");
+
+	$effect(() => {
+		const from = indexes.length ? indexes[0] : 0;
+		const to = indexes.length ? indexes[indexes.length - 1] + 1 : 0;
+		if (!shadow) return;
+		untrack(() => {
+			for (let i = mutedFrom; i < mutedTo; i++) if (i < from || i >= to) mute(i, true);
+			for (let i = from; i < to; i++) mute(i, false);
+			mutedFrom = from;
+			mutedTo = to;
+		});
+	});
 
 	// in window mode the grid has no scroller of its own: it sits in the document flow and is
 	// virtualized against the page scroll, so every position is taken relative to the canvas
@@ -130,6 +157,19 @@
 
 {#snippet cells()}
 	<div bind:this={canvas} bind:clientWidth={canvasWidth} class={cn("relative w-full", contentClass)} style="height: {total}px">
+		<!--
+			find-in-page only sees what is in the document, so a cell the grid is not rendering leaves
+			its text behind here, in the place the cell would have been. `until-found` is what makes
+			that free: the browser skips the subtree until a search reaches it, and the scroll it does
+			to reveal the match is what brings the real cell in.
+		-->
+		{#if text && canvasWidth}
+			<div bind:this={shadow}>
+				{#each { length: itemCount }, index}
+					<div hidden="until-found" aria-hidden="true" style={shadowStyle(index)}>{text(index)}</div>
+				{/each}
+			</div>
+		{/if}
 		<!--
 			Keyed by absolute index unless the caller names the cells: they are expensive to build, so
 			scrolling should move the existing ones and add one at the edge rather than rewrite every

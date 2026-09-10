@@ -19,16 +19,18 @@
 		itemSize: number;
 		dynamic?: boolean;
 		overscan?: number;
+		text?: (index: number) => string;
 		class?: string;
 		contentClass?: string;
 		onscroll?: (detail: ScrollDetail) => void;
 		item: Snippet<[number, string]>;
 	};
 
-	let { itemCount, itemSize, dynamic = false, overscan = 4, class: className, contentClass, onscroll, item }: Props = $props();
+	let { itemCount, itemSize, dynamic = false, overscan = 4, text, class: className, contentClass, onscroll, item }: Props = $props();
 
 	let viewport: HTMLDivElement;
 	let canvas: HTMLDivElement;
+	let shadow: HTMLDivElement | undefined = $state();
 	let viewportHeight = $state(0);
 	let offset = $state(0);
 	let pinned = false;
@@ -85,6 +87,31 @@
 	const start = $derived(Math.max(0, firstVisible - overscan));
 	const end = $derived(Math.min(itemCount, (dynamic ? rowAt(offset + viewportHeight) + 1 : Math.ceil((offset + viewportHeight) / itemSize)) + overscan));
 	const indexes = $derived(Array.from({ length: Math.max(0, end - start) }, (_, i) => start + i));
+
+	// find-in-page only sees what is in the document, so a row the list is not rendering leaves its
+	// text behind in one of these, clipped to a point at the row's place in the scroll. `until-found`
+	// is what makes that free: the browser skips the subtree until a search reaches it, and the
+	// scroll it does to reveal the match is what brings the real row in. A row that is on screen
+	// would be a second match for what the reader can already see, so the window's worth of them is
+	// switched off as it moves — plain `hidden` takes an element out of find-in-page.
+	const shadowStyle = (index: number) => `position: absolute; top: ${rowTop(index)}px; width: 1px; height: 1px; overflow: hidden; white-space: nowrap; color: transparent;`;
+
+	let mutedFrom = 0;
+	let mutedTo = 0;
+
+	const mute = (index: number, matchable: boolean) => shadow?.children[index]?.setAttribute("hidden", matchable ? "until-found" : "");
+
+	$effect(() => {
+		const from = start;
+		const to = end;
+		if (!shadow) return;
+		untrack(() => {
+			for (let i = mutedFrom; i < mutedTo; i++) if (i < from || i >= to) mute(i, true);
+			for (let i = from; i < to; i++) mute(i, false);
+			mutedFrom = from;
+			mutedTo = to;
+		});
+	});
 
 	// the held correction rides on the canvas rather than the scroller, so the tail it lifts the rows
 	// off the bottom by is added back as canvas height and the scrollable range never moves
@@ -248,6 +275,14 @@
 
 <!-- a viewport of absolutely positioned rows repaints whole every frame unless the scroller gets its own layer -->
 <div bind:this={viewport} bind:clientHeight={viewportHeight} onscroll={handleScroll} class={cn("h-full overflow-auto will-change-transform", className)}>
+	<!-- outside the canvas, whose children the measurement below counts on being the rendered rows -->
+	{#if text}
+		<div bind:this={shadow} class="relative h-0">
+			{#each { length: itemCount }, index}
+				<div hidden="until-found" aria-hidden="true" style={shadowStyle(index)}>{text(index)}</div>
+			{/each}
+		</div>
+	{/if}
 	<!-- the rows are placed in here, so narrowing this narrows them without narrowing what scrolls -->
 	<div bind:this={canvas} class={cn("relative w-full", contentClass)}>
 		<!--
