@@ -61,6 +61,12 @@
 		return stream ? `${stream.platform}:${stream.uid}` : index;
 	};
 
+	// what the card puts on screen, for a card that is not on screen to be found by
+	const cellText = (index: number) => {
+		const stream = streams[index];
+		return stream ? `${stream.name} ${stream.title} ${stream.game}` : "";
+	};
+
 	const windowKeydown = (event: KeyboardEvent) => {
 		if (event.altKey || event.ctrlKey) return;
 		if (event.key === "m") {
@@ -160,7 +166,7 @@
 		<Label for="show-kick-checkbox" class="cursor-pointer normal-case">Show Kick streams</Label>
 	</div>
 
-	<VirtualGrid windowScroll {columns} {gap} itemCount={streams.length || skeletonCount} itemSize={(width) => width * (9 / 16) + cardChrome} key={cellKey}>
+	<VirtualGrid windowScroll {columns} {gap} itemCount={streams.length || skeletonCount} itemSize={(width) => width * (9 / 16) + cardChrome} key={cellKey} text={cellText}>
 		{#snippet item(index, style)}
 			{@const stream = streams[index]}
 			{#if stream}
