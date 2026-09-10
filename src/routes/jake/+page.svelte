@@ -80,6 +80,9 @@
 
 	const cardKey = (index: number) => files?.[index]?.id ?? index;
 
+	// what the card puts on screen, for a card that is not on screen to be found by
+	const cardText = (index: number) => files?.[index]?.title ?? "";
+
 	const fetchFiles = async () => {
 		const res = await fetch("https://fi.supa.sh/.archive/jake/files.json");
 		files = await res.json();
@@ -211,7 +214,7 @@
 		{/if}
 	</p>
 
-	<VirtualGrid bind:this={cardGrid} windowScroll {columns} {gap} itemCount={files?.length ?? skeletonCount} itemSize={(width) => width * (9 / 16) + cardChrome} key={cardKey}>
+	<VirtualGrid bind:this={cardGrid} windowScroll {columns} {gap} itemCount={files?.length ?? skeletonCount} itemSize={(width) => width * (9 / 16) + cardChrome} key={cardKey} text={cardText}>
 		{#snippet item(index, style)}
 			{@const file = files?.[index]}
 			{#if file}
