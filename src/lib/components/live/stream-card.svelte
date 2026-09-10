@@ -64,14 +64,13 @@
 		{/if}
 		<Image
 			src={(stream.thumbnail || `https://static-cdn.jtvnw.net/previews-ttv/live_user_${stream.login}-${$gridCols && $gridCols < 4 ? "900x507" : "600x338"}.jpg`) + `?t=${lastRefresh}`}
-			loading="lazy"
 			alt="Thumbnail"
 			class="aspect-video w-full object-cover"
 		/>
 
 		<div class="pointer-events-none absolute inset-x-0 top-0 z-20 flex items-start gap-1.5 p-1.5">
 			{#if showKick}
-				<div class="grid h-5 place-items-center rounded-md bg-black/60 px-1.5 backdrop-blur">
+				<div class="grid h-5 place-items-center rounded-md bg-black/60 px-1.5">
 					{#if stream.platform === "kick"}
 						<img src={KickWordmark} alt="Kick" class="h-2.5" />
 					{:else}
@@ -81,7 +80,7 @@
 			{/if}
 
 			{#if uptime}
-				<span class="font-display ml-auto grid h-5 place-items-center rounded-md bg-black/60 px-1.5 text-xs font-semibold text-white tabular-nums backdrop-blur">
+				<span class="font-display ml-auto grid h-5 place-items-center rounded-md bg-black/60 px-1.5 text-xs font-semibold text-white tabular-nums">
 					{uptime}
 				</span>
 			{/if}
@@ -89,7 +88,7 @@
 	</div>
 
 	<div class="flex flex-1 gap-2 px-2 py-1">
-		<Image src={stream.avatar} loading="lazy" alt="Avatar" class="size-12 shrink-0 self-center rounded-sm text-[0]" />
+		<Image src={stream.avatar} alt="Avatar" class="size-12 shrink-0 self-center rounded-sm text-[0]" />
 
 		<div class="flex min-w-0 flex-1 flex-col">
 			<div class="flex items-center gap-2">

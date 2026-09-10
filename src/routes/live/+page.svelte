@@ -7,7 +7,9 @@
 	import type { Stream } from "$lib/twitch/livestreams";
 
 	import { onMount, getContext } from "svelte";
+	import { MediaQuery } from "svelte/reactivity";
 	import StreamCard from "$lib/components/live/stream-card.svelte";
+	import VirtualGrid from "$lib/components/virtual-grid.svelte";
 
 	import { playerMuted, gridCols } from "$lib/stores/live";
 
@@ -40,6 +42,30 @@
 	};
 
 	let streams = $derived(showKick ? ogStreams : ogStreams.filter((s) => s.platform === "twitch"));
+
+	// the breakpoints the css grid held the cards on before they were virtualized
+	const md = new MediaQuery("min-width: 48rem");
+	const lg = new MediaQuery("min-width: 64rem");
+	const xl = new MediaQuery("min-width: 80rem");
+	const columns = $derived($gridCols ?? (xl.current ? 4 : lg.current ? 3 : md.current ? 2 : 1));
+
+	// gap-4, and the card under its 16:9 thumbnail: the name, title and game rows plus their padding
+	const gap = 16;
+	const cardChrome = 68;
+
+	const skeletonCount = 30;
+
+	// a card holds the player it opened on right-click, so it follows its stream through a refresh
+	const cellKey = (index: number) => {
+		const stream = streams[index];
+		return stream ? `${stream.platform}:${stream.uid}` : index;
+	};
+
+	// what the card puts on screen, for a card that is not on screen to be found by
+	const cellText = (index: number) => {
+		const stream = streams[index];
+		return stream ? `${stream.name} ${stream.title} ${stream.game}` : "";
+	};
 
 	const windowKeydown = (event: KeyboardEvent) => {
 		if (event.altKey || event.ctrlKey) return;
@@ -140,19 +166,15 @@
 		<Label for="show-kick-checkbox" class="cursor-pointer normal-case">Show Kick streams</Label>
 	</div>
 
-	<div
-		class="grid grid-cols-1 gap-4 sm:grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-4"
-		style={$gridCols ? `grid-template-columns: repeat(${$gridCols}, minmax(0, 1fr));` : ""}
-	>
-		{#if streams.length}
-			{#each streams as stream (`${stream.platform}:${stream.uid}`)}
-				<a href="https://{stream.platform === 'kick' ? 'kick.com' : 'www.twitch.tv'}/{stream.login}" target="_blank" rel="nofollow">
+	<VirtualGrid windowScroll {columns} {gap} itemCount={streams.length || skeletonCount} itemSize={(width) => width * (9 / 16) + cardChrome} key={cellKey} text={cellText}>
+		{#snippet item(index, style)}
+			{@const stream = streams[index]}
+			{#if stream}
+				<a {style} href="https://{stream.platform === 'kick' ? 'kick.com' : 'www.twitch.tv'}/{stream.login}" target="_blank" rel="nofollow">
 					<StreamCard {stream} {showKick} {lastRefresh} />
 				</a>
-			{/each}
-		{:else}
-			{#each { length: 30 }}
-				<div class="bg-surface flex h-full flex-col overflow-hidden rounded-lg border border-transparent">
+			{:else}
+				<div {style} class="bg-surface flex flex-col overflow-hidden rounded-lg border border-transparent">
 					<Skeleton class="aspect-video w-full rounded-none" />
 					<div class="flex flex-1 gap-2 px-2 py-1">
 						<Skeleton class="size-12 shrink-0 self-center rounded-sm" />
@@ -170,10 +192,14 @@
 						</div>
 					</div>
 				</div>
-			{/each}
-			<div style="height: 99999px;"></div>
-		{/if}
-	</div>
+			{/if}
+		{/snippet}
+	</VirtualGrid>
+
+	{#if !streams.length}
+		<!-- the page has to stay tall enough for the browser to restore a deep scroll onto the cards that are still loading -->
+		<div style="height: 99999px;"></div>
+	{/if}
 </div>
 
 <img alt="cat peek" src={catPeek} class="mt-auto size-24 rotate-90" />

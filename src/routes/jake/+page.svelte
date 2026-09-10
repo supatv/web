@@ -6,6 +6,7 @@
 	import { page } from "$app/state";
 	import { goto } from "$app/navigation";
 	import { getContext, onDestroy, onMount, tick, untrack } from "svelte";
+	import { MediaQuery } from "svelte/reactivity";
 
 	import Image from "$lib/components/image.svelte";
 	import dayjs from "dayjs";
@@ -16,6 +17,7 @@
 	import ReplyThread from "$lib/components/message/reply-thread.svelte";
 	import UserCard from "$lib/components/message/user-card.svelte";
 	import VirtualList from "$lib/components/virtual-list.svelte";
+	import VirtualGrid from "$lib/components/virtual-grid.svelte";
 
 	import { ChatSource, type ChatUser, type Message } from "$lib/twitch/chat.svelte";
 	import { splitDeletions } from "$lib/twitch/logs";
@@ -39,11 +41,27 @@
 
 	let fileList: ReturnType<typeof VirtualList> | undefined = $state();
 	let chatList: ReturnType<typeof VirtualList> | undefined = $state();
+	let cardGrid: ReturnType<typeof VirtualGrid> | undefined = $state();
 	const itemSize = 96;
 	const chatItemSize = 26;
 	let chatAtBottom = true;
 
+	// the breakpoints the css grid held the cards on before they were virtualized
+	const md = new MediaQuery("min-width: 48rem");
+	const lg = new MediaQuery("min-width: 64rem");
+	const xl = new MediaQuery("min-width: 80rem");
+	const wide = new MediaQuery("min-width: 96rem");
+	const columns = $derived(wide.current ? 6 : xl.current ? 5 : lg.current ? 4 : md.current ? 3 : 2);
+
+	// gap-2, and the two clamped title lines under the 16:9 thumbnail plus their padding
+	const gap = 8;
+	const cardChrome = 39;
+
+	const skeletonCount = 60;
+
 	let selectedFile: number | null = $state(null);
+	// the card the reader came back from stays marked after the player closes
+	let lastOpened: number | null = $state(null);
 
 	let currentVideoTime = $state(0);
 
@@ -59,6 +77,11 @@
 	let files: ArchiveFile[] | null = $state(null);
 
 	const fileEntries: ArchiveFile[] = $derived(files ?? []);
+
+	const cardKey = (index: number) => files?.[index]?.id ?? index;
+
+	// what the card puts on screen, for a card that is not on screen to be found by
+	const cardText = (index: number) => files?.[index]?.title ?? "";
 
 	const fetchFiles = async () => {
 		const res = await fetch("https://fi.supa.sh/.archive/jake/files.json");
@@ -88,7 +111,8 @@
 			return;
 		}
 
-		const file = files[selectedFile];
+		const index = selectedFile;
+		const file = files[index];
 		if (!file) return;
 
 		untrack(async () => {
@@ -116,12 +140,8 @@
 		untrack(async () => {
 			await goto(`?i=${file.id}`, { replaceState: true, keepFocus: true, noScroll: true });
 
-			const style = ["ring-2", "ring-accent", "rounded-md"];
-			document.querySelector(".active-card")?.classList.remove("active-card", ...style);
-			const fileCard = document.getElementById(`file-card-${selectedFile}`);
-			if (!fileCard) return;
-			fileCard.scrollIntoView({ behavior: "smooth", block: "center" });
-			fileCard.classList.add("active-card", ...style);
+			lastOpened = index;
+			cardGrid?.scrollToIndex(index, "center");
 		});
 	});
 
@@ -194,12 +214,13 @@
 		{/if}
 	</p>
 
-	<div class="grid grid-cols-2 gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-		{#if files !== null}
-			{#each files as file, index (file.id)}
+	<VirtualGrid bind:this={cardGrid} windowScroll {columns} {gap} itemCount={files?.length ?? skeletonCount} itemSize={(width) => width * (9 / 16) + cardChrome} key={cardKey} text={cardText}>
+		{#snippet item(index, style)}
+			{@const file = files?.[index]}
+			{#if file}
 				{@const date = dayjs(file.created_at * 1000)}
 				<!-- svelte-ignore a11y_click_events_have_key_events -->
-				<div role="button" tabindex="0" onclick={() => openFile(index)} class="rounded-sm" id="file-card-{index}">
+				<div {style} role="button" tabindex="0" onclick={() => openFile(index)} class={["rounded-sm", index === lastOpened && "ring-accent rounded-md ring-2"]}>
 					<div class="relative overflow-hidden">
 						<span class="absolute top-0 right-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white tabular-nums" title={date.format(dateTimeFormat)}>
 							{date.format("MMM 'YY")}
@@ -207,21 +228,23 @@
 						<span class="absolute right-0 bottom-0 m-1 rounded-sm bg-black/60 px-0.5 text-xs text-white tabular-nums">
 							{formatDuration(file.duration, "s")}
 						</span>
-						<Image src="https://fi.supa.sh/.archive/jake/thumb/{file.id}.jpg" loading="lazy" class="aspect-video w-full rounded-sm" />
+						<Image src="https://fi.supa.sh/.archive/jake/thumb/{file.id}.jpg" class="aspect-video w-full rounded-sm" />
 					</div>
 					<span class="line-clamp-2 py-0.5 text-sm leading-tight" title={file.title}>{file.title}</span>
 				</div>
-			{/each}
-		{:else}
-			{#each { length: 60 }}
-				<div>
+			{:else}
+				<div {style}>
 					<Skeleton class="aspect-video w-full rounded-sm" />
 					<Skeleton class="my-0.5 h-4 w-3/4"></Skeleton>
 				</div>
-			{/each}
-			<div style="height: 99999px;"></div>
-		{/if}
-	</div>
+			{/if}
+		{/snippet}
+	</VirtualGrid>
+
+	{#if files === null}
+		<!-- the page has to stay tall enough for the browser to restore a deep scroll onto the cards that are still loading -->
+		<div style="height: 99999px;"></div>
+	{/if}
 </div>
 
 {#if selectedFile !== null}

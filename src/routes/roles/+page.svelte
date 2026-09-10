@@ -348,6 +348,12 @@
 		return parts.join(" · ");
 	};
 
+	// what the row puts on screen, for a row that is not on screen to be found by
+	const rowText = (section: RoleSection, index: number) => {
+		const row = section.rows[index];
+		return row ? row.displayName || row.login : "";
+	};
+
 	const summaryLine = (section: RoleSection) => {
 		if (!section.summary) return "";
 
@@ -561,6 +567,7 @@
 								<VirtualList
 									itemCount={section.rows.length + (section.loading ? skeletonRows(section) : 0)}
 									itemSize={rowHeight}
+									text={(index) => rowText(section, index)}
 									class="overscroll-contain"
 									onscroll={({ distanceFromBottom }) => {
 										if (distanceFromBottom < 600 && section.cursor) loadPage(sectionIndex, section.cursor);
@@ -601,15 +608,16 @@
 														<DiamondIcon class="fill-accent size-3 shrink-0 text-transparent" />
 													{/if}
 
+													<!-- the name is a label rather than sr-only text: clipped text is still text, and find-in-page would match the row twice -->
 													<a
 														href="https://www.twitch.tv/{row.login}"
 														target="_blank"
 														rel="nofollow"
+														aria-label="Open {row.login} on Twitch"
 														data-umami-event="link-Twitch-channel"
 														class="ring-focus text-dim hover:text-accent relative grid size-6 shrink-0 place-items-center rounded-md opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
 													>
 														<ExternalLinkIcon class="size-4" />
-														<span class="sr-only">Open {row.login} on Twitch</span>
 													</a>
 												</div>
 
