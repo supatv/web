@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { TvIcon, ScrollIcon, HeartIcon, ExternalLinkIcon, FlameIcon, ShieldIcon } from "@lucide/svelte";
+	import { TvIcon, ScrollIcon, GitCommitHorizontalIcon, ExternalLinkIcon, FlameIcon, ShieldIcon } from "@lucide/svelte";
 	import dayjs from "dayjs";
 
 	import { afterNavigate } from "$app/navigation";
@@ -53,6 +53,18 @@
 	});
 </script>
 
+{#snippet sparkle(className: string)}
+	<svg viewBox="0 0 24 24" class={["text-accent pointer-events-none transition-transform duration-300 group-hover:scale-125 group-hover:rotate-90", className]} aria-hidden="true">
+		<path d="M12 0c0 6.6 5.4 12 12 12-6.6 0-12 5.4-12 12 0-6.6-5.4-12-12-12 6.6 0 12-5.4 12-12z" fill="currentColor" />
+	</svg>
+{/snippet}
+
+{#snippet heart(className: string)}
+	<svg viewBox="0 0 24 24" class={["text-accent shrink-0", className]} aria-hidden="true">
+		<path d="M12 21s-7.5-4.6-9.6-9.3C.9 8.4 3 4.5 6.7 4.5c2.1 0 3.6 1.1 5.3 3 1.7-1.9 3.2-3 5.3-3 3.7 0 5.8 3.9 4.3 7.2C19.5 16.4 12 21 12 21z" fill="currentColor" />
+	</svg>
+{/snippet}
+
 <svelte:window
 	onkeydown={(e) => {
 		if (e.key === "Escape" && drawerOpen) shell.mobileNavOpen = false;
@@ -85,8 +97,18 @@
 	]}
 >
 	<div class="flex min-h-0 w-60 min-w-60 flex-1 flex-col">
-		<a href="/live" onclick={() => logo?.play()} class="ring-focus border-line flex h-14 shrink-0 items-center gap-2.5 border-b px-4">
-			<Logo bind:this={logo} class="text-accent size-6 shrink-0" />
+		<a
+			href="/live"
+			onclick={() => logo?.play()}
+			class="ring-focus border-line group after:from-accent/60 relative flex h-14 shrink-0 items-center gap-2 border-b px-3 after:pointer-events-none after:absolute after:inset-x-0 after:-bottom-px after:h-px after:bg-linear-to-r after:to-transparent after:to-80%"
+		>
+			<span
+				class="from-accent/25 group-hover:from-accent/40 relative grid size-11 shrink-0 place-items-center rounded-full bg-radial to-transparent to-70% transition-transform duration-200 group-hover:scale-105"
+			>
+				<Logo bind:this={logo} class="text-accent size-8" />
+				{@render sparkle("absolute -top-0.5 -right-0.5 size-3")}
+				{@render sparkle("absolute bottom-0.5 -left-1 size-2 opacity-70")}
+			</span>
 			<span class="flex flex-col leading-none">
 				<span class="font-display text-text text-base font-bold tracking-tight">Twitch Utilities</span>
 				<span class="text-dim text-xs">tv.supa.sh</span>
@@ -132,14 +154,27 @@
 			</div>
 		</div>
 
-		<div class="border-line text-dim shrink-0 border-t p-2 text-xs leading-relaxed">
-			<a href="https://github.com/supatv/web/commit/{__COMMIT_HASH}" target="_blank" rel="nofollow" data-umami-event="link-GitHub-commit" class="ring-focus hover:text-text">
-				{dayjs(__BUILD_DATE).format("D MMM")}, commit <span class="font-mono tabular-nums">{__COMMIT_HASH.slice(0, 7)}</span>
-			</a>
-			<p class="mt-1">
-				not affiliated with Twitch or its creators<br />
-				&copy; {new Date().getFullYear()} supa.sh
-				<HeartIcon class="text-accent inline size-4" fill="currentColor" />
+		<div class="border-line text-dim shrink-0 border-t px-2 py-3 text-xs">
+			<div class="flex items-center justify-between gap-2">
+				<span class="font-display text-text inline-flex items-center gap-1 text-sm font-bold tracking-tight">
+					supa.sh
+					{@render heart("size-3")}
+				</span>
+				<a
+					href="https://github.com/supatv/web/commit/{__COMMIT_HASH}"
+					target="_blank"
+					rel="nofollow"
+					data-umami-event="link-GitHub-commit"
+					class="ring-focus bg-raised hover:text-text inline-flex h-6 items-center gap-1 rounded-full px-2 tabular-nums transition-colors"
+				>
+					<GitCommitHorizontalIcon class="size-3.5 shrink-0" />
+					<span class="sr-only">commit</span>
+					{__COMMIT_HASH.slice(0, 7)}
+				</a>
+			</div>
+			<p class="mt-2 leading-relaxed">
+				&copy; {new Date().getFullYear()} &middot; built {dayjs(__BUILD_DATE).format("D MMM")}<br />
+				not affiliated with Twitch or its creators
 			</p>
 		</div>
 	</div>
