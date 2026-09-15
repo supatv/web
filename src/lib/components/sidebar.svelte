@@ -11,6 +11,8 @@
 	import Logo from "./logo.svelte";
 	import { shell } from "./ui/shell.svelte";
 
+	let logo: ReturnType<typeof Logo> | undefined = $state();
+
 	const sections = [
 		{
 			label: "Romanian",
@@ -83,8 +85,8 @@
 	]}
 >
 	<div class="flex min-h-0 w-60 min-w-60 flex-1 flex-col">
-		<a href="/live" class="ring-focus border-line flex h-14 shrink-0 items-center gap-2.5 border-b px-4">
-			<Logo class="text-accent size-6 shrink-0" />
+		<a href="/live" onclick={() => logo?.play()} class="ring-focus border-line flex h-14 shrink-0 items-center gap-2.5 border-b px-4">
+			<Logo bind:this={logo} class="text-accent size-6 shrink-0" />
 			<span class="flex flex-col leading-none">
 				<span class="font-display text-text text-base font-bold tracking-tight">Twitch Utilities</span>
 				<span class="text-dim text-xs">tv.supa.sh</span>
